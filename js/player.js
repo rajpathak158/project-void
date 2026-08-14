@@ -10,97 +10,135 @@ class PlayerController {
         collisionSystem
     ) {
 
-        this.scene = scene;
-        this.camera = camera;
-        this.collision = collisionSystem;
+        this.scene =
+            scene;
 
-        this.player = null;
+        this.camera =
+            camera;
+
+        this.collision =
+            collisionSystem;
+
 
         /*
-        ==========================================
-        PLAYER IDENTITY
-        ==========================================
+        ==================================================
+        PLAYER
+        ==================================================
         */
+
+        this.player =
+            new THREE.Group();
+
 
         this.playerId =
             this.createPlayerId();
+
 
         this.playerName =
             localStorage.getItem(
                 "void_player_name"
             ) || "";
 
+
         this.playerColor =
             this.createPlayerColor();
 
-        this.ready = false;
+
+        this.ready =
+            false;
 
 
         /*
-        ==========================================
+        ==================================================
         MOVEMENT
-        ==========================================
+        ==================================================
         */
 
-        this.speed = 4;
+        this.speed =
+            4.5;
 
-        this.runSpeed = 6.5;
+        this.runSpeed =
+            7;
+
 
         this.moveInput =
             new THREE.Vector2();
 
+
         this.keys = {};
 
-        this.joystickActive = false;
 
-        this.joystickTouchId = null;
+        this.joystickActive =
+            false;
+
+        this.joystickTouchId =
+            null;
 
 
         /*
-        ==========================================
+        ==================================================
         CAMERA
-        ==========================================
+        ==================================================
         */
 
-        this.cameraDistance = 6.5;
+        this.cameraDistance =
+            6.5;
 
-        this.cameraHeight = 2.5;
+        this.cameraHeight =
+            2.5;
 
-        this.cameraYaw = 0;
+        this.cameraYaw =
+            0;
 
-        this.cameraPitch = 0.2;
+        this.cameraPitch =
+            0.2;
 
-        this.cameraMinPitch = -0.45;
+        this.cameraMinPitch =
+            -0.45;
 
-        this.cameraMaxPitch = 0.85;
+        this.cameraMaxPitch =
+            0.85;
 
-        this.cameraSensitivity = 0.008;
+        this.cameraSensitivity =
+            0.008;
 
 
         /*
-        ==========================================
-        CAMERA TOUCH
-        ==========================================
+        ==================================================
+        TOUCH CAMERA
+        ==================================================
         */
 
-        this.cameraTouchId = null;
+        this.cameraTouchId =
+            null;
 
-        this.cameraTouchActive = false;
+        this.cameraTouchActive =
+            false;
 
-        this.lastCameraX = 0;
+        this.lastCameraX =
+            0;
 
-        this.lastCameraY = 0;
+        this.lastCameraY =
+            0;
 
 
         /*
-        ==========================================
-        CHARACTER ANIMATION
-        ==========================================
+        ==================================================
+        ANIMATION
+        ==================================================
         */
 
         this.characterParts = {};
 
-        this.walkTime = 0;
+        this.walkTime =
+            0;
+
+
+        /*
+        ==================================================
+        CREATE
+        ==================================================
+        */
 
         this.createPlayer();
 
@@ -118,9 +156,9 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    PLAYER ID
-    ==========================================
+    ==================================================
+    ID
+    ==================================================
     */
 
     createPlayerId() {
@@ -138,9 +176,9 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    PLAYER COLOR
-    ==========================================
+    ==================================================
+    COLOR
+    ==================================================
     */
 
     createPlayerColor() {
@@ -158,6 +196,7 @@ class PlayerController {
 
         ];
 
+
         return colors[
             Math.floor(
                 Math.random() *
@@ -169,12 +208,12 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    MATERIAL HELPERS
-    ==========================================
+    ==================================================
+    MATERIAL
+    ==================================================
     */
 
-    createMaterial(
+    material(
         color,
         roughness = 0.5,
         metalness = 0.2
@@ -182,29 +221,30 @@ class PlayerController {
 
         return new THREE.MeshStandardMaterial({
 
-            color: color,
+            color,
 
-            roughness: roughness,
+            roughness,
 
-            metalness: metalness
+            metalness
 
         });
 
     }
 
 
-    createGlowMaterial(
+    glow(
         color,
         intensity = 2
     ) {
 
         return new THREE.MeshStandardMaterial({
 
-            color: color,
+            color,
 
             emissive: color,
 
-            emissiveIntensity: intensity,
+            emissiveIntensity:
+                intensity,
 
             roughness: 0.25,
 
@@ -216,25 +256,15 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    CHARACTER
-    ==========================================
+    ==================================================
+    CREATE PLAYER
+    ==================================================
     */
 
     createPlayer() {
 
-        this.player =
-            new THREE.Group();
-
-
-        /*
-        ==========================================
-        MATERIALS
-        ==========================================
-        */
-
         const armor =
-            this.createMaterial(
+            this.material(
                 0x202532,
                 0.38,
                 0.7
@@ -242,7 +272,7 @@ class PlayerController {
 
 
         const darkArmor =
-            this.createMaterial(
+            this.material(
                 0x0d111a,
                 0.42,
                 0.8
@@ -250,14 +280,14 @@ class PlayerController {
 
 
         const joint =
-            this.createMaterial(
+            this.material(
                 0x080b11,
                 0.65,
                 0.55
             );
 
 
-        const visorMaterial =
+        const visor =
             new THREE.MeshStandardMaterial({
 
                 color: 0x8be9ff,
@@ -274,61 +304,61 @@ class PlayerController {
 
 
         const accent =
-            this.createGlowMaterial(
+            this.glow(
                 this.playerColor,
                 2.2
             );
 
 
         const cyan =
-            this.createGlowMaterial(
+            this.glow(
                 0x36d9ff,
                 2.5
             );
 
 
         /*
-        ==========================================
+        ==================================================
         TORSO
-        ==========================================
+        ==================================================
         */
 
         const torso =
             new THREE.Mesh(
-
                 new THREE.BoxGeometry(
                     0.9,
                     0.95,
                     0.5
                 ),
-
                 armor
-
             );
 
-        torso.position.y = 1.15;
 
-        torso.castShadow = true;
+        torso.position.y =
+            1.15;
 
-        this.player.add(torso);
+        torso.castShadow =
+            true;
+
+        this.player.add(
+            torso
+        );
 
 
         /*
-        CHEST PLATE
+        CHEST
         */
 
         const chest =
             new THREE.Mesh(
-
                 new THREE.BoxGeometry(
                     0.72,
                     0.55,
                     0.12
                 ),
-
                 darkArmor
-
             );
+
 
         chest.position.set(
             0,
@@ -336,33 +366,31 @@ class PlayerController {
             -0.3
         );
 
-        chest.castShadow = true;
 
-        this.player.add(chest);
+        this.player.add(
+            chest
+        );
 
 
         /*
-        ==========================================
-        CHEST POWER CORE
-        ==========================================
+        CORE
         */
 
         const core =
             new THREE.Mesh(
-
                 new THREE.CylinderGeometry(
                     0.105,
                     0.105,
                     0.055,
                     16
                 ),
-
                 cyan
-
             );
+
 
         core.rotation.x =
             Math.PI / 2;
+
 
         core.position.set(
             0,
@@ -370,59 +398,59 @@ class PlayerController {
             -0.37
         );
 
-        this.player.add(core);
+
+        this.player.add(
+            core
+        );
+
 
         this.characterParts.core =
             core;
 
 
         /*
-        ==========================================
         NECK
-        ==========================================
         */
 
         const neck =
             new THREE.Mesh(
-
                 new THREE.CylinderGeometry(
                     0.19,
                     0.22,
                     0.25,
                     12
                 ),
-
                 joint
-
             );
+
 
         neck.position.y =
             1.72;
 
-        this.player.add(neck);
+
+        this.player.add(
+            neck
+        );
 
 
         /*
-        ==========================================
         HELMET
-        ==========================================
         */
 
         const helmet =
             new THREE.Mesh(
-
                 new THREE.SphereGeometry(
                     0.5,
                     20,
                     16
                 ),
-
                 darkArmor
-
             );
+
 
         helmet.position.y =
             2.08;
+
 
         helmet.scale.set(
             1,
@@ -430,80 +458,78 @@ class PlayerController {
             0.95
         );
 
-        helmet.castShadow = true;
 
-        this.player.add(helmet);
+        this.player.add(
+            helmet
+        );
 
 
         /*
-        ==========================================
         VISOR
-        ==========================================
         */
 
-        const visor =
+        const visorMesh =
             new THREE.Mesh(
-
                 new THREE.SphereGeometry(
                     0.34,
                     20,
                     12
                 ),
-
-                visorMaterial
-
+                visor
             );
 
-        visor.position.set(
+
+        visorMesh.position.set(
             0,
             2.08,
             -0.39
         );
 
-        visor.scale.set(
+
+        visorMesh.scale.set(
             1.15,
             0.65,
             0.35
         );
 
-        this.player.add(visor);
+
+        this.player.add(
+            visorMesh
+        );
 
 
         /*
-        ==========================================
-        VISOR SIDE FRAME
-        ==========================================
+        VISOR FRAME
         */
 
-        const visorFrame =
+        const frame =
             new THREE.Mesh(
-
                 new THREE.BoxGeometry(
                     0.78,
                     0.08,
                     0.08
                 ),
-
                 accent
-
             );
 
-        visorFrame.position.set(
+
+        frame.position.set(
             0,
             1.91,
             -0.41
         );
 
-        this.player.add(visorFrame);
+
+        this.player.add(
+            frame
+        );
 
 
         /*
-        ==========================================
-        LEFT ARM
-        ==========================================
+        ARMS
         */
 
-        const leftArm =
+        this.characterParts.leftArm =
             this.createArm(
                 -0.62,
                 armor,
@@ -512,11 +538,8 @@ class PlayerController {
                 accent
             );
 
-        /*
-        RIGHT ARM
-        */
 
-        const rightArm =
+        this.characterParts.rightArm =
             this.createArm(
                 0.62,
                 armor,
@@ -526,20 +549,11 @@ class PlayerController {
             );
 
 
-        this.characterParts.leftArm =
-            leftArm;
-
-        this.characterParts.rightArm =
-            rightArm;
-
-
         /*
-        ==========================================
-        LEFT LEG
-        ==========================================
+        LEGS
         */
 
-        const leftLeg =
+        this.characterParts.leftLeg =
             this.createLeg(
                 -0.25,
                 armor,
@@ -548,11 +562,7 @@ class PlayerController {
             );
 
 
-        /*
-        RIGHT LEG
-        */
-
-        const rightLeg =
+        this.characterParts.rightLeg =
             this.createLeg(
                 0.25,
                 armor,
@@ -561,31 +571,20 @@ class PlayerController {
             );
 
 
-        this.characterParts.leftLeg =
-            leftLeg;
-
-        this.characterParts.rightLeg =
-            rightLeg;
-
-
         /*
-        ==========================================
         BACKPACK
-        ==========================================
         */
 
         const backpack =
             new THREE.Mesh(
-
                 new THREE.BoxGeometry(
                     0.7,
                     0.95,
                     0.32
                 ),
-
                 darkArmor
-
             );
+
 
         backpack.position.set(
             0,
@@ -593,147 +592,38 @@ class PlayerController {
             0.43
         );
 
-        backpack.castShadow = true;
-
-        this.player.add(backpack);
-
-
-        /*
-        ==========================================
-        BACKPACK LIGHTS
-        ==========================================
-        */
-
-        const backpackLight =
-            new THREE.Mesh(
-
-                new THREE.BoxGeometry(
-                    0.12,
-                    0.28,
-                    0.04
-                ),
-
-                cyan
-
-            );
-
-        backpackLight.position.set(
-            0,
-            1.28,
-            0.61
-        );
 
         this.player.add(
-            backpackLight
+            backpack
         );
 
 
         /*
-        ==========================================
         WAIST
-        ==========================================
         */
 
         const waist =
             new THREE.Mesh(
-
                 new THREE.BoxGeometry(
                     0.82,
                     0.22,
                     0.48
                 ),
-
                 darkArmor
-
             );
+
 
         waist.position.y =
             0.68;
 
-        this.player.add(waist);
-
-
-        /*
-        ==========================================
-        WAIST LIGHTS
-        ==========================================
-        */
-
-        for (
-            let i = -1;
-            i <= 1;
-            i++
-        ) {
-
-            const light =
-                new THREE.Mesh(
-
-                    new THREE.BoxGeometry(
-                        0.09,
-                        0.08,
-                        0.03
-                    ),
-
-                    accent
-
-                );
-
-            light.position.set(
-                i * 0.18,
-                0.72,
-                -0.27
-            );
-
-            this.player.add(light);
-
-        }
-
-
-        /*
-        ==========================================
-        SMALL SHOULDER LIGHTS
-        ==========================================
-        */
-
-        const shoulderLightLeft =
-            new THREE.Mesh(
-
-                new THREE.SphereGeometry(
-                    0.07,
-                    10,
-                    10
-                ),
-
-                cyan
-
-            );
-
-        shoulderLightLeft.position.set(
-            -0.75,
-            1.45,
-            -0.05
-        );
 
         this.player.add(
-            shoulderLightLeft
-        );
-
-
-        const shoulderLightRight =
-            shoulderLightLeft.clone();
-
-        shoulderLightRight.position.x =
-            0.75;
-
-        this.player.add(
-            shoulderLightRight
+            waist
         );
 
 
         /*
-        ==========================================
         START POSITION
-        ==========================================
         */
 
         this.player.position.set(
@@ -751,9 +641,9 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    ARM CREATION
-    ==========================================
+    ==================================================
+    ARM
+    ==================================================
     */
 
     createArm(
@@ -767,6 +657,7 @@ class PlayerController {
         const arm =
             new THREE.Group();
 
+
         arm.position.set(
             x,
             1.42,
@@ -774,151 +665,108 @@ class PlayerController {
         );
 
 
-        /*
-        Shoulder
-        */
-
         const shoulder =
             new THREE.Mesh(
-
                 new THREE.SphereGeometry(
                     0.25,
                     12,
                     12
                 ),
-
                 armor
-
             );
 
-        arm.add(shoulder);
 
+        arm.add(
+            shoulder
+        );
 
-        /*
-        Upper arm
-        */
 
         const upper =
             new THREE.Mesh(
-
                 new THREE.CapsuleGeometry(
                     0.17,
                     0.4,
                     6,
                     10
                 ),
-
                 armor
-
             );
+
 
         upper.position.y =
             -0.28;
 
-        upper.castShadow = true;
 
-        arm.add(upper);
+        arm.add(
+            upper
+        );
 
-
-        /*
-        Elbow
-        */
 
         const elbow =
             new THREE.Mesh(
-
                 new THREE.SphereGeometry(
                     0.16,
                     10,
                     10
                 ),
-
                 joint
-
             );
+
 
         elbow.position.y =
             -0.55;
 
-        arm.add(elbow);
 
+        arm.add(
+            elbow
+        );
 
-        /*
-        Forearm
-        */
 
         const forearm =
             new THREE.Mesh(
-
                 new THREE.CapsuleGeometry(
                     0.16,
                     0.38,
                     6,
                     10
                 ),
-
                 darkArmor
-
             );
+
 
         forearm.position.y =
             -0.82;
 
-        forearm.castShadow = true;
 
-        arm.add(forearm);
+        arm.add(
+            forearm
+        );
 
-
-        /*
-        Glove
-        */
 
         const glove =
             new THREE.Mesh(
-
                 new THREE.SphereGeometry(
                     0.17,
                     12,
                     12
                 ),
-
                 joint
-
             );
+
 
         glove.position.y =
             -1.08;
 
-        arm.add(glove);
 
-
-        /*
-        Accent strip
-        */
-
-        const strip =
-            new THREE.Mesh(
-
-                new THREE.BoxGeometry(
-                    0.04,
-                    0.24,
-                    0.05
-                ),
-
-                accent
-
-            );
-
-        strip.position.set(
-            x > 0 ? 0.15 : -0.15,
-            -0.82,
-            -0.12
+        arm.add(
+            glove
         );
 
-        arm.add(strip);
 
+        this.player.add(
+            arm
+        );
 
-        this.player.add(arm);
 
         return arm;
 
@@ -926,9 +774,9 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    LEG CREATION
-    ==========================================
+    ==================================================
+    LEG
+    ==================================================
     */
 
     createLeg(
@@ -941,6 +789,7 @@ class PlayerController {
         const leg =
             new THREE.Group();
 
+
         leg.position.set(
             x,
             0.62,
@@ -948,97 +797,78 @@ class PlayerController {
         );
 
 
-        /*
-        Thigh
-        */
-
         const thigh =
             new THREE.Mesh(
-
                 new THREE.CapsuleGeometry(
                     0.19,
                     0.42,
                     6,
                     10
                 ),
-
                 armor
-
             );
+
 
         thigh.position.y =
             -0.27;
 
-        thigh.castShadow = true;
 
-        leg.add(thigh);
+        leg.add(
+            thigh
+        );
 
-
-        /*
-        Knee
-        */
 
         const knee =
             new THREE.Mesh(
-
                 new THREE.SphereGeometry(
                     0.18,
                     10,
                     10
                 ),
-
                 joint
-
             );
+
 
         knee.position.y =
             -0.55;
 
-        leg.add(knee);
 
+        leg.add(
+            knee
+        );
 
-        /*
-        Shin
-        */
 
         const shin =
             new THREE.Mesh(
-
                 new THREE.CapsuleGeometry(
                     0.17,
                     0.42,
                     6,
                     10
                 ),
-
                 darkArmor
-
             );
+
 
         shin.position.y =
             -0.84;
 
-        shin.castShadow = true;
 
-        leg.add(shin);
+        leg.add(
+            shin
+        );
 
-
-        /*
-        Boot
-        */
 
         const boot =
             new THREE.Mesh(
-
                 new THREE.BoxGeometry(
                     0.34,
                     0.2,
                     0.48
                 ),
-
                 joint
-
             );
+
 
         boot.position.set(
             0,
@@ -1046,12 +876,16 @@ class PlayerController {
             -0.08
         );
 
-        boot.castShadow = true;
 
-        leg.add(boot);
+        leg.add(
+            boot
+        );
 
 
-        this.player.add(leg);
+        this.player.add(
+            leg
+        );
+
 
         return leg;
 
@@ -1059,487 +893,9 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    NAME SCREEN
-    ==========================================
-    */
-
-    createNameScreen() {
-
-        this.nameScreen =
-            document.createElement("div");
-
-        this.nameScreen.id =
-            "void-name-screen";
-
-        this.nameScreen.innerHTML = `
-
-            <div id="void-name-box">
-
-                <div id="void-name-small">
-                    PROJECT: VOID
-                </div>
-
-                <div id="void-name-title">
-                    ENTER YOUR NAME
-                </div>
-
-                <div id="void-name-subtitle">
-                    Your identity will be used
-                    in multiplayer.
-                </div>
-
-                <input
-                    id="void-name-input"
-                    type="text"
-                    maxlength="16"
-                    autocomplete="off"
-                    placeholder="Enter player name"
-                >
-
-                <button id="void-name-button">
-                    ENTER STATION
-                </button>
-
-                <div id="void-player-id">
-                    ID: ${this.playerId}
-                </div>
-
-            </div>
-
-        `;
-
-
-        const style =
-            document.createElement("style");
-
-        style.textContent = `
-
-            #void-name-screen {
-
-                position: fixed;
-                inset: 0;
-                z-index: 99999;
-
-                display: flex;
-                align-items: center;
-                justify-content: center;
-
-                background:
-                    radial-gradient(
-                        circle at center,
-                        rgba(30,40,90,0.35),
-                        rgba(2,3,8,0.97)
-                    );
-
-                font-family:
-                    Arial,
-                    Helvetica,
-                    sans-serif;
-
-                color: white;
-
-            }
-
-            #void-name-box {
-
-                width:
-                    min(520px, 86vw);
-
-                padding:
-                    42px 34px;
-
-                border:
-                    1px solid
-                    rgba(100,130,255,0.45);
-
-                border-radius:
-                    24px;
-
-                background:
-                    rgba(12,15,29,0.96);
-
-                box-shadow:
-                    0 25px 80px
-                    rgba(0,0,0,0.7);
-
-                text-align:
-                    center;
-
-                backdrop-filter:
-                    blur(18px);
-
-            }
-
-            #void-name-small {
-
-                font-size: 14px;
-
-                letter-spacing: 6px;
-
-                color: #8994b8;
-
-                margin-bottom: 18px;
-
-            }
-
-            #void-name-title {
-
-                font-size: 32px;
-
-                font-weight: 800;
-
-                letter-spacing: 2px;
-
-                margin-bottom: 12px;
-
-            }
-
-            #void-name-subtitle {
-
-                color: #858ba3;
-
-                font-size: 14px;
-
-                line-height: 1.5;
-
-                margin-bottom: 28px;
-
-            }
-
-            #void-name-input {
-
-                width: 100%;
-
-                height: 58px;
-
-                padding: 0 18px;
-
-                box-sizing: border-box;
-
-                border:
-                    1px solid
-                    rgba(120,140,255,0.35);
-
-                border-radius: 14px;
-
-                outline: none;
-
-                background:
-                    rgba(255,255,255,0.06);
-
-                color: white;
-
-                font-size: 17px;
-
-                text-align: center;
-
-                margin-bottom: 14px;
-
-            }
-
-            #void-name-input:focus {
-
-                border-color: #4778ff;
-
-                box-shadow:
-                    0 0 20px
-                    rgba(71,120,255,0.25);
-
-            }
-
-            #void-name-button {
-
-                width: 100%;
-
-                height: 58px;
-
-                border: none;
-
-                border-radius: 14px;
-
-                background: #3d6dff;
-
-                color: white;
-
-                font-size: 15px;
-
-                font-weight: 800;
-
-                letter-spacing: 1.5px;
-
-                cursor: pointer;
-
-            }
-
-            #void-name-button:active {
-
-                transform: scale(0.98);
-
-            }
-
-            #void-player-id {
-
-                margin-top: 22px;
-
-                color: #505772;
-
-                font-size: 10px;
-
-                letter-spacing: 1px;
-
-            }
-
-        `;
-
-        document.head.appendChild(style);
-
-        document.body.appendChild(
-            this.nameScreen
-        );
-
-
-        const input =
-            this.nameScreen.querySelector(
-                "#void-name-input"
-            );
-
-        const button =
-            this.nameScreen.querySelector(
-                "#void-name-button"
-            );
-
-
-        if (this.playerName) {
-
-            input.value =
-                this.playerName;
-
-        }
-
-
-        button.addEventListener(
-            "click",
-            () => this.confirmName()
-        );
-
-
-        input.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key === "Enter"
-                ) {
-
-                    this.confirmName();
-
-                }
-
-            }
-        );
-
-
-        setTimeout(
-            () => input.focus(),
-            100
-        );
-
-    }
-
-
-    /*
-    ==========================================
-    CONFIRM NAME
-    ==========================================
-    */
-
-    confirmName() {
-
-        const input =
-            this.nameScreen.querySelector(
-                "#void-name-input"
-            );
-
-        let name =
-            input.value.trim();
-
-
-        if (!name) {
-
-            name = "Player";
-
-        }
-
-
-        name =
-            name.substring(
-                0,
-                16
-            );
-
-
-        this.playerName =
-            name;
-
-
-        localStorage.setItem(
-            "void_player_name",
-            this.playerName
-        );
-
-
-        this.ready = true;
-
-
-        this.nameScreen.style.opacity =
-            "0";
-
-        this.nameScreen.style.transition =
-            "opacity 0.35s ease";
-
-
-        setTimeout(
-            () => {
-
-                if (
-                    this.nameScreen &&
-                    this.nameScreen.parentNode
-                ) {
-
-                    this.nameScreen.parentNode
-                        .removeChild(
-                            this.nameScreen
-                        );
-
-                }
-
-            },
-            350
-        );
-
-
-        this.createNameTag();
-
-
-        console.log(
-            "PLAYER READY:",
-            this.playerName
-        );
-
-        console.log(
-            "PLAYER ID:",
-            this.playerId
-        );
-
-    }
-
-
-    /*
-    ==========================================
-    NAME TAG
-    ==========================================
-    */
-
-    createNameTag() {
-
-        const canvas =
-            document.createElement("canvas");
-
-        canvas.width = 512;
-
-        canvas.height = 128;
-
-
-        const context =
-            canvas.getContext("2d");
-
-
-        context.clearRect(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
-
-
-        context.font =
-            "bold 46px Arial";
-
-        context.textAlign =
-            "center";
-
-        context.textBaseline =
-            "middle";
-
-        context.fillStyle =
-            "#ffffff";
-
-        context.shadowColor =
-            "rgba(0,0,0,0.8)";
-
-        context.shadowBlur = 8;
-
-
-        context.fillText(
-            this.playerName,
-            256,
-            64
-        );
-
-
-        const texture =
-            new THREE.CanvasTexture(
-                canvas
-            );
-
-
-        texture.needsUpdate = true;
-
-
-        const material =
-            new THREE.SpriteMaterial({
-
-                map: texture,
-
-                transparent: true,
-
-                depthTest: false
-
-            });
-
-
-        this.nameTag =
-            new THREE.Sprite(
-                material
-            );
-
-
-        this.nameTag.scale.set(
-            2.4,
-            0.6,
-            1
-        );
-
-
-        this.nameTag.position.set(
-            0,
-            2.9,
-            0
-        );
-
-
-        this.player.add(
-            this.nameTag
-        );
-
-    }
-
-
-    /*
-    ==========================================
+    ==================================================
     KEYBOARD
-    ==========================================
+    ==================================================
     */
 
     setupKeyboard() {
@@ -1548,8 +904,9 @@ class PlayerController {
             "keydown",
             event => {
 
-                this.keys[event.code] =
-                    true;
+                this.keys[
+                    event.code
+                ] = true;
 
             }
         );
@@ -1559,8 +916,9 @@ class PlayerController {
             "keyup",
             event => {
 
-                this.keys[event.code] =
-                    false;
+                this.keys[
+                    event.code
+                ] = false;
 
             }
         );
@@ -1569,9 +927,9 @@ class PlayerController {
 
 
     /*
-    ==========================================
+    ==================================================
     JOYSTICK
-    ==========================================
+    ==================================================
     */
 
     setupJoystick() {
@@ -1580,6 +938,7 @@ class PlayerController {
             document.getElementById(
                 "joystick"
             );
+
 
         const knob =
             document.getElementById(
@@ -1598,10 +957,10 @@ class PlayerController {
 
 
         let centerX = 0;
-
         let centerY = 0;
 
-        const maxDistance = 42;
+        const maxDistance =
+            42;
 
 
         joystick.addEventListener(
@@ -1610,22 +969,28 @@ class PlayerController {
 
                 event.preventDefault();
 
+
                 const touch =
                     event.changedTouches[0];
 
+
                 const rect =
                     joystick.getBoundingClientRect();
+
 
                 centerX =
                     rect.left +
                     rect.width / 2;
 
+
                 centerY =
                     rect.top +
                     rect.height / 2;
 
+
                 this.joystickTouchId =
                     touch.identifier;
+
 
                 this.joystickActive =
                     true;
@@ -1652,6 +1017,7 @@ class PlayerController {
             event => {
 
                 event.preventDefault();
+
 
                 if (
                     !this.joystickActive
@@ -1695,7 +1061,7 @@ class PlayerController {
         );
 
 
-        const stopJoystick =
+        const stop =
             event => {
 
                 for (
@@ -1715,6 +1081,7 @@ class PlayerController {
 
                     this.joystickActive =
                         false;
+
 
                     this.joystickTouchId =
                         null;
@@ -1736,22 +1103,17 @@ class PlayerController {
 
         joystick.addEventListener(
             "touchend",
-            stopJoystick
+            stop
         );
+
 
         joystick.addEventListener(
             "touchcancel",
-            stopJoystick
+            stop
         );
 
     }
 
-
-    /*
-    ==========================================
-    JOYSTICK CALCULATION
-    ==========================================
-    */
 
     updateJoystick(
         x,
@@ -1765,6 +1127,7 @@ class PlayerController {
         let dx =
             x - centerX;
 
+
         let dy =
             y - centerY;
 
@@ -1777,17 +1140,17 @@ class PlayerController {
 
 
         if (
-            distance > maxDistance
+            distance >
+            maxDistance
         ) {
 
             dx =
-                dx /
-                distance *
+                dx / distance *
                 maxDistance;
 
+
             dy =
-                dy /
-                distance *
+                dy / distance *
                 maxDistance;
 
         }
@@ -1809,9 +1172,9 @@ class PlayerController {
 
 
     /*
-    ==========================================
+    ==================================================
     CAMERA TOUCH
-    ==========================================
+    ==================================================
     */
 
     setupCameraTouch() {
@@ -1852,11 +1215,14 @@ class PlayerController {
                     this.cameraTouchId =
                         touch.identifier;
 
+
                     this.cameraTouchActive =
                         true;
 
+
                     this.lastCameraX =
                         touch.clientX;
+
 
                     this.lastCameraY =
                         touch.clientY;
@@ -1902,6 +1268,7 @@ class PlayerController {
                         touch.clientX -
                         this.lastCameraX;
 
+
                     const dy =
                         touch.clientY -
                         this.lastCameraY;
@@ -1928,6 +1295,7 @@ class PlayerController {
                     this.lastCameraX =
                         touch.clientX;
 
+
                     this.lastCameraY =
                         touch.clientY;
 
@@ -1940,7 +1308,7 @@ class PlayerController {
         );
 
 
-        const stopCamera =
+        const stop =
             event => {
 
                 for (
@@ -1956,6 +1324,7 @@ class PlayerController {
                         this.cameraTouchActive =
                             false;
 
+
                         this.cameraTouchId =
                             null;
 
@@ -1968,29 +1337,31 @@ class PlayerController {
 
         canvas.addEventListener(
             "touchend",
-            stopCamera
+            stop
         );
+
 
         canvas.addEventListener(
             "touchcancel",
-            stopCamera
+            stop
         );
 
     }
 
 
     /*
-    ==========================================
+    ==================================================
     MOUSE CAMERA
-    ==========================================
+    ==================================================
     */
 
     setupMouseCamera() {
 
-        let dragging = false;
+        let dragging =
+            false;
+
 
         let lastX = 0;
-
         let lastY = 0;
 
 
@@ -1998,10 +1369,13 @@ class PlayerController {
             "mousedown",
             event => {
 
-                dragging = true;
+                dragging =
+                    true;
+
 
                 lastX =
                     event.clientX;
+
 
                 lastY =
                     event.clientY;
@@ -2014,7 +1388,8 @@ class PlayerController {
             "mouseup",
             () => {
 
-                dragging = false;
+                dragging =
+                    false;
 
             }
         );
@@ -2035,6 +1410,7 @@ class PlayerController {
                     event.clientX -
                     lastX;
 
+
                 const dy =
                     event.clientY -
                     lastY;
@@ -2042,6 +1418,7 @@ class PlayerController {
 
                 this.cameraYaw -=
                     dx * 0.006;
+
 
                 this.cameraPitch -=
                     dy * 0.006;
@@ -2058,6 +1435,7 @@ class PlayerController {
                 lastX =
                     event.clientX;
 
+
                 lastY =
                     event.clientY;
 
@@ -2068,15 +1446,14 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    KEYBOARD MOVEMENT
-    ==========================================
+    ==================================================
+    INPUT
+    ==================================================
     */
 
     updateKeyboardInput() {
 
         let x = 0;
-
         let y = 0;
 
 
@@ -2085,7 +1462,7 @@ class PlayerController {
             this.keys["ArrowLeft"]
         ) {
 
-            x -= 1;
+            x--;
 
         }
 
@@ -2095,7 +1472,7 @@ class PlayerController {
             this.keys["ArrowRight"]
         ) {
 
-            x += 1;
+            x++;
 
         }
 
@@ -2105,7 +1482,7 @@ class PlayerController {
             this.keys["ArrowUp"]
         ) {
 
-            y -= 1;
+            y--;
 
         }
 
@@ -2115,20 +1492,20 @@ class PlayerController {
             this.keys["ArrowDown"]
         ) {
 
-            y += 1;
+            y++;
 
         }
 
 
         if (
-            x !== 0 ||
-            y !== 0
+            x ||
+            y
         ) {
 
             const length =
-                Math.sqrt(
-                    x * x +
-                    y * y
+                Math.hypot(
+                    x,
+                    y
                 );
 
 
@@ -2150,26 +1527,16 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    CHARACTER ANIMATION
-    ==========================================
+    ==================================================
+    ANIMATION
+    ==================================================
     */
 
-    updateCharacterAnimation(
+    updateAnimation(
         delta,
         moving,
         running
     ) {
-
-        if (
-            !this.characterParts.leftArm ||
-            !this.characterParts.rightArm
-        ) {
-
-            return;
-
-        }
-
 
         const leftArm =
             this.characterParts.leftArm;
@@ -2184,21 +1551,25 @@ class PlayerController {
             this.characterParts.rightLeg;
 
 
-        if (moving) {
+        if (!leftArm) {
 
-            const animationSpeed =
-                running ? 12 : 8;
+            return;
+
+        }
+
+
+        if (moving) {
 
             this.walkTime +=
                 delta *
-                animationSpeed;
+                (running ? 12 : 8);
 
 
             const swing =
                 Math.sin(
                     this.walkTime
                 ) *
-                (running ? 0.65 : 0.4);
+                (running ? 0.55 : 0.35);
 
 
             leftArm.rotation.x =
@@ -2207,76 +1578,84 @@ class PlayerController {
             rightArm.rotation.x =
                 -swing;
 
+
             leftLeg.rotation.x =
                 -swing * 0.8;
 
             rightLeg.rotation.x =
                 swing * 0.8;
 
-
-            this.player.position.y =
-                Math.sin(
-                    this.walkTime * 2
-                ) *
-                0.025;
-
         } else {
-
-            this.walkTime +=
-                delta * 1.5;
-
 
             leftArm.rotation.x =
                 THREE.MathUtils.lerp(
                     leftArm.rotation.x,
                     0,
-                    delta * 7
+                    delta * 8
                 );
+
 
             rightArm.rotation.x =
                 THREE.MathUtils.lerp(
                     rightArm.rotation.x,
                     0,
-                    delta * 7
+                    delta * 8
                 );
+
 
             leftLeg.rotation.x =
                 THREE.MathUtils.lerp(
                     leftLeg.rotation.x,
                     0,
-                    delta * 7
+                    delta * 8
                 );
+
 
             rightLeg.rotation.x =
                 THREE.MathUtils.lerp(
                     rightLeg.rotation.x,
                     0,
-                    delta * 7
+                    delta * 8
                 );
 
         }
+
+
+        /*
+        IMPORTANT:
+        Never move the entire player vertically.
+        */
+
+        this.player.position.y =
+            0;
 
     }
 
 
     /*
-    ==========================================
+    ==================================================
     UPDATE
-    ==========================================
+    ==================================================
     */
 
     update(delta) {
 
-        if (!this.player) {
+        if (
+            !this.player
+        ) {
 
             return;
 
         }
 
 
-        if (!this.ready) {
+        if (
+            !this.ready
+        ) {
 
-            this.updateCamera(delta);
+            this.updateCamera(
+                delta
+            );
 
             return;
 
@@ -2295,6 +1674,7 @@ class PlayerController {
         const inputX =
             this.moveInput.x;
 
+
         const inputZ =
             this.moveInput.y;
 
@@ -2309,13 +1689,13 @@ class PlayerController {
             this.keys["ShiftRight"];
 
 
-        /*
-        ==========================================
-        MOVEMENT
-        ==========================================
-        */
-
         if (moving) {
+
+            /*
+            ------------------------------------------
+            Camera-relative movement
+            ------------------------------------------
+            */
 
             const forward =
                 new THREE.Vector3(
@@ -2347,7 +1727,7 @@ class PlayerController {
 
             direction.addScaledVector(
                 right,
-                -inputX
+                inputX
             );
 
 
@@ -2357,7 +1737,14 @@ class PlayerController {
             );
 
 
-            direction.normalize();
+            if (
+                direction.lengthSq() >
+                0
+            ) {
+
+                direction.normalize();
+
+            }
 
 
             const speed =
@@ -2366,19 +1753,25 @@ class PlayerController {
                     : this.speed;
 
 
-            const newX =
+            const targetX =
                 this.player.position.x +
                 direction.x *
                 speed *
                 delta;
 
 
-            const newZ =
+            const targetZ =
                 this.player.position.z +
                 direction.z *
                 speed *
                 delta;
 
+
+            /*
+            ------------------------------------------
+            Collision
+            ------------------------------------------
+            */
 
             if (
                 this.collision &&
@@ -2388,20 +1781,26 @@ class PlayerController {
 
                 this.collision.movePlayer(
                     this.player,
-                    newX,
-                    newZ
+                    targetX,
+                    targetZ
                 );
 
             } else {
 
                 this.player.position.x =
-                    newX;
+                    targetX;
 
                 this.player.position.z =
-                    newZ;
+                    targetZ;
 
             }
 
+
+            /*
+            ------------------------------------------
+            Rotate character
+            ------------------------------------------
+            */
 
             const targetRotation =
                 Math.atan2(
@@ -2424,12 +1823,10 @@ class PlayerController {
 
 
         /*
-        ==========================================
-        ANIMATION
-        ==========================================
+        Animation
         */
 
-        this.updateCharacterAnimation(
+        this.updateAnimation(
             delta,
             moving,
             running
@@ -2437,62 +1834,73 @@ class PlayerController {
 
 
         /*
-        ==========================================
-        BOUNDARY
-        ==========================================
+        ==================================================
+        LARGE WORLD LIMIT
+        ==================================================
         */
+
+        const limit =
+            57;
+
 
         this.player.position.x =
             THREE.MathUtils.clamp(
                 this.player.position.x,
-                -15.2,
-                15.2
+                -limit,
+                limit
             );
 
 
         this.player.position.z =
             THREE.MathUtils.clamp(
                 this.player.position.z,
-                -15.2,
-                15.2
+                -limit,
+                limit
             );
 
 
         /*
-        ==========================================
-        CAMERA
-        ==========================================
+        Camera
         */
 
-        this.updateCamera(delta);
+        this.updateCamera(
+            delta
+        );
 
     }
 
 
     /*
-    ==========================================
-    CAMERA UPDATE
-    ==========================================
+    ==================================================
+    CAMERA
+    ==================================================
     */
 
     updateCamera(delta) {
 
+        if (!this.player) {
+
+            return;
+
+        }
+
+
         const target =
             new THREE.Vector3(
                 this.player.position.x,
-                this.player.position.y + 1.35,
+                1.35,
                 this.player.position.z
             );
 
 
-        const horizontalDistance =
+        const horizontal =
             this.cameraDistance *
             Math.cos(
                 this.cameraPitch
             );
 
 
-        const verticalDistance =
+        const vertical =
             this.cameraDistance *
             Math.sin(
                 this.cameraPitch
@@ -2508,7 +1916,7 @@ class PlayerController {
             Math.sin(
                 this.cameraYaw
             ) *
-            horizontalDistance;
+            horizontal;
 
 
         desired.z =
@@ -2516,13 +1924,13 @@ class PlayerController {
             Math.cos(
                 this.cameraYaw
             ) *
-            horizontalDistance;
+            horizontal;
 
 
         desired.y =
             this.player.position.y +
             this.cameraHeight +
-            verticalDistance;
+            vertical;
 
 
         this.camera.position.lerp(
@@ -2542,9 +1950,394 @@ class PlayerController {
 
 
     /*
-    ==========================================
-    MULTIPLAYER DATA
-    ==========================================
+    ==================================================
+    NAME SCREEN
+    ==================================================
+    */
+
+    createNameScreen() {
+
+        this.nameScreen =
+            document.createElement(
+                "div"
+            );
+
+
+        this.nameScreen.id =
+            "void-name-screen";
+
+
+        this.nameScreen.innerHTML = `
+
+            <div id="void-name-box">
+
+                <div class="void-small">
+                    PROJECT: VOID
+                </div>
+
+                <div class="void-title">
+                    ENTER YOUR NAME
+                </div>
+
+                <div class="void-subtitle">
+                    Your identity will be used
+                    in multiplayer.
+                </div>
+
+                <input
+                    id="void-name-input"
+                    type="text"
+                    maxlength="16"
+                    autocomplete="off"
+                    placeholder="Enter player name"
+                >
+
+                <button id="void-name-button">
+                    ENTER STATION
+                </button>
+
+                <div class="void-id">
+                    ID: ${this.playerId}
+                </div>
+
+            </div>
+        `;
+
+
+        const style =
+            document.createElement(
+                "style"
+            );
+
+
+        style.textContent = `
+
+            #void-name-screen {
+                position:fixed;
+                inset:0;
+                z-index:99999;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:
+                    radial-gradient(
+                        circle,
+                        rgba(30,40,90,.35),
+                        rgba(2,3,8,.97)
+                    );
+                color:white;
+                font-family:Arial,sans-serif;
+            }
+
+            #void-name-box {
+                width:min(520px,86vw);
+                padding:42px 34px;
+                border:1px solid
+                    rgba(100,130,255,.45);
+                border-radius:24px;
+                background:
+                    rgba(12,15,29,.96);
+                box-shadow:
+                    0 25px 80px
+                    rgba(0,0,0,.7);
+                text-align:center;
+            }
+
+            .void-small {
+                color:#8994b8;
+                letter-spacing:6px;
+                font-size:14px;
+                margin-bottom:18px;
+            }
+
+            .void-title {
+                font-size:32px;
+                font-weight:800;
+                margin-bottom:12px;
+            }
+
+            .void-subtitle {
+                color:#858ba3;
+                font-size:14px;
+                margin-bottom:28px;
+            }
+
+            #void-name-input {
+                width:100%;
+                height:58px;
+                padding:0 18px;
+                border:1px solid
+                    rgba(120,140,255,.35);
+                border-radius:14px;
+                outline:none;
+                background:
+                    rgba(255,255,255,.06);
+                color:white;
+                font-size:17px;
+                text-align:center;
+                margin-bottom:14px;
+            }
+
+            #void-name-button {
+                width:100%;
+                height:58px;
+                border:0;
+                border-radius:14px;
+                background:#3d6dff;
+                color:white;
+                font-size:15px;
+                font-weight:800;
+                cursor:pointer;
+            }
+
+            .void-id {
+                margin-top:22px;
+                color:#505772;
+                font-size:10px;
+            }
+
+        `;
+
+
+        document.head.appendChild(
+            style
+        );
+
+
+        document.body.appendChild(
+            this.nameScreen
+        );
+
+
+        const input =
+            this.nameScreen.querySelector(
+                "#void-name-input"
+            );
+
+
+        const button =
+            this.nameScreen.querySelector(
+                "#void-name-button"
+            );
+
+
+        if (
+            this.playerName
+        ) {
+
+            input.value =
+                this.playerName;
+
+        }
+
+
+        button.addEventListener(
+            "click",
+            () => this.confirmName()
+        );
+
+
+        input.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    this.confirmName();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    CONFIRM NAME
+    ==================================================
+    */
+
+    confirmName() {
+
+        const input =
+            this.nameScreen.querySelector(
+                "#void-name-input"
+            );
+
+
+        let name =
+            input.value.trim();
+
+
+        if (!name) {
+
+            name =
+                "Player";
+
+        }
+
+
+        this.playerName =
+            name.substring(
+                0,
+                16
+            );
+
+
+        localStorage.setItem(
+            "void_player_name",
+            this.playerName
+        );
+
+
+        this.ready =
+            true;
+
+
+        this.nameScreen.style.transition =
+            "opacity .35s";
+
+
+        this.nameScreen.style.opacity =
+            "0";
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    this.nameScreen.parentNode
+                ) {
+
+                    this.nameScreen.parentNode
+                        .removeChild(
+                            this.nameScreen
+                        );
+
+                }
+
+            },
+            350
+        );
+
+
+        this.createNameTag();
+
+    }
+
+
+    /*
+    ==================================================
+    NAME TAG
+    ==================================================
+    */
+
+    createNameTag() {
+
+        const canvas =
+            document.createElement(
+                "canvas"
+            );
+
+
+        canvas.width =
+            512;
+
+        canvas.height =
+            128;
+
+
+        const ctx =
+            canvas.getContext(
+                "2d"
+            );
+
+
+        ctx.font =
+            "bold 46px Arial";
+
+
+        ctx.textAlign =
+            "center";
+
+
+        ctx.textBaseline =
+            "middle";
+
+
+        ctx.fillStyle =
+            "#ffffff";
+
+
+        ctx.shadowColor =
+            "#000000";
+
+
+        ctx.shadowBlur =
+            8;
+
+
+        ctx.fillText(
+            this.playerName,
+            256,
+            64
+        );
+
+
+        const texture =
+            new THREE.CanvasTexture(
+                canvas
+            );
+
+
+        const material =
+            new THREE.SpriteMaterial({
+
+                map:
+                    texture,
+
+                transparent:
+                    true,
+
+                depthTest:
+                    false
+
+            });
+
+
+        this.nameTag =
+            new THREE.Sprite(
+                material
+            );
+
+
+        this.nameTag.scale.set(
+            2.4,
+            0.6,
+            1
+        );
+
+
+        this.nameTag.position.y =
+            2.9;
+
+
+        this.player.add(
+            this.nameTag
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    NETWORK
+    ==================================================
     */
 
     getNetworkState() {
@@ -2579,12 +2372,6 @@ class PlayerController {
 
     }
 
-
-    /*
-    ==========================================
-    PUBLIC METHODS
-    ==========================================
-    */
 
     getObject() {
 
