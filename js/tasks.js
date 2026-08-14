@@ -1,16 +1,78 @@
+/*
+==================================================
+PROJECT: VOID
+TASK SYSTEM
+==================================================
+*/
+
 class TaskSystem {
 
-    constructor(scene, camera, player) {
+    constructor(
+        scene,
+        camera,
+        player
+    ) {
 
         this.scene = scene;
+
         this.camera = camera;
+
         this.player = player;
+
+
+        /*
+        ==========================================
+        TASK DATA
+        ==========================================
+        */
 
         this.tasks = [];
 
+        this.total = 0;
+
         this.activeTask = null;
 
+
+        /*
+        ==========================================
+        SETTINGS
+        ==========================================
+        */
+
         this.interactionDistance = 2.5;
+
+
+        /*
+        ==========================================
+        UI
+        ==========================================
+        */
+
+        this.container = null;
+
+        this.completeButton = null;
+
+        this.taskNameElement = null;
+
+        this.progressElement = null;
+
+
+        /*
+        ==========================================
+        INTERACTION
+        ==========================================
+        */
+
+        this.promptHandler = null;
+
+        this.currentPromptTask = null;
+
+
+        /*
+        ==========================================
+        CREATE UI
+        ==========================================
+        */
 
         this.createUI();
 
@@ -18,15 +80,24 @@ class TaskSystem {
 
 
     /*
-    ==========================================
+    ==================================================
     REGISTER TASK
-    ==========================================
+    ==================================================
     */
 
-    register(object, name) {
+    register(
+        object,
+        name
+    ) {
+
+        /*
+        Prevent invalid task.
+        */
 
         if (!object) {
+
             return;
+
         }
 
 
@@ -41,20 +112,44 @@ class TaskSystem {
             );
 
 
-        if (alreadyRegistered) {
+        if (
+            alreadyRegistered
+        ) {
+
             return;
+
         }
 
 
-        this.tasks.push({
+        /*
+        Create task.
+        */
+
+        const task = {
 
             object: object,
 
-            name: name,
+            name:
+                name ||
+                "TASK",
 
             completed: false
 
-        });
+        };
+
+
+        this.tasks.push(
+            task
+        );
+
+
+        /*
+        Always derive total
+        from actual task list.
+        */
+
+        this.total =
+            this.tasks.length;
 
 
         this.updateProgress();
@@ -63,44 +158,39 @@ class TaskSystem {
 
 
     /*
-    ==========================================
-    GET COMPLETED
-    ==========================================
-    */
-
-    getCompletedCount() {
-
-        return this.tasks.filter(
-            task =>
-                task.completed
-        ).length;
-
-    }
-
-
-    /*
-    ==========================================
-    GET TOTAL
-    ==========================================
-    */
-
-    getTotalCount() {
-
-        return this.tasks.length;
-
-    }
-
-
-    /*
-    ==========================================
+    ==================================================
     UI
-    ==========================================
+    ==================================================
     */
 
     createUI() {
 
+        /*
+        Remove an old task UI if one exists.
+        This protects against duplicate UI.
+        */
+
+        const oldUI =
+            document.getElementById(
+                "task-ui"
+            );
+
+
+        if (oldUI) {
+
+            oldUI.remove();
+
+        }
+
+
+        /*
+        Create container.
+        */
+
         this.container =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
         this.container.id =
@@ -140,30 +230,70 @@ class TaskSystem {
         );
 
 
+        /*
+        Hide initially.
+        */
+
         this.container.style.display =
             "none";
 
 
+        /*
+        Store references.
+        */
+
         this.completeButton =
-            document.getElementById(
-                "task-complete"
+            this.container.querySelector(
+                "#task-complete"
+            );
+
+
+        this.taskNameElement =
+            this.container.querySelector(
+                "#task-name"
+            );
+
+
+        this.progressElement =
+            this.container.querySelector(
+                "#task-progress"
             );
 
 
         /*
-        Only the button completes
-        the currently open task.
+        Complete button.
         */
 
         this.completeButton.addEventListener(
             "click",
             event => {
 
+                /*
+                Stop click from reaching
+                the interaction system.
+                */
+
                 event.preventDefault();
 
                 event.stopPropagation();
 
+
                 this.completeCurrentTask();
+
+            }
+        );
+
+
+        /*
+        Prevent pointer events from
+        accidentally affecting the game.
+        */
+
+        this.container.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
 
             }
         );
@@ -172,12 +302,14 @@ class TaskSystem {
 
 
     /*
-    ==========================================
+    ==================================================
     DISTANCE
-    ==========================================
+    ==================================================
     */
 
-    getDistance(task) {
+    getDistance(
+        task
+    ) {
 
         if (
             !task ||
@@ -190,34 +322,46 @@ class TaskSystem {
         }
 
 
-        return this.player
-            .getPosition()
-            .distanceTo(
-                task.object.position
-            );
+        const playerPosition =
+            this.player.getPosition();
+
+
+        const taskPosition =
+            task.object.position;
+
+
+        return playerPosition.distanceTo(
+            taskPosition
+        );
 
     }
 
 
     /*
-    ==========================================
+    ==================================================
     UPDATE
-    ==========================================
+    ==================================================
     */
 
     update() {
 
         /*
-        Don't search for another
-        task while one is open.
+        Don't search for another task
+        while one is already open.
         */
 
-        if (this.activeTask) {
+        if (
+            this.activeTask
+        ) {
 
             return;
 
         }
 
+
+        /*
+        Find closest unfinished task.
+        */
 
         let closestTask =
             null;
@@ -230,6 +374,11 @@ class TaskSystem {
         for (
             const task of this.tasks
         ) {
+
+            /*
+            IMPORTANT:
+            Completed tasks are ignored.
+            */
 
             if (
                 task.completed
@@ -262,7 +411,13 @@ class TaskSystem {
         }
 
 
-        if (closestTask) {
+        /*
+        Show / hide interaction.
+        */
+
+        if (
+            closestTask
+        ) {
 
             this.showPrompt(
                 closestTask
@@ -278,12 +433,14 @@ class TaskSystem {
 
 
     /*
-    ==========================================
-    PROMPT
-    ==========================================
+    ==================================================
+    SHOW PROMPT
+    ==================================================
     */
 
-    showPrompt(task) {
+    showPrompt(
+        task
+    ) {
 
         const interaction =
             document.getElementById(
@@ -291,30 +448,48 @@ class TaskSystem {
             );
 
 
-        if (!interaction) {
+        if (
+            interaction
+        ) {
+
+            interaction.style.display =
+                "block";
+
+
+            interaction.textContent =
+                `TAP TO USE: ${task.name}`;
+
+        }
+
+
+        /*
+        Don't create multiple
+        document click listeners.
+        */
+
+        if (
+            this.currentPromptTask ===
+            task
+        ) {
 
             return;
 
         }
 
 
-        interaction.style.display =
-            "block";
-
-
-        interaction.textContent =
-            `TAP TO USE: ${task.name}`;
+        this.currentPromptTask =
+            task;
 
 
         /*
-        Remove previous listener.
+        Remove old handler.
         */
 
         if (
             this.promptHandler
         ) {
 
-            interaction.removeEventListener(
+            document.removeEventListener(
                 "click",
                 this.promptHandler
             );
@@ -323,40 +498,37 @@ class TaskSystem {
 
 
         /*
-        Store the current task.
+        Create new handler.
         */
-
-        this.currentPromptTask =
-            task;
-
 
         this.promptHandler =
             event => {
 
-                event.preventDefault();
-
-                event.stopPropagation();
+                /*
+                Ignore clicks on the
+                task UI itself.
+                */
 
                 if (
-                    this.currentPromptTask
+                    this.container &&
+                    this.container.contains(
+                        event.target
+                    )
                 ) {
 
-                    this.openTask(
-                        this.currentPromptTask
-                    );
+                    return;
 
                 }
+
+
+                this.openTask(
+                    task
+                );
 
             };
 
 
-        /*
-        IMPORTANT:
-        Listen only on the interaction
-        button, NOT the entire document.
-        */
-
-        interaction.addEventListener(
+        document.addEventListener(
             "click",
             this.promptHandler
         );
@@ -365,9 +537,9 @@ class TaskSystem {
 
 
     /*
-    ==========================================
+    ==================================================
     HIDE PROMPT
-    ==========================================
+    ==================================================
     */
 
     hidePrompt() {
@@ -378,7 +550,9 @@ class TaskSystem {
             );
 
 
-        if (interaction) {
+        if (
+            interaction
+        ) {
 
             interaction.style.display =
                 "none";
@@ -386,40 +560,48 @@ class TaskSystem {
         }
 
 
+        this.currentPromptTask =
+            null;
+
+
+        /*
+        Remove old click listener.
+        */
+
         if (
-            interaction &&
             this.promptHandler
         ) {
 
-            interaction.removeEventListener(
+            document.removeEventListener(
                 "click",
                 this.promptHandler
             );
 
+
+            this.promptHandler =
+                null;
+
         }
-
-
-        this.promptHandler =
-            null;
-
-
-        this.currentPromptTask =
-            null;
 
     }
 
 
     /*
-    ==========================================
+    ==================================================
     OPEN TASK
-    ==========================================
+    ==================================================
     */
 
-    openTask(task) {
+    openTask(
+        task
+    ) {
+
+        /*
+        Safety checks.
+        */
 
         if (
-            !task ||
-            task.completed
+            !task
         ) {
 
             return;
@@ -436,6 +618,24 @@ class TaskSystem {
         }
 
 
+        /*
+        A completed task can NEVER
+        be opened again.
+        */
+
+        if (
+            task.completed
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+        Distance check.
+        */
+
         if (
             this.getDistance(task) >
             this.interactionDistance
@@ -446,53 +646,57 @@ class TaskSystem {
         }
 
 
+        /*
+        Set active task.
+        */
+
         this.activeTask =
             task;
 
 
-        const panel =
-            document.getElementById(
-                "task-ui"
-            );
-
-
-        const name =
-            document.getElementById(
-                "task-name"
-            );
-
-
-        if (name) {
-
-            name.textContent =
-                task.name;
-
-        }
-
-
-        this.updateProgress();
-
-
-        if (panel) {
-
-            panel.style.display =
-                "flex";
-
-        }
-
+        /*
+        Hide interaction prompt.
+        */
 
         this.hidePrompt();
+
+
+        /*
+        Show task panel.
+        */
+
+        this.container.style.display =
+            "flex";
+
+
+        /*
+        Task name.
+        */
+
+        this.taskNameElement.textContent =
+            task.name;
+
+
+        /*
+        Progress.
+        */
+
+        this.updateProgress();
 
     }
 
 
     /*
-    ==========================================
-    COMPLETE CURRENT TASK
-    ==========================================
+    ==================================================
+    COMPLETE TASK
+    ==================================================
     */
 
     completeCurrentTask() {
+
+        /*
+        No active task.
+        */
 
         if (
             !this.activeTask
@@ -503,19 +707,26 @@ class TaskSystem {
         }
 
 
+        const task =
+            this.activeTask;
+
+
         /*
-        Make sure it isn't already
-        completed.
+        CRITICAL PROTECTION
+        ==============================================
+
+        If the task is already completed,
+        DO NOT increase anything.
         */
 
         if (
-            this.activeTask.completed
+            task.completed
         ) {
 
             this.activeTask =
                 null;
 
-            this.closeTask();
+            this.closeTaskUI();
 
             return;
 
@@ -523,22 +734,16 @@ class TaskSystem {
 
 
         /*
-        Mark the actual task
-        as completed.
+        Mark task completed.
         */
 
-        this.activeTask.completed =
+        task.completed =
             true;
 
 
-        console.log(
-            "Completed:",
-            this.activeTask.name
-        );
-
-
         /*
-        Clear active task.
+        Clear active task immediately.
+        This prevents double-clicks.
         */
 
         this.activeTask =
@@ -549,19 +754,19 @@ class TaskSystem {
         Close UI.
         */
 
-        this.closeTask();
+        this.closeTaskUI();
 
 
         /*
-        Update counter from the
-        actual task array.
+        Update progress from
+        actual task states.
         */
 
         this.updateProgress();
 
 
         /*
-        Check victory condition.
+        Check all tasks.
         */
 
         if (
@@ -572,50 +777,108 @@ class TaskSystem {
                 "ALL TASKS COMPLETED!"
             );
 
+        } else {
+
+            console.log(
+                "Task completed:",
+                task.name
+            );
+
         }
+
+
+        /*
+        Refresh interaction.
+        */
+
+        setTimeout(
+            () => {
+
+                this.update();
+
+            },
+            50
+        );
 
     }
 
 
     /*
-    ==========================================
-    CLOSE TASK
-    ==========================================
+    ==================================================
+    CLOSE TASK UI
+    ==================================================
     */
 
-    closeTask() {
+    closeTaskUI() {
 
-        const panel =
-            document.getElementById(
-                "task-ui"
-            );
+        if (
+            this.container
+        ) {
 
-
-        if (panel) {
-
-            panel.style.display =
+            this.container.style.display =
                 "none";
 
         }
 
+
+        this.activeTask =
+            null;
+
     }
 
 
     /*
-    ==========================================
+    ==================================================
+    GET COMPLETED COUNT
+    ==================================================
+    */
+
+    getCompletedCount() {
+
+        /*
+        IMPORTANT:
+
+        We calculate this from the
+        actual task objects.
+
+        Therefore it is IMPOSSIBLE
+        to get 9 / 4.
+        */
+
+        let count = 0;
+
+
+        for (
+            const task of this.tasks
+        ) {
+
+            if (
+                task.completed
+            ) {
+
+                count++;
+
+            }
+
+        }
+
+
+        return count;
+
+    }
+
+
+    /*
+    ==================================================
     PROGRESS
-    ==========================================
+    ==================================================
     */
 
     updateProgress() {
 
-        const progress =
-            document.getElementById(
-                "task-progress"
-            );
-
-
-        if (!progress) {
+        if (
+            !this.progressElement
+        ) {
 
             return;
 
@@ -627,69 +890,48 @@ class TaskSystem {
 
 
         const total =
-            this.getTotalCount();
+            this.tasks.length;
 
 
-        progress.textContent =
+        this.progressElement.textContent =
             `${completed} / ${total} TASKS`;
 
     }
 
 
     /*
-    ==========================================
-    ALL COMPLETE
-    ==========================================
+    ==================================================
+    ALL COMPLETED
+    ==================================================
     */
 
     allCompleted() {
 
         const total =
-            this.getTotalCount();
+            this.tasks.length;
+
+
+        if (
+            total === 0
+        ) {
+
+            return false;
+
+        }
 
 
         return (
-            total > 0 &&
-            this.getCompletedCount() === total
+            this.getCompletedCount() ===
+            total
         );
 
     }
 
 
     /*
-    ==========================================
-    RESET
-    ==========================================
-    */
-
-    reset() {
-
-        for (
-            const task of this.tasks
-        ) {
-
-            task.completed =
-                false;
-
-        }
-
-
-        this.activeTask =
-            null;
-
-
-        this.closeTask();
-
-
-        this.updateProgress();
-
-    }
-
-
-    /*
-    ==========================================
-    PUBLIC DATA
-    ==========================================
+    ==================================================
+    PUBLIC
+    ==================================================
     */
 
     getProgress() {
@@ -700,7 +942,7 @@ class TaskSystem {
                 this.getCompletedCount(),
 
             total:
-                this.getTotalCount()
+                this.tasks.length
 
         };
 
