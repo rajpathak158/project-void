@@ -10,49 +10,75 @@ class PlayerController {
         collisionSystem
     ) {
 
-        this.scene =
-            scene;
+        this.scene = scene;
+        this.camera = camera;
+        this.collision = collisionSystem;
 
-        this.camera =
-            camera;
+        this.player = null;
 
-        this.collision =
-            collisionSystem;
+        /*
+        Movement
+        */
 
-        this.player =
-            null;
-
-        this.speed =
-            4;
-
-        this.runSpeed =
-            6.5;
-
-        this.velocity =
-            new THREE.Vector3();
+        this.speed = 4;
+        this.runSpeed = 6.5;
 
         this.moveInput =
             new THREE.Vector2();
 
         this.keys = {};
 
-        this.joystickActive =
-            false;
+        this.joystickActive = false;
 
         this.joystickStart =
             new THREE.Vector2();
 
-        this.cameraDistance =
-            7;
 
-        this.cameraHeight =
-            4;
+        /*
+        Camera
+        */
+
+        this.cameraDistance = 7;
+
+        this.cameraHeight = 3.2;
+
+        this.cameraYaw = 0;
+
+        this.cameraPitch = 0.15;
+
+        this.cameraMinPitch = -0.35;
+
+        this.cameraMaxPitch = 0.8;
+
+        this.cameraSensitivity = 0.006;
+
+
+        /*
+        Camera touch
+        */
+
+        this.cameraTouchActive = false;
+
+        this.cameraTouchId = null;
+
+        this.cameraTouchX = 0;
+
+        this.cameraTouchY = 0;
+
+
+        /*
+        Create everything
+        */
 
         this.createPlayer();
 
         this.setupKeyboard();
 
-        this.setupTouch();
+        this.setupMovementJoystick();
+
+        this.setupCameraTouch();
+
+        this.setupMouseCamera();
 
     }
 
@@ -73,105 +99,71 @@ class PlayerController {
         BODY
         */
 
-        const bodyGeometry =
-            new THREE.CapsuleGeometry(
-                0.45,
-                0.8,
-                8,
-                16
-            );
-
-
-        const bodyMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x3d6dff,
-                roughness: 0.5
-            });
-
-
         const body =
             new THREE.Mesh(
-                bodyGeometry,
-                bodyMaterial
+                new THREE.CapsuleGeometry(
+                    0.45,
+                    0.8,
+                    8,
+                    16
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x3d6dff,
+                    roughness: 0.5
+                })
             );
 
 
-        body.position.y =
-            1.05;
+        body.position.y = 1.05;
 
-        body.castShadow =
-            true;
+        body.castShadow = true;
 
-
-        this.player.add(
-            body
-        );
+        this.player.add(body);
 
 
         /*
         HEAD
         */
 
-        const headGeometry =
-            new THREE.SphereGeometry(
-                0.48,
-                24,
-                24
-            );
-
-
-        const headMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x4778ff,
-                roughness: 0.45
-            });
-
-
         const head =
             new THREE.Mesh(
-                headGeometry,
-                headMaterial
+                new THREE.SphereGeometry(
+                    0.48,
+                    24,
+                    24
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x4778ff,
+                    roughness: 0.45
+                })
             );
 
 
-        head.position.y =
-            2;
+        head.position.y = 2;
 
-        head.castShadow =
-            true;
+        head.castShadow = true;
 
-
-        this.player.add(
-            head
-        );
+        this.player.add(head);
 
 
         /*
         VISOR
         */
 
-        const visorGeometry =
-            new THREE.SphereGeometry(
-                0.28,
-                20,
-                20
-            );
-
-
-        const visorMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x8be9ff,
-                metalness: 0.8,
-                roughness: 0.15,
-                emissive: 0x123c55,
-                emissiveIntensity: 0.5
-            });
-
-
         const visor =
             new THREE.Mesh(
-                visorGeometry,
-                visorMaterial
+                new THREE.SphereGeometry(
+                    0.28,
+                    20,
+                    20
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x8be9ff,
+                    metalness: 0.8,
+                    roughness: 0.15,
+                    emissive: 0x123c55,
+                    emissiveIntensity: 0.5
+                })
             );
 
 
@@ -189,34 +181,24 @@ class PlayerController {
         );
 
 
-        this.player.add(
-            visor
-        );
+        this.player.add(visor);
 
 
         /*
         BACKPACK
         */
 
-        const backpackGeometry =
-            new THREE.BoxGeometry(
-                0.65,
-                0.9,
-                0.3
-            );
-
-
-        const backpackMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x20263a,
-                roughness: 0.7
-            });
-
-
         const backpack =
             new THREE.Mesh(
-                backpackGeometry,
-                backpackMaterial
+                new THREE.BoxGeometry(
+                    0.65,
+                    0.9,
+                    0.3
+                ),
+                new THREE.MeshStandardMaterial({
+                    color: 0x20263a,
+                    roughness: 0.7
+                })
             );
 
 
@@ -227,17 +209,13 @@ class PlayerController {
         );
 
 
-        backpack.castShadow =
-            true;
+        backpack.castShadow = true;
 
-
-        this.player.add(
-            backpack
-        );
+        this.player.add(backpack);
 
 
         /*
-        PLAYER POSITION
+        START POSITION
         */
 
         this.player.position.set(
@@ -266,9 +244,7 @@ class PlayerController {
             "keydown",
             event => {
 
-                this.keys[
-                    event.code
-                ] = true;
+                this.keys[event.code] = true;
 
             }
         );
@@ -278,9 +254,7 @@ class PlayerController {
             "keyup",
             event => {
 
-                this.keys[
-                    event.code
-                ] = false;
+                this.keys[event.code] = false;
 
             }
         );
@@ -290,11 +264,11 @@ class PlayerController {
 
     /*
     ==========================================
-    TOUCH JOYSTICK
+    MOVEMENT JOYSTICK
     ==========================================
     */
 
-    setupTouch() {
+    setupMovementJoystick() {
 
         const joystick =
             document.getElementById(
@@ -308,18 +282,14 @@ class PlayerController {
             );
 
 
-        if (
-            !joystick ||
-            !knob
-        ) {
+        if (!joystick || !knob) {
 
             return;
 
         }
 
 
-        const maxDistance =
-            42;
+        const maxDistance = 42;
 
 
         joystick.addEventListener(
@@ -328,9 +298,8 @@ class PlayerController {
 
                 event.preventDefault();
 
-
                 const touch =
-                    event.touches[0];
+                    event.changedTouches[0];
 
 
                 const rect =
@@ -346,8 +315,7 @@ class PlayerController {
                 );
 
 
-                this.joystickActive =
-                    true;
+                this.joystickActive = true;
 
 
                 this.updateJoystick(
@@ -381,7 +349,7 @@ class PlayerController {
 
 
                 const touch =
-                    event.touches[0];
+                    event.changedTouches[0];
 
 
                 this.updateJoystick(
@@ -405,8 +373,7 @@ class PlayerController {
                 event.preventDefault();
 
 
-                this.joystickActive =
-                    false;
+                this.joystickActive = false;
 
 
                 this.moveInput.set(
@@ -429,7 +396,7 @@ class PlayerController {
 
     /*
     ==========================================
-    JOYSTICK
+    JOYSTICK UPDATE
     ==========================================
     */
 
@@ -487,6 +454,295 @@ class PlayerController {
                 calc(-50% + ${dx}px),
                 calc(-50% + ${dy}px)
             )`;
+
+    }
+
+
+    /*
+    ==========================================
+    360 CAMERA TOUCH
+    ==========================================
+    */
+
+    setupCameraTouch() {
+
+        const canvas =
+            document.querySelector(
+                "canvas"
+            );
+
+
+        if (!canvas) {
+
+            return;
+
+        }
+
+
+        canvas.addEventListener(
+            "touchstart",
+            event => {
+
+                for (
+                    const touch of
+                    event.changedTouches
+                ) {
+
+                    /*
+                    Ignore touches
+                    on the joystick.
+                    */
+
+                    const target =
+                        document.elementFromPoint(
+                            touch.clientX,
+                            touch.clientY
+                        );
+
+
+                    if (
+                        target &&
+                        (
+                            target.id ===
+                            "joystick" ||
+                            target.closest(
+                                "#joystick"
+                            )
+                        )
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    this.cameraTouchActive =
+                        true;
+
+                    this.cameraTouchId =
+                        touch.identifier;
+
+                    this.cameraTouchX =
+                        touch.clientX;
+
+                    this.cameraTouchY =
+                        touch.clientY;
+
+                    break;
+
+                }
+
+            },
+            {
+                passive: true
+            }
+        );
+
+
+        canvas.addEventListener(
+            "touchmove",
+            event => {
+
+                if (
+                    !this.cameraTouchActive
+                ) {
+
+                    return;
+
+                }
+
+
+                for (
+                    const touch of
+                    event.changedTouches
+                ) {
+
+                    if (
+                        touch.identifier !==
+                        this.cameraTouchId
+                    ) {
+
+                        continue;
+
+                    }
+
+
+                    const dx =
+                        touch.clientX -
+                        this.cameraTouchX;
+
+
+                    const dy =
+                        touch.clientY -
+                        this.cameraTouchY;
+
+
+                    this.cameraYaw -=
+                        dx *
+                        this.cameraSensitivity;
+
+
+                    this.cameraPitch -=
+                        dy *
+                        this.cameraSensitivity;
+
+
+                    this.cameraPitch =
+                        THREE.MathUtils.clamp(
+                            this.cameraPitch,
+                            this.cameraMinPitch,
+                            this.cameraMaxPitch
+                        );
+
+
+                    this.cameraTouchX =
+                        touch.clientX;
+
+
+                    this.cameraTouchY =
+                        touch.clientY;
+
+                }
+
+            },
+            {
+                passive: true
+            }
+        );
+
+
+        canvas.addEventListener(
+            "touchend",
+            event => {
+
+                for (
+                    const touch of
+                    event.changedTouches
+                ) {
+
+                    if (
+                        touch.identifier ===
+                        this.cameraTouchId
+                    ) {
+
+                        this.cameraTouchActive =
+                            false;
+
+                        this.cameraTouchId =
+                            null;
+
+                    }
+
+                }
+
+            },
+            {
+                passive: true
+            }
+        );
+
+
+        canvas.addEventListener(
+            "touchcancel",
+            () => {
+
+                this.cameraTouchActive =
+                    false;
+
+                this.cameraTouchId =
+                    null;
+
+            }
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    MOUSE CAMERA
+    ==========================================
+    */
+
+    setupMouseCamera() {
+
+        let dragging = false;
+
+        let lastX = 0;
+
+        let lastY = 0;
+
+
+        window.addEventListener(
+            "mousedown",
+            event => {
+
+                dragging = true;
+
+                lastX = event.clientX;
+
+                lastY = event.clientY;
+
+            }
+        );
+
+
+        window.addEventListener(
+            "mouseup",
+            () => {
+
+                dragging = false;
+
+            }
+        );
+
+
+        window.addEventListener(
+            "mousemove",
+            event => {
+
+                if (!dragging) {
+
+                    return;
+
+                }
+
+
+                const dx =
+                    event.clientX -
+                    lastX;
+
+
+                const dy =
+                    event.clientY -
+                    lastY;
+
+
+                this.cameraYaw -=
+                    dx * 0.006;
+
+
+                this.cameraPitch -=
+                    dy * 0.006;
+
+
+                this.cameraPitch =
+                    THREE.MathUtils.clamp(
+                        this.cameraPitch,
+                        this.cameraMinPitch,
+                        this.cameraMaxPitch
+                    );
+
+
+                lastX =
+                    event.clientX;
+
+
+                lastY =
+                    event.clientY;
+
+            }
+        );
 
     }
 
@@ -574,9 +830,7 @@ class PlayerController {
 
     update(delta) {
 
-        if (
-            !this.player
-        ) {
+        if (!this.player) {
 
             return;
 
@@ -605,45 +859,35 @@ class PlayerController {
             Math.abs(inputZ) > 0.01;
 
 
-        if (
-            moving
-        ) {
+        if (moving) {
 
             /*
-            CAMERA DIRECTION
+            Camera-relative movement
             */
 
-            const cameraDirection =
-                new THREE.Vector3();
-
-
-            this.camera.getWorldDirection(
-                cameraDirection
-            );
-
-
-            cameraDirection.y =
-                0;
-
-
-            cameraDirection.normalize();
-
-
-            /*
-            RIGHT VECTOR
-            */
-
-            const right =
+            const forward =
                 new THREE.Vector3(
-                    cameraDirection.z,
+                    Math.sin(
+                        this.cameraYaw
+                    ),
                     0,
-                    -cameraDirection.x
+                    Math.cos(
+                        this.cameraYaw
+                    )
                 );
 
 
-            /*
-            MOVEMENT DIRECTION
-            */
+            const right =
+                new THREE.Vector3(
+                    Math.cos(
+                        this.cameraYaw
+                    ),
+                    0,
+                    -Math.sin(
+                        this.cameraYaw
+                    )
+                );
+
 
             const direction =
                 new THREE.Vector3();
@@ -656,7 +900,7 @@ class PlayerController {
 
 
             direction.addScaledVector(
-                cameraDirection,
+                forward,
                 -inputZ
             );
 
@@ -665,7 +909,7 @@ class PlayerController {
 
 
             /*
-            SPEED
+            Speed
             */
 
             const running =
@@ -680,7 +924,7 @@ class PlayerController {
 
 
             /*
-            COLLISION-AWARE MOVEMENT
+            New position
             */
 
             const newX =
@@ -696,6 +940,10 @@ class PlayerController {
                 speed *
                 delta;
 
+
+            /*
+            Collision
+            */
 
             if (
                 this.collision
@@ -719,7 +967,7 @@ class PlayerController {
 
 
             /*
-            ROTATE PLAYER
+            Character rotation
             */
 
             const targetRotation =
@@ -743,27 +991,27 @@ class PlayerController {
 
 
         /*
-        STATION BOUNDARIES
+        Station boundary
         */
 
         this.player.position.x =
             THREE.MathUtils.clamp(
                 this.player.position.x,
-                -15,
-                15
+                -15.2,
+                15.2
             );
 
 
         this.player.position.z =
             THREE.MathUtils.clamp(
                 this.player.position.z,
-                -15,
-                15
+                -15.2,
+                15.2
             );
 
 
         /*
-        CAMERA
+        Camera
         */
 
         this.updateCamera(
@@ -775,7 +1023,7 @@ class PlayerController {
 
     /*
     ==========================================
-    CAMERA
+    CAMERA UPDATE
     ==========================================
     */
 
@@ -784,27 +1032,64 @@ class PlayerController {
         const target =
             new THREE.Vector3(
                 this.player.position.x,
-                this.player.position.y +
-                1.4,
+                this.player.position.y + 1.35,
                 this.player.position.z
             );
 
 
-        const desired =
-            new THREE.Vector3(
-                this.player.position.x,
-                this.player.position.y +
-                this.cameraHeight,
-                this.player.position.z +
-                this.cameraDistance
+        /*
+        Spherical camera position
+        */
+
+        const horizontalDistance =
+            this.cameraDistance *
+            Math.cos(
+                this.cameraPitch
             );
 
+
+        const verticalDistance =
+            this.cameraDistance *
+            Math.sin(
+                this.cameraPitch
+            );
+
+
+        const desired =
+            new THREE.Vector3();
+
+
+        desired.x =
+            this.player.position.x -
+            Math.sin(
+                this.cameraYaw
+            ) *
+            horizontalDistance;
+
+
+        desired.z =
+            this.player.position.z -
+            Math.cos(
+                this.cameraYaw
+            ) *
+            horizontalDistance;
+
+
+        desired.y =
+            this.player.position.y +
+            this.cameraHeight +
+            verticalDistance;
+
+
+        /*
+        Smooth camera
+        */
 
         this.camera.position.lerp(
             desired,
             Math.min(
                 1,
-                delta * 5
+                delta * 8
             )
         );
 
@@ -818,7 +1103,7 @@ class PlayerController {
 
     /*
     ==========================================
-    PLAYER OBJECT
+    GET PLAYER
     ==========================================
     */
 
@@ -831,7 +1116,7 @@ class PlayerController {
 
     /*
     ==========================================
-    PLAYER POSITION
+    GET POSITION
     ==========================================
     */
 
