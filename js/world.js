@@ -46,7 +46,7 @@ const materials = {
 
 /*
 ==================================================
-BOX CREATOR
+BOX
 ==================================================
 */
 
@@ -68,13 +68,11 @@ function createBox(
             depth
         );
 
-
     const mesh =
         new THREE.Mesh(
             geometry,
             material
         );
-
 
     mesh.position.set(
         x,
@@ -82,16 +80,52 @@ function createBox(
         z
     );
 
-
     mesh.castShadow = true;
-
     mesh.receiveShadow = true;
-
 
     scene.add(mesh);
 
-
     return mesh;
+}
+
+
+/*
+==================================================
+WALL + COLLISION
+==================================================
+*/
+
+function createWall(
+    scene,
+    collision,
+    x,
+    z,
+    width,
+    depth,
+    height = 4
+) {
+
+    createBox(
+        scene,
+        x,
+        height / 2,
+        z,
+        width,
+        height,
+        depth,
+        materials.wall
+    );
+
+    if (collision) {
+
+        collision.addWall(
+            x,
+            z,
+            width,
+            depth
+        );
+
+    }
 
 }
 
@@ -104,7 +138,7 @@ FLOOR
 
 function createFloor(scene) {
 
-    return createBox(
+    createBox(
         scene,
         0,
         -0.15,
@@ -120,61 +154,11 @@ function createFloor(scene) {
 
 /*
 ==================================================
-WALL
-==================================================
-*/
-
-function createWall(
-    scene,
-    collision,
-    x,
-    z,
-    width,
-    depth,
-    height = 4
-) {
-
-    const wall =
-        createBox(
-            scene,
-            x,
-            height / 2,
-            z,
-            width,
-            height,
-            depth,
-            materials.wall
-        );
-
-
-    /*
-    Register wall with collision
-    */
-
-    if (collision) {
-
-        collision.addWall(
-            x,
-            z,
-            width,
-            depth
-        );
-
-    }
-
-
-    return wall;
-
-}
-
-
-/*
-==================================================
 LIGHT
 ==================================================
 */
 
-function createCeilingLight(
+function createLight(
     scene,
     x,
     z,
@@ -188,16 +172,13 @@ function createCeilingLight(
             9
         );
 
-
     light.position.set(
         x,
         3.6,
         z
     );
 
-
     scene.add(light);
-
 
     createBox(
         scene,
@@ -214,8 +195,281 @@ function createCeilingLight(
         })
     );
 
+}
 
-    return light;
+
+/*
+==================================================
+DOORWAY WALL
+==================================================
+
+Creates a wall with an opening in the middle.
+
+==================================================
+*/
+
+function createHorizontalDoorWall(
+    scene,
+    collision,
+    x,
+    z,
+    totalWidth,
+    openingWidth,
+    depth
+) {
+
+    const sideWidth =
+        (totalWidth - openingWidth) / 2;
+
+
+    if (sideWidth > 0) {
+
+        createWall(
+            scene,
+            collision,
+            x - totalWidth / 2 + sideWidth / 2,
+            z,
+            sideWidth,
+            depth
+        );
+
+        createWall(
+            scene,
+            collision,
+            x + totalWidth / 2 - sideWidth / 2,
+            z,
+            sideWidth,
+            depth
+        );
+
+    }
+
+}
+
+
+function createVerticalDoorWall(
+    scene,
+    collision,
+    x,
+    z,
+    totalDepth,
+    openingWidth,
+    depth
+) {
+
+    const sideDepth =
+        (totalDepth - openingWidth) / 2;
+
+
+    if (sideDepth > 0) {
+
+        createWall(
+            scene,
+            collision,
+            x,
+            z - totalDepth / 2 + sideDepth / 2,
+            depth,
+            sideDepth
+        );
+
+        createWall(
+            scene,
+            collision,
+            x,
+            z + totalDepth / 2 - sideDepth / 2,
+            depth,
+            sideDepth
+        );
+
+    }
+
+}
+
+
+/*
+==================================================
+CENTRAL HUB
+==================================================
+*/
+
+function createCentralHub(
+    scene,
+    collision
+) {
+
+    const width = 12;
+    const depth = 10;
+    const thickness = 0.35;
+    const door = 3;
+
+
+    /*
+    North wall
+    */
+
+    createHorizontalDoorWall(
+        scene,
+        collision,
+        0,
+        -5,
+        width,
+        door,
+        thickness
+    );
+
+
+    /*
+    South wall
+    */
+
+    createHorizontalDoorWall(
+        scene,
+        collision,
+        0,
+        5,
+        width,
+        door,
+        thickness
+    );
+
+
+    /*
+    West wall
+    */
+
+    createVerticalDoorWall(
+        scene,
+        collision,
+        -6,
+        0,
+        depth,
+        door,
+        thickness
+    );
+
+
+    /*
+    East wall
+    */
+
+    createVerticalDoorWall(
+        scene,
+        collision,
+        6,
+        0,
+        depth,
+        door,
+        thickness
+    );
+
+
+    createLight(
+        scene,
+        -3,
+        0
+    );
+
+    createLight(
+        scene,
+        3,
+        0
+    );
+
+}
+
+
+/*
+==================================================
+SIDE ROOM
+==================================================
+*/
+
+function createRoom(
+    scene,
+    collision,
+    x,
+    z,
+    name
+) {
+
+    const width = 7;
+    const depth = 7;
+    const thickness = 0.35;
+    const door = 2.5;
+
+
+    /*
+    Back
+    */
+
+    createWall(
+        scene,
+        collision,
+        x,
+        z - depth / 2,
+        width,
+        thickness
+    );
+
+
+    /*
+    Front
+    */
+
+    createWall(
+        scene,
+        collision,
+        x,
+        z + depth / 2,
+        width,
+        thickness
+    );
+
+
+    /*
+    Left
+    */
+
+    createWall(
+        scene,
+        collision,
+        x - width / 2,
+        z,
+        thickness,
+        depth
+    );
+
+
+    /*
+    Right
+    */
+
+    createWall(
+        scene,
+        collision,
+        x + width / 2,
+        z,
+        thickness,
+        depth
+    );
+
+
+    /*
+    Room light
+    */
+
+    createLight(
+        scene,
+        x,
+        z
+    );
+
+
+    return {
+        name: name,
+        x: x,
+        z: z
+    };
 
 }
 
@@ -244,10 +498,6 @@ function createTaskTerminal(
     );
 
 
-    /*
-    Body
-    */
-
     const body =
         new THREE.Mesh(
             new THREE.BoxGeometry(
@@ -265,10 +515,6 @@ function createTaskTerminal(
 
     group.add(body);
 
-
-    /*
-    Screen
-    */
 
     const screen =
         new THREE.Mesh(
@@ -290,10 +536,6 @@ function createTaskTerminal(
 
     group.add(screen);
 
-
-    /*
-    Task light
-    */
 
     const light =
         new THREE.PointLight(
@@ -325,7 +567,6 @@ function createTaskTerminal(
 
 
     scene.add(group);
-
 
     return group;
 
@@ -404,103 +645,7 @@ function createEmergencyButton(
 
     scene.add(group);
 
-
     return group;
-
-}
-
-
-/*
-==================================================
-ROOM
-==================================================
-*/
-
-function createRoom(
-    scene,
-    collision,
-    centerX,
-    centerZ,
-    width,
-    depth
-) {
-
-    const thickness =
-        0.35;
-
-
-    /*
-    Back wall
-    */
-
-    createWall(
-        scene,
-        collision,
-        centerX,
-        centerZ - depth / 2,
-        width,
-        thickness
-    );
-
-
-    /*
-    Front wall
-    */
-
-    createWall(
-        scene,
-        collision,
-        centerX,
-        centerZ + depth / 2,
-        width,
-        thickness
-    );
-
-
-    /*
-    Left wall
-    */
-
-    createWall(
-        scene,
-        collision,
-        centerX - width / 2,
-        centerZ,
-        thickness,
-        depth
-    );
-
-
-    /*
-    Right wall
-    */
-
-    createWall(
-        scene,
-        collision,
-        centerX + width / 2,
-        centerZ,
-        thickness,
-        depth
-    );
-
-
-    /*
-    Lights
-    */
-
-    createCeilingLight(
-        scene,
-        centerX - width / 4,
-        centerZ
-    );
-
-
-    createCeilingLight(
-        scene,
-        centerX + width / 4,
-        centerZ
-    );
 
 }
 
@@ -525,21 +670,17 @@ function(
 
 
     /*
-    CENTRAL HUB
+    Central hub
     */
 
-    createRoom(
+    createCentralHub(
         scene,
-        collision,
-        0,
-        0,
-        12,
-        10
+        collision
     );
 
 
     /*
-    LABORATORY
+    Four rooms
     */
 
     createRoom(
@@ -547,55 +688,39 @@ function(
         collision,
         -9,
         -7,
-        7,
-        7
+        "Laboratory"
     );
 
-
-    /*
-    SECURITY
-    */
 
     createRoom(
         scene,
         collision,
         9,
         -7,
-        7,
-        7
+        "Security"
     );
 
-
-    /*
-    MEDBAY
-    */
 
     createRoom(
         scene,
         collision,
         -9,
         7,
-        7,
-        7
+        "Medbay"
     );
 
-
-    /*
-    ENGINE
-    */
 
     createRoom(
         scene,
         collision,
         9,
         7,
-        7,
-        7
+        "Engine Room"
     );
 
 
     /*
-    TASKS
+    Tasks
     */
 
     createTaskTerminal(
@@ -609,7 +734,7 @@ function(
     createTaskTerminal(
         scene,
         8,
-        -8,
+        -7,
         "SECURITY SYSTEM"
     );
 
@@ -617,7 +742,7 @@ function(
     createTaskTerminal(
         scene,
         -8,
-        8,
+        7,
         "MEDICAL SYSTEM"
     );
 
@@ -625,13 +750,13 @@ function(
     createTaskTerminal(
         scene,
         10,
-        8,
+        7,
         "ENGINE CONTROL"
     );
 
 
     /*
-    EMERGENCY BUTTON
+    Emergency button
     */
 
     createEmergencyButton(
@@ -642,10 +767,54 @@ function(
 
 
     /*
-    CENTRAL LIGHT
+    Outer boundaries
     */
 
-    createCeilingLight(
+    createWall(
+        scene,
+        collision,
+        0,
+        -16,
+        32,
+        0.4
+    );
+
+
+    createWall(
+        scene,
+        collision,
+        0,
+        16,
+        32,
+        0.4
+    );
+
+
+    createWall(
+        scene,
+        collision,
+        -16,
+        0,
+        0.4,
+        32
+    );
+
+
+    createWall(
+        scene,
+        collision,
+        16,
+        0,
+        0.4,
+        32
+    );
+
+
+    /*
+    Central emergency light
+    */
+
+    createLight(
         scene,
         0,
         0,
@@ -654,83 +823,27 @@ function(
 
 
     /*
-    OUTER BOUNDARIES
-    */
-
-    createWall(
-        scene,
-        collision,
-        0,
-        -16,
-        32,
-        0.4
-    );
-
-
-    createWall(
-        scene,
-        collision,
-        0,
-        16,
-        32,
-        0.4
-    );
-
-
-    createWall(
-        scene,
-        collision,
-        -16,
-        0,
-        0.4,
-        32
-    );
-
-
-    createWall(
-        scene,
-        collision,
-        16,
-        0,
-        0.4,
-        32
-    );
-
-
-    /*
-    WORLD DATA
+    Station information
     */
 
     return {
 
         rooms: [
-
             "Central Hub",
-
             "Laboratory",
-
             "Security",
-
             "Medbay",
-
             "Engine Room"
-
         ],
 
         tasks: [
-
             "LAB TERMINAL",
-
             "SECURITY SYSTEM",
-
             "MEDICAL SYSTEM",
-
             "ENGINE CONTROL"
-
         ],
 
-        emergencyButton:
-            true
+        emergencyButton: true
 
     };
 
