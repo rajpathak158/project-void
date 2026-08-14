@@ -8,58 +8,52 @@ const world = {};
 /*
 ==================================================
 PROJECT: VOID
-STATION MAP 01
+MASSIVE STATION WORLD
 ==================================================
 
-Large seamless sci-fi station.
+WORLD:
+180 x 180
 
-                 NORTH
-                   ↑
+HEIGHT:
+8.2
 
-        ┌─────────────────────────┐
-        │       RESEARCH           │
-        │                           │
-        ├───────────┬───────────────┤
-        │ SECURITY  │ CENTRAL HUB   │
-        │           │               │
-        ├───────────┼───────────────┤
-        │ MEDICAL   │ ENGINEERING   │
-        │           │               │
-        ├───────────┴───────────────┤
-        │       LOWER DECK          │
-        │                           │
-        │   CARGO / REACTOR         │
-        └───────────────────────────┘
+MAIN AREAS:
 
-==================================================
-*/
+                    COMMAND
+                       |
+                 RESEARCH
+                       |
+        SECURITY — CENTRAL — ENGINEERING
+                       |
+                  MEDICAL
+                       |
+                    REACTOR
 
+WEST:
+    CARGO
+    MAINTENANCE
+    QUARANTINE
 
-/*
-==================================================
-WORLD SETTINGS
-==================================================
-*/
+EAST:
+    HANGAR
+    DOCKING
 
-const WORLD_WIDTH = 140;
-const WORLD_DEPTH = 140;
-
-const HALF_WIDTH =
-    WORLD_WIDTH / 2;
-
-const HALF_DEPTH =
-    WORLD_DEPTH / 2;
-
-
-/*
-==================================================
-WALL SETTINGS
 ==================================================
 */
 
-const WALL_HEIGHT = 4.5;
 
-const WALL_THICKNESS = 0.45;
+const WORLD_SIZE = 180;
+
+const HALF_WORLD =
+    WORLD_SIZE / 2;
+
+const WALL_HEIGHT = 4;
+
+const WALL_THICKNESS = 0.4;
+
+const FLOOR_Y = 0;
+
+const CEILING_Y = 4.15;
 
 
 /*
@@ -85,9 +79,21 @@ const materials = {
 
             color: 0x171c27,
 
-            metalness: 0.55,
+            metalness: 0.5,
 
-            roughness: 0.42
+            roughness: 0.5
+
+        }),
+
+
+    floorDark:
+        new THREE.MeshStandardMaterial({
+
+            color: 0x10131b,
+
+            metalness: 0.35,
+
+            roughness: 0.65
 
         }),
 
@@ -97,8 +103,6 @@ const materials = {
 
             color: 0x252b38,
 
-            metalness: 0.25,
-
             roughness: 0.72
 
         }),
@@ -107,11 +111,9 @@ const materials = {
     wallDark:
         new THREE.MeshStandardMaterial({
 
-            color: 0x11151e,
+            color: 0x171b25,
 
-            metalness: 0.3,
-
-            roughness: 0.8
+            roughness: 0.82
 
         }),
 
@@ -119,9 +121,9 @@ const materials = {
     metal:
         new THREE.MeshStandardMaterial({
 
-            color: 0x424958,
+            color: 0x414856,
 
-            metalness: 0.8,
+            metalness: 0.78,
 
             roughness: 0.32
 
@@ -131,9 +133,9 @@ const materials = {
     research:
         new THREE.MeshStandardMaterial({
 
-            color: 0x27476b,
+            color: 0x29486d,
 
-            metalness: 0.35,
+            metalness: 0.3,
 
             roughness: 0.5
 
@@ -143,11 +145,11 @@ const materials = {
     security:
         new THREE.MeshStandardMaterial({
 
-            color: 0x4c2935,
+            color: 0x4a3039,
 
-            metalness: 0.35,
+            metalness: 0.3,
 
-            roughness: 0.5
+            roughness: 0.52
 
         }),
 
@@ -157,7 +159,7 @@ const materials = {
 
             color: 0x28504b,
 
-            metalness: 0.3,
+            metalness: 0.25,
 
             roughness: 0.5
 
@@ -167,11 +169,11 @@ const materials = {
     engineering:
         new THREE.MeshStandardMaterial({
 
-            color: 0x594527,
+            color: 0x51432a,
 
-            metalness: 0.45,
+            metalness: 0.4,
 
-            roughness: 0.45
+            roughness: 0.48
 
         }),
 
@@ -179,11 +181,23 @@ const materials = {
     reactor:
         new THREE.MeshStandardMaterial({
 
-            color: 0x46336b,
+            color: 0x49342b,
 
-            metalness: 0.5,
+            metalness: 0.55,
 
-            roughness: 0.38
+            roughness: 0.4
+
+        }),
+
+
+    command:
+        new THREE.MeshStandardMaterial({
+
+            color: 0x38315b,
+
+            metalness: 0.35,
+
+            roughness: 0.45
 
         }),
 
@@ -191,11 +205,47 @@ const materials = {
     cargo:
         new THREE.MeshStandardMaterial({
 
-            color: 0x3e424b,
+            color: 0x3c4148,
 
-            metalness: 0.65,
+            metalness: 0.55,
 
-            roughness: 0.42
+            roughness: 0.48
+
+        }),
+
+
+    hangar:
+        new THREE.MeshStandardMaterial({
+
+            color: 0x283b4b,
+
+            metalness: 0.6,
+
+            roughness: 0.4
+
+        }),
+
+
+    quarantine:
+        new THREE.MeshStandardMaterial({
+
+            color: 0x33462f,
+
+            metalness: 0.3,
+
+            roughness: 0.55
+
+        }),
+
+
+    maintenance:
+        new THREE.MeshStandardMaterial({
+
+            color: 0x3f3a31,
+
+            metalness: 0.5,
+
+            roughness: 0.5
 
         }),
 
@@ -203,15 +253,11 @@ const materials = {
     blue:
         new THREE.MeshStandardMaterial({
 
-            color: 0x3d72ff,
+            color: 0x3474ff,
 
-            emissive: 0x102d88,
+            emissive: 0x102b82,
 
-            emissiveIntensity: 1.5,
-
-            metalness: 0.2,
-
-            roughness: 0.3
+            emissiveIntensity: 1.6
 
         }),
 
@@ -219,15 +265,11 @@ const materials = {
     cyan:
         new THREE.MeshStandardMaterial({
 
-            color: 0x36ddff,
+            color: 0x39e1ff,
 
-            emissive: 0x06394c,
+            emissive: 0x073b55,
 
-            emissiveIntensity: 2,
-
-            metalness: 0.25,
-
-            roughness: 0.3
+            emissiveIntensity: 2
 
         }),
 
@@ -235,9 +277,9 @@ const materials = {
     red:
         new THREE.MeshStandardMaterial({
 
-            color: 0xff344d,
+            color: 0xff303d,
 
-            emissive: 0x69000d,
+            emissive: 0x650000,
 
             emissiveIntensity: 2
 
@@ -247,11 +289,11 @@ const materials = {
     yellow:
         new THREE.MeshStandardMaterial({
 
-            color: 0xffc34d,
+            color: 0xffc247,
 
-            emissive: 0x583800,
+            emissive: 0x5a3800,
 
-            emissiveIntensity: 1.7
+            emissiveIntensity: 1.8
 
         }),
 
@@ -259,11 +301,11 @@ const materials = {
     green:
         new THREE.MeshStandardMaterial({
 
-            color: 0x35e0a0,
+            color: 0x43e69a,
 
-            emissive: 0x063c29,
+            emissive: 0x0b5835,
 
-            emissiveIntensity: 1.6
+            emissiveIntensity: 1.5
 
         })
 
@@ -272,7 +314,7 @@ const materials = {
 
 /*
 ==================================================
-CREATE BOX
+BOX
 ==================================================
 */
 
@@ -287,18 +329,17 @@ function createBox(
     material
 ) {
 
-    const geometry =
-        new THREE.BoxGeometry(
-            width,
-            height,
-            depth
-        );
-
-
     const mesh =
         new THREE.Mesh(
-            geometry,
+
+            new THREE.BoxGeometry(
+                width,
+                height,
+                depth
+            ),
+
             material
+
         );
 
 
@@ -324,7 +365,7 @@ function createBox(
 
 /*
 ==================================================
-CREATE FLOOR
+FLOOR
 ==================================================
 */
 
@@ -334,16 +375,8 @@ function createFloor(
     z,
     width,
     depth,
-    material =
-        materials.floor
+    material = materials.floor
 ) {
-
-    /*
-    The floor always sits at Y = 0.
-
-    No overlapping raised floors.
-    No gaps.
-    */
 
     return createBox(
 
@@ -351,13 +384,13 @@ function createFloor(
 
         x,
 
-        -0.10,
+        FLOOR_Y,
 
         z,
 
         width,
 
-        0.20,
+        0.25,
 
         depth,
 
@@ -370,15 +403,44 @@ function createFloor(
 
 /*
 ==================================================
-CREATE WALL
+CEILING
 ==================================================
+*/
 
-IMPORTANT:
+function createCeiling(
+    scene,
+    x,
+    z,
+    width,
+    depth
+) {
 
-The visual wall and collision wall use
-exactly the same dimensions.
+    return createBox(
 
-This prevents invisible walls.
+        scene,
+
+        x,
+
+        CEILING_Y,
+
+        z,
+
+        width,
+
+        0.12,
+
+        depth,
+
+        materials.wallDark
+
+    );
+
+}
+
+
+/*
+==================================================
+WALL
 ==================================================
 */
 
@@ -389,8 +451,7 @@ function createWall(
     z,
     width,
     depth,
-    material =
-        materials.wall
+    material = materials.wall
 ) {
 
     createBox(
@@ -423,11 +484,8 @@ function createWall(
         collision.addWall(
 
             x,
-
             z,
-
             width,
-
             depth
 
         );
@@ -439,7 +497,696 @@ function createWall(
 
 /*
 ==================================================
-CREATE LIGHT
+HORIZONTAL WALL WITH DOOR
+==================================================
+
+Creates:
+
+wall ---- DOOR ---- wall
+
+doorWidth = opening size
+
+==================================================
+*/
+
+function horizontalWallWithDoor(
+    scene,
+    collision,
+    x,
+    z,
+    totalWidth,
+    doorWidth,
+    material = materials.wall
+) {
+
+    const sideWidth =
+        (totalWidth - doorWidth) / 2;
+
+
+    if (sideWidth > 0.05) {
+
+        createWall(
+
+            scene,
+            collision,
+
+            x - (
+                doorWidth / 2 +
+                sideWidth / 2
+            ),
+
+            z,
+
+            sideWidth,
+            WALL_THICKNESS,
+            material
+
+        );
+
+
+        createWall(
+
+            scene,
+            collision,
+
+            x + (
+                doorWidth / 2 +
+                sideWidth / 2
+            ),
+
+            z,
+
+            sideWidth,
+            WALL_THICKNESS,
+            material
+
+        );
+
+    }
+
+
+    /*
+    Door frame
+    */
+
+    createDoorFrame(
+
+        scene,
+
+        x,
+        z,
+        doorWidth,
+        true
+
+    );
+
+}
+
+
+/*
+==================================================
+VERTICAL WALL WITH DOOR
+==================================================
+*/
+
+function verticalWallWithDoor(
+    scene,
+    collision,
+    x,
+    z,
+    totalDepth,
+    doorWidth,
+    material = materials.wall
+) {
+
+    const sideDepth =
+        (totalDepth - doorWidth) / 2;
+
+
+    if (sideDepth > 0.05) {
+
+        createWall(
+
+            scene,
+            collision,
+
+            x,
+
+            z - (
+                doorWidth / 2 +
+                sideDepth / 2
+            ),
+
+            WALL_THICKNESS,
+            sideDepth,
+            material
+
+        );
+
+
+        createWall(
+
+            scene,
+            collision,
+
+            x,
+
+            z + (
+                doorWidth / 2 +
+                sideDepth / 2
+            ),
+
+            WALL_THICKNESS,
+            sideDepth,
+            material
+
+        );
+
+    }
+
+
+    createDoorFrame(
+
+        scene,
+
+        x,
+        z,
+        doorWidth,
+        false
+
+    );
+
+}
+
+
+/*
+==================================================
+DOOR FRAME
+==================================================
+*/
+
+function createDoorFrame(
+    scene,
+    x,
+    z,
+    width,
+    horizontal
+) {
+
+    const frameMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: 0x263b55,
+
+            emissive: 0x0b1c35,
+
+            emissiveIntensity: 1
+
+        });
+
+
+    if (horizontal) {
+
+        createBox(
+
+            scene,
+
+            x - width / 2,
+
+            2,
+
+            z,
+
+            0.12,
+            4,
+            0.48,
+            frameMaterial
+
+        );
+
+
+        createBox(
+
+            scene,
+
+            x + width / 2,
+
+            2,
+
+            z,
+
+            0.12,
+            4,
+            0.48,
+            frameMaterial
+
+        );
+
+
+        createBox(
+
+            scene,
+
+            x,
+
+            3.9,
+
+            z,
+
+            width,
+            0.15,
+            0.48,
+            frameMaterial
+
+        );
+
+    } else {
+
+        createBox(
+
+            scene,
+
+            x,
+
+            2,
+
+            z - width / 2,
+
+            0.48,
+            4,
+            0.12,
+            frameMaterial
+
+        );
+
+
+        createBox(
+
+            scene,
+
+            x,
+
+            2,
+
+            z + width / 2,
+
+            0.48,
+            4,
+            0.12,
+            frameMaterial
+
+        );
+
+
+        createBox(
+
+            scene,
+
+            x,
+
+            3.9,
+
+            z,
+
+            0.48,
+            0.15,
+            width,
+
+            frameMaterial
+
+        );
+
+    }
+
+}
+
+
+/*
+==================================================
+ROOM
+==================================================
+*/
+
+function createRoom(
+    scene,
+    collision,
+    x,
+    z,
+    width,
+    depth,
+    material,
+    doors = {}
+) {
+
+    const north =
+        doors.north || 0;
+
+    const south =
+        doors.south || 0;
+
+    const east =
+        doors.east || 0;
+
+    const west =
+        doors.west || 0;
+
+
+    createFloor(
+
+        scene,
+
+        x,
+        z,
+
+        width,
+        depth,
+
+        materials.floorMetal
+
+    );
+
+
+    createCeiling(
+
+        scene,
+
+        x,
+        z,
+
+        width,
+        depth
+
+    );
+
+
+    /*
+    NORTH
+    */
+
+    if (north > 0) {
+
+        horizontalWallWithDoor(
+
+            scene,
+            collision,
+
+            x,
+            z - depth / 2,
+
+            width,
+            north,
+            material
+
+        );
+
+    } else {
+
+        createWall(
+
+            scene,
+            collision,
+
+            x,
+            z - depth / 2,
+
+            width,
+            WALL_THICKNESS,
+            material
+
+        );
+
+    }
+
+
+    /*
+    SOUTH
+    */
+
+    if (south > 0) {
+
+        horizontalWallWithDoor(
+
+            scene,
+            collision,
+
+            x,
+            z + depth / 2,
+
+            width,
+            south,
+            material
+
+        );
+
+    } else {
+
+        createWall(
+
+            scene,
+            collision,
+
+            x,
+            z + depth / 2,
+
+            width,
+            WALL_THICKNESS,
+            material
+
+        );
+
+    }
+
+
+    /*
+    EAST
+    */
+
+    if (east > 0) {
+
+        verticalWallWithDoor(
+
+            scene,
+            collision,
+
+            x + width / 2,
+            z,
+
+            depth,
+            east,
+            material
+
+        );
+
+    } else {
+
+        createWall(
+
+            scene,
+            collision,
+
+            x + width / 2,
+            z,
+
+            WALL_THICKNESS,
+            depth,
+            material
+
+        );
+
+    }
+
+
+    /*
+    WEST
+    */
+
+    if (west > 0) {
+
+        verticalWallWithDoor(
+
+            scene,
+            collision,
+
+            x - width / 2,
+            z,
+
+            depth,
+            west,
+            material
+
+        );
+
+    } else {
+
+        createWall(
+
+            scene,
+            collision,
+
+            x - width / 2,
+            z,
+
+            WALL_THICKNESS,
+            depth,
+            material
+
+        );
+
+    }
+
+
+    /*
+    Interior lighting
+    */
+
+    createLight(
+
+        scene,
+
+        x,
+        z,
+
+        0x566fff,
+        4,
+        18
+
+    );
+
+
+    return {
+
+        x,
+        z,
+        width,
+        depth
+
+    };
+
+}
+
+
+/*
+==================================================
+CORRIDOR
+==================================================
+*/
+
+function createCorridor(
+    scene,
+    x,
+    z,
+    width,
+    depth,
+    color = 0x3474ff
+) {
+
+    createFloor(
+
+        scene,
+
+        x,
+        z,
+
+        width,
+        depth,
+
+        materials.floorDark
+
+    );
+
+
+    createCeiling(
+
+        scene,
+
+        x,
+        z,
+
+        width,
+        depth
+
+    );
+
+
+    /*
+    Floor center strip
+    */
+
+    createBox(
+
+        scene,
+
+        x,
+        0.02,
+        z,
+
+        Math.min(width, 0.16),
+        0.025,
+        Math.min(depth, 0.16),
+
+        new THREE.MeshStandardMaterial({
+
+            color: color,
+
+            emissive: color,
+
+            emissiveIntensity: 1.8
+
+        })
+
+    );
+
+
+    /*
+    Ceiling lights
+    */
+
+    const count =
+        Math.max(
+
+            1,
+
+            Math.floor(
+                Math.max(width, depth) / 8
+            )
+
+        );
+
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        const t =
+            count === 1
+                ? 0
+                : i / (count - 1);
+
+
+        let lx = x;
+
+        let lz = z;
+
+
+        if (width >= depth) {
+
+            lx =
+                x -
+                width / 2 +
+                width * t;
+
+        } else {
+
+            lz =
+                z -
+                depth / 2 +
+                depth * t;
+
+        }
+
+
+        createLight(
+
+            scene,
+
+            lx,
+            lz,
+            color,
+            3,
+            12
+
+        );
+
+    }
+
+}
+
+
+/*
+==================================================
+LIGHT
 ==================================================
 */
 
@@ -448,7 +1195,7 @@ function createLight(
     x,
     z,
     color = 0x596cff,
-    intensity = 3.5,
+    intensity = 4,
     distance = 18
 ) {
 
@@ -456,9 +1203,7 @@ function createLight(
         new THREE.PointLight(
 
             color,
-
             intensity,
-
             distance
 
         );
@@ -467,9 +1212,7 @@ function createLight(
     light.position.set(
 
         x,
-
-        3.7,
-
+        3.55,
         z
 
     );
@@ -483,24 +1226,20 @@ function createLight(
         scene,
 
         x,
-
-        4.25,
-
+        3.94,
         z,
 
-        2.2,
-
+        1.6,
         0.08,
-
-        0.22,
+        0.3,
 
         new THREE.MeshStandardMaterial({
 
-            color,
+            color: color,
 
             emissive: color,
 
-            emissiveIntensity: 2
+            emissiveIntensity: 2.2
 
         })
 
@@ -511,7 +1250,7 @@ function createLight(
 
 /*
 ==================================================
-CREATE LIGHT STRIP
+STRIP
 ==================================================
 */
 
@@ -520,7 +1259,8 @@ function createStrip(
     x,
     z,
     width,
-    color = 0x3d72ff
+    depth,
+    color = 0x3474ff
 ) {
 
     createBox(
@@ -534,14 +1274,12 @@ function createStrip(
         z,
 
         width,
-
-        0.04,
-
-        0.12,
+        0.035,
+        depth,
 
         new THREE.MeshStandardMaterial({
 
-            color,
+            color: color,
 
             emissive: color,
 
@@ -556,302 +1294,7 @@ function createStrip(
 
 /*
 ==================================================
-CREATE DOOR
-==================================================
-*/
-
-function createDoor(
-    scene,
-    x,
-    z,
-    width = 3,
-    color = 0x3d72ff
-) {
-
-    createBox(
-
-        scene,
-
-        x,
-
-        1.65,
-
-        z,
-
-        width,
-
-        3.3,
-
-        0.18,
-
-        materials.wallDark
-
-    );
-
-
-    createBox(
-
-        scene,
-
-        x - width / 2 + 0.12,
-
-        1.65,
-
-        z - 0.11,
-
-        0.08,
-
-        3.0,
-
-        0.08,
-
-        new THREE.MeshStandardMaterial({
-
-            color,
-
-            emissive: color,
-
-            emissiveIntensity: 2
-
-        })
-
-    );
-
-
-    createBox(
-
-        scene,
-
-        x + width / 2 - 0.12,
-
-        1.65,
-
-        z - 0.11,
-
-        0.08,
-
-        3.0,
-
-        0.08,
-
-        new THREE.MeshStandardMaterial({
-
-            color,
-
-            emissive: color,
-
-            emissiveIntensity: 2
-
-        })
-
-    );
-
-}
-
-
-/*
-==================================================
-CREATE ROOM
-==================================================
-
-Room walls are created with openings.
-
-The openings are REAL openings, not invisible
-collision gaps.
-==================================================
-*/
-
-function createRoom(
-    scene,
-    collision,
-    x,
-    z,
-    width,
-    depth,
-    material
-) {
-
-    /*
-    Floor
-    */
-
-    createFloor(
-
-        scene,
-
-        x,
-
-        z,
-
-        width,
-
-        depth,
-
-        materials.floorMetal
-
-    );
-
-
-    /*
-    North
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        x - width / 4,
-        z - depth / 2,
-        width / 2 - 1.5,
-        WALL_THICKNESS,
-        material
-
-    );
-
-
-    createWall(
-
-        scene,
-        collision,
-
-        x + width / 4,
-        z - depth / 2,
-        width / 2 - 1.5,
-        WALL_THICKNESS,
-        material
-
-    );
-
-
-    /*
-    South
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        x - width / 4,
-        z + depth / 2,
-        width / 2 - 1.5,
-        WALL_THICKNESS,
-        material
-
-    );
-
-
-    createWall(
-
-        scene,
-        collision,
-
-        x + width / 4,
-        z + depth / 2,
-        width / 2 - 1.5,
-        WALL_THICKNESS,
-        material
-
-    );
-
-
-    /*
-    West
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        x - width / 2,
-        z,
-        WALL_THICKNESS,
-        depth,
-        material
-
-    );
-
-
-    /*
-    East
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        x + width / 2,
-        z,
-        WALL_THICKNESS,
-        depth,
-        material
-
-    );
-
-
-    /*
-    Doors
-    */
-
-    createDoor(
-
-        scene,
-
-        x,
-
-        z - depth / 2,
-
-        3,
-
-        0x3d72ff
-
-    );
-
-
-    createDoor(
-
-        scene,
-
-        x,
-
-        z + depth / 2,
-
-        3,
-
-        0x3d72ff
-
-    );
-
-
-    /*
-    Lighting
-    */
-
-    createLight(
-
-        scene,
-
-        x,
-
-        z,
-
-        0x6578ff,
-
-        2.5,
-
-        14
-
-    );
-
-}
-
-
-/*
-==================================================
-CREATE TERMINAL
+TASK TERMINAL
 ==================================================
 */
 
@@ -859,7 +1302,8 @@ function createTaskTerminal(
     scene,
     x,
     z,
-    label
+    label,
+    color = 0x3474ff
 ) {
 
     const group =
@@ -869,9 +1313,7 @@ function createTaskTerminal(
     group.position.set(
 
         x,
-
         0,
-
         z
 
     );
@@ -883,9 +1325,7 @@ function createTaskTerminal(
             new THREE.BoxGeometry(
 
                 0.85,
-
-                1.5,
-
+                1.45,
                 0.5
 
             ),
@@ -896,13 +1336,22 @@ function createTaskTerminal(
 
 
     body.position.y =
-        0.75;
-
-
-    body.castShadow = true;
+        0.72;
 
 
     group.add(body);
+
+
+    const screenMaterial =
+        new THREE.MeshStandardMaterial({
+
+            color: color,
+
+            emissive: color,
+
+            emissiveIntensity: 2
+
+        });
 
 
     const screen =
@@ -911,14 +1360,12 @@ function createTaskTerminal(
             new THREE.BoxGeometry(
 
                 0.58,
-
-                0.46,
-
-                0.04
+                0.42,
+                0.05
 
             ),
 
-            materials.blue
+            screenMaterial
 
         );
 
@@ -926,9 +1373,7 @@ function createTaskTerminal(
     screen.position.set(
 
         0,
-
         1.05,
-
         -0.27
 
     );
@@ -937,41 +1382,36 @@ function createTaskTerminal(
     group.add(screen);
 
 
-    const glow =
+    const light =
         new THREE.PointLight(
 
-            0x3377ff,
+            color,
 
-            1.4,
-
+            1.5,
             3
 
         );
 
 
-    glow.position.set(
+    light.position.set(
 
         0,
-
-        1.1,
-
+        1,
         -0.5
 
     );
 
 
-    group.add(glow);
+    group.add(light);
 
 
     group.userData = {
 
-        type:
-            "task",
+        type: "task",
 
         label,
 
-        completed:
-            false
+        completed: false
 
     };
 
@@ -996,6 +1436,19 @@ function createEmergencyButton(
     z
 ) {
 
+    const group =
+        new THREE.Group();
+
+
+    group.position.set(
+
+        x,
+        0,
+        z
+
+    );
+
+
     const base =
         new THREE.Mesh(
 
@@ -1003,7 +1456,7 @@ function createEmergencyButton(
 
                 0.7,
                 0.7,
-                0.22,
+                0.25,
                 24
 
             ),
@@ -1013,18 +1466,11 @@ function createEmergencyButton(
         );
 
 
-    base.position.set(
-
-        x,
-
-        0.11,
-
-        z
-
-    );
+    base.position.y =
+        0.125;
 
 
-    scene.add(base);
+    group.add(base);
 
 
     const button =
@@ -1034,7 +1480,7 @@ function createEmergencyButton(
 
                 0.4,
                 0.4,
-                0.28,
+                0.3,
                 24
 
             ),
@@ -1044,21 +1490,171 @@ function createEmergencyButton(
         );
 
 
-    button.position.set(
+    button.position.y =
+        0.4;
+
+
+    group.add(button);
+
+
+    group.userData = {
+
+        type: "emergency",
+
+        active: true
+
+    };
+
+
+    scene.add(group);
+
+
+    return group;
+
+}
+
+
+/*
+==================================================
+CRATES
+==================================================
+*/
+
+function createCrates(
+    scene,
+    x,
+    z,
+    count
+) {
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        const ox =
+            (Math.random() - 0.5) * 7;
+
+        const oz =
+            (Math.random() - 0.5) * 7;
+
+
+        createBox(
+
+            scene,
+
+            x + ox,
+
+            0.65,
+
+            z + oz,
+
+            1.1,
+            1.3,
+            1.1,
+
+            materials.cargo
+
+        );
+
+    }
+
+}
+
+
+/*
+==================================================
+REACTOR
+==================================================
+*/
+
+function createReactor(
+    scene,
+    x,
+    z
+) {
+
+    const core =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+
+                2.2,
+                2.2,
+                4.5,
+                32
+
+            ),
+
+            materials.metal
+
+        );
+
+
+    core.position.set(
 
         x,
-
-        0.34,
-
+        2.25,
         z
 
     );
 
 
-    scene.add(button);
+    scene.add(core);
 
 
-    return button;
+    const energy =
+        new THREE.Mesh(
+
+            new THREE.CylinderGeometry(
+
+                1.15,
+                1.15,
+                3.8,
+                32
+
+            ),
+
+            materials.cyan
+
+        );
+
+
+    energy.position.set(
+
+        x,
+        2.25,
+        z
+
+    );
+
+
+    scene.add(energy);
+
+
+    const glow =
+        new THREE.PointLight(
+
+            0x39e1ff,
+
+            8,
+
+            22
+
+        );
+
+
+    glow.position.set(
+
+        x,
+        2.5,
+        z
+
+    );
+
+
+    scene.add(glow);
 
 }
 
@@ -1074,187 +1670,64 @@ function createCentralHub(
     collision
 ) {
 
-    const width = 36;
+    /*
+    42 x 42
+    */
 
-    const depth = 32;
+    createRoom(
+
+        scene,
+        collision,
+
+        0,
+        0,
+
+        42,
+        42,
+
+        materials.wallDark,
+
+        {
+
+            north: 10,
+
+            south: 10,
+
+            east: 10,
+
+            west: 10
+
+        }
+
+    );
 
 
-    createFloor(
+    createStrip(
 
         scene,
 
         0,
-
         0,
 
-        width,
+        30,
+        0.25,
 
-        depth,
-
-        materials.floorMetal
-
-    );
-
-
-    /*
-    North boundary
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        -13,
-        -16,
-        10,
-        WALL_THICKNESS
+        0x3474ff
 
     );
 
 
-    createWall(
-
-        scene,
-        collision,
-
-        13,
-        -16,
-        10,
-        WALL_THICKNESS
-
-    );
-
-
-    /*
-    South boundary
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        -13,
-        16,
-        10,
-        WALL_THICKNESS
-
-    );
-
-
-    createWall(
-
-        scene,
-        collision,
-
-        13,
-        16,
-        10,
-        WALL_THICKNESS
-
-    );
-
-
-    /*
-    West boundary
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        -18,
-        0,
-        WALL_THICKNESS,
-        32
-
-    );
-
-
-    /*
-    East boundary
-    */
-
-    createWall(
-
-        scene,
-        collision,
-
-        18,
-        0,
-        WALL_THICKNESS,
-        32
-
-    );
-
-
-    /*
-    Main lights
-    */
-
-    createLight(
-
-        scene,
-        -10,
-        -8,
-        0x596cff,
-        4,
-        20
-
-    );
-
-
-    createLight(
-
-        scene,
-        10,
-        -8,
-        0x596cff,
-        4,
-        20
-
-    );
-
-
-    createLight(
-
-        scene,
-        -10,
-        8,
-        0x596cff,
-        4,
-        20
-
-    );
-
-
-    createLight(
-
-        scene,
-        10,
-        8,
-        0x596cff,
-        4,
-        20
-
-    );
-
-
-    /*
-    Central reactor console
-    */
-
-    createTaskTerminal(
+    createStrip(
 
         scene,
 
         0,
+        0,
 
-        -5,
+        0.25,
+        30,
 
-        "CENTRAL CONTROL"
+        0x3474ff
 
     );
 
@@ -1264,784 +1737,232 @@ function createCentralHub(
         scene,
 
         0,
+        0
 
-        4
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        0,
+        -8,
+
+        "CENTRAL CONTROL"
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -8,
+        0,
+
+        "STATION NETWORK"
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        8,
+        0,
+
+        "MISSION CONTROL"
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        0,
+        8,
+
+        "COMMUNICATIONS"
 
     );
 
 
     /*
-    Floor navigation lines
+    Decorative pillars
     */
 
-    createStrip(
+    const positions = [
 
-        scene,
-        0,
-        -10,
-        12,
-        0x3d72ff
+        [-14, -14],
 
-    );
+        [14, -14],
 
+        [-14, 14],
 
-    createStrip(
+        [14, 14]
 
-        scene,
-        0,
-        10,
-        12,
-        0x3d72ff
+    ];
 
-    );
 
-}
-
-
-/*
-==================================================
-RESEARCH
-==================================================
-*/
-
-function createResearchSector(
-    scene,
-    collision
-) {
-
-    const x = 0;
-
-    const z = -46;
-
-
-    createFloor(
-
-        scene,
-
-        x,
-
-        z,
-
-        60,
-
-        28,
-
-        materials.floorMetal
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        -16,
-
-        z,
-
-        24,
-
-        20,
-
-        materials.research
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        16,
-
-        z,
-
-        24,
-
-        20,
-
-        materials.research
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        -16,
-
-        z,
-
-        "RESEARCH TERMINAL"
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        16,
-
-        z,
-
-        "LABORATORY SYSTEM"
-
-    );
-
-
-    createLight(
-
-        scene,
-
-        0,
-
-        z,
-
-        0x3ddcff,
-
-        4,
-
-        24
-
-    );
-
-}
-
-
-/*
-==================================================
-SECURITY
-==================================================
-*/
-
-function createSecuritySector(
-    scene,
-    collision
-) {
-
-    const x = 0;
-
-    const z = 46;
-
-
-    createFloor(
-
-        scene,
-
-        x,
-
-        z,
-
-        60,
-
-        28,
-
-        materials.floorMetal
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        -16,
-
-        z,
-
-        24,
-
-        20,
-
-        materials.security
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        16,
-
-        z,
-
-        24,
-
-        20,
-
-        materials.security
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        -16,
-
-        z,
-
-        "SECURITY CONTROL"
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        16,
-
-        z,
-
-        "SURVEILLANCE SYSTEM"
-
-    );
-
-
-    createLight(
-
-        scene,
-
-        0,
-
-        z,
-
-        0xff3d52,
-
-        4,
-
-        24
-
-    );
-
-}
-
-
-/*
-==================================================
-MEDICAL
-==================================================
-*/
-
-function createMedicalSector(
-    scene,
-    collision
-) {
-
-    const x = -46;
-
-    const z = 0;
-
-
-    createFloor(
-
-        scene,
-
-        x,
-
-        z,
-
-        28,
-
-        60,
-
-        materials.floorMetal
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        x,
-
-        -16,
-
-        20,
-
-        24,
-
-        materials.medical
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        x,
-
-        16,
-
-        20,
-
-        24,
-
-        materials.medical
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        x,
-
-        -16,
-
-        "MEDICAL SYSTEM"
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        x,
-
-        16,
-
-        "LIFE SUPPORT"
-
-    );
-
-
-    createLight(
-
-        scene,
-
-        x,
-
-        0,
-
-        0x3dffcf,
-
-        4,
-
-        24
-
-    );
-
-}
-
-
-/*
-==================================================
-ENGINEERING
-==================================================
-*/
-
-function createEngineeringSector(
-    scene,
-    collision
-) {
-
-    const x = 46;
-
-    const z = 0;
-
-
-    createFloor(
-
-        scene,
-
-        x,
-
-        z,
-
-        28,
-
-        60,
-
-        materials.floorMetal
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        x,
-
-        -16,
-
-        20,
-
-        24,
-
-        materials.engineering
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        x,
-
-        16,
-
-        20,
-
-        24,
-
-        materials.engineering
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        x,
-
-        -16,
-
-        "ENGINE CONTROL"
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        x,
-
-        16,
-
-        "POWER SYSTEM"
-
-    );
-
-
-    createLight(
-
-        scene,
-
-        x,
-
-        0,
-
-        0xffbd3d,
-
-        4,
-
-        24
-
-    );
-
-}
-
-
-/*
-==================================================
-LOWER DECK
-==================================================
-*/
-
-function createLowerDeck(
-    scene,
-    collision
-) {
-
-    const z = 66;
-
-
-    createFloor(
-
-        scene,
-
-        0,
-
-        z,
-
-        100,
-
-        18,
-
-        materials.floorMetal
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        -28,
-
-        z,
-
-        36,
-
-        14,
-
-        materials.cargo
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        0,
-
-        z,
-
-        22,
-
-        14,
-
-        materials.reactor
-
-    );
-
-
-    createRoom(
-
-        scene,
-        collision,
-
-        28,
-
-        z,
-
-        36,
-
-        14,
-
-        materials.engineering
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        -28,
-
-        z,
-
-        "CARGO CONTROL"
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        0,
-
-        z,
-
-        "REACTOR CONTROL"
-
-    );
-
-
-    createTaskTerminal(
-
-        scene,
-
-        28,
-
-        z,
-
-        "POWER DISTRIBUTION"
-
-    );
-
-
-    createLight(
-
-        scene,
-
-        -28,
-
-        z,
-
-        0x6d7bff,
-
-        4,
-
-        20
-
-    );
-
-
-    createLight(
-
-        scene,
-
-        0,
-
-        z,
-
-        0xb85cff,
-
-        4,
-
-        20
-
-    );
-
-
-    createLight(
-
-        scene,
-
-        28,
-
-        z,
-
-        0xffbd3d,
-
-        4,
-
-        20
-
-    );
-
-}
-
-
-/*
-==================================================
-CORRIDOR
-==================================================
-*/
-
-function createCorridor(
-    scene,
-    collision,
-    x,
-    z,
-    width,
-    depth
-) {
-
-    createFloor(
-
-        scene,
-
-        x,
-
-        z,
-
-        width,
-
-        depth,
-
-        materials.floorMetal
-
-    );
-
-
-    /*
-    Corridor side walls.
-
-    Ends remain open.
-    */
-
-    if (
-        width > depth
+    for (
+        const [x, z] of positions
     ) {
 
-        createWall(
+        createBox(
 
             scene,
-            collision,
 
             x,
-            z - depth / 2,
-            width,
-            WALL_THICKNESS
-
-        );
-
-
-        createWall(
-
-            scene,
-            collision,
-
-            x,
-            z + depth / 2,
-            width,
-            WALL_THICKNESS
-
-        );
-
-    } else {
-
-        createWall(
-
-            scene,
-            collision,
-
-            x - width / 2,
+            1.5,
             z,
-            WALL_THICKNESS,
-            depth
 
-        );
+            0.6,
+            3,
+            0.6,
 
-
-        createWall(
-
-            scene,
-            collision,
-
-            x + width / 2,
-            z,
-            WALL_THICKNESS,
-            depth
+            materials.metal
 
         );
 
     }
 
+}
 
-    createStrip(
+
+/*
+==================================================
+NORTH RESEARCH
+==================================================
+*/
+
+function createResearch(
+    scene,
+    collision
+) {
+
+    createRoom(
+
+        scene,
+        collision,
+
+        0,
+        -60,
+
+        48,
+        28,
+
+        materials.research,
+
+        {
+
+            south: 12,
+
+            north: 8
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        -30,
+        -60,
+
+        24,
+        28,
+
+        materials.research,
+
+        {
+
+            east: 8
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        30,
+        -60,
+
+        24,
+        28,
+
+        materials.research,
+
+        {
+
+            west: 8
+
+        }
+
+    );
+
+
+    createTaskTerminal(
 
         scene,
 
-        x,
+        -10,
+        -60,
 
-        z,
+        "RESEARCH CORE",
 
-        Math.min(
-            width,
-            depth
-        ) * 0.55,
+        0x39e1ff
 
-        0x3d72ff
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        10,
+        -60,
+
+        "LABORATORY",
+
+        0x39e1ff
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -30,
+        -60,
+
+        "SPECIMEN CONTROL",
+
+        0x39e1ff
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        30,
+        -60,
+
+        "DATA ANALYSIS",
+
+        0x39e1ff
 
     );
 
@@ -2050,83 +1971,827 @@ function createCorridor(
 
 /*
 ==================================================
-CONNECT SECTORS
+SOUTH SECURITY
 ==================================================
 */
 
-function createConnections(
+function createSecurity(
     scene,
     collision
 ) {
 
-    /*
-    North
-    */
-
-    createCorridor(
+    createRoom(
 
         scene,
         collision,
 
         0,
-        -30,
+        60,
 
-        10,
-        28
+        48,
+        28,
 
-    );
+        materials.security,
 
+        {
 
-    /*
-    South
-    */
+            north: 12,
 
-    createCorridor(
+            south: 8
 
-        scene,
-        collision,
-
-        0,
-        30,
-
-        10,
-        28
+        }
 
     );
 
 
-    /*
-    West
-    */
-
-    createCorridor(
+    createRoom(
 
         scene,
         collision,
 
         -30,
-        0,
+        60,
 
+        24,
         28,
-        10
+
+        materials.security,
+
+        {
+
+            east: 8
+
+        }
 
     );
 
 
-    /*
-    East
-    */
-
-    createCorridor(
+    createRoom(
 
         scene,
         collision,
 
         30,
+        60,
+
+        24,
+        28,
+
+        materials.security,
+
+        {
+
+            west: 8
+
+        }
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -12,
+        60,
+
+        "SECURITY CONTROL",
+
+        0xff3d55
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        12,
+        60,
+
+        "SURVEILLANCE",
+
+        0xff3d55
+
+    );
+
+
+    createEmergencyButton(
+
+        scene,
+
+        0,
+        60
+
+    );
+
+}
+
+
+/*
+==================================================
+WEST MEDICAL
+==================================================
+*/
+
+function createMedical(
+    scene,
+    collision
+) {
+
+    createRoom(
+
+        scene,
+        collision,
+
+        -60,
         0,
 
         28,
+        48,
+
+        materials.medical,
+
+        {
+
+            east: 12,
+
+            west: 8
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        -60,
+        -32,
+
+        28,
+        22,
+
+        materials.medical,
+
+        {
+
+            south: 8
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        -60,
+        32,
+
+        28,
+        22,
+
+        materials.quarantine,
+
+        {
+
+            north: 8
+
+        }
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -60,
+        -8,
+
+        "MEDICAL SYSTEM",
+
+        0x43e69a
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -60,
+        8,
+
+        "LIFE SUPPORT",
+
+        0x43e69a
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -60,
+        32,
+
+        "QUARANTINE CONTROL",
+
+        0xffc247
+
+    );
+
+}
+
+
+/*
+==================================================
+EAST ENGINEERING
+==================================================
+*/
+
+function createEngineering(
+    scene,
+    collision
+) {
+
+    createRoom(
+
+        scene,
+        collision,
+
+        60,
+        0,
+
+        28,
+        48,
+
+        materials.engineering,
+
+        {
+
+            west: 12,
+
+            east: 8
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        60,
+        -32,
+
+        28,
+        22,
+
+        materials.maintenance,
+
+        {
+
+            south: 8
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        60,
+        32,
+
+        28,
+        22,
+
+        materials.reactor,
+
+        {
+
+            north: 8
+
+        }
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        60,
+        -8,
+
+        "ENGINE CONTROL",
+
+        0xffc247
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        60,
+        8,
+
+        "POWER SYSTEM",
+
+        0xffc247
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        60,
+        32,
+
+        "REACTOR CONTROL",
+
+        0x39e1ff
+
+    );
+
+
+    createReactor(
+
+        scene,
+
+        60,
+        32
+
+    );
+
+}
+
+
+/*
+==================================================
+COMMAND
+==================================================
+*/
+
+function createCommand(
+    scene,
+    collision
+) {
+
+    createRoom(
+
+        scene,
+        collision,
+
+        0,
+        -82,
+
+        44,
+        16,
+
+        materials.command,
+
+        {
+
+            south: 10
+
+        }
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -12,
+        -82,
+
+        "COMMAND",
+
+        0xb66cff
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        12,
+        -82,
+
+        "NAVIGATION",
+
+        0xb66cff
+
+    );
+
+}
+
+
+/*
+==================================================
+HANGAR
+==================================================
+*/
+
+function createHangar(
+    scene,
+    collision
+) {
+
+    createRoom(
+
+        scene,
+        collision,
+
+        82,
+        0,
+
+        16,
+        52,
+
+        materials.hangar,
+
+        {
+
+            west: 10
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        82,
+        -35,
+
+        16,
+        18,
+
+        materials.hangar,
+
+        {
+
+            south: 7
+
+        }
+
+    );
+
+
+    createRoom(
+
+        scene,
+        collision,
+
+        82,
+        35,
+
+        16,
+        18,
+
+        materials.hangar,
+
+        {
+
+            north: 7
+
+        }
+
+    );
+
+
+    createCrates(
+
+        scene,
+
+        82,
+        0,
+
         10
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        82,
+        -35,
+
+        "DOCKING CONTROL",
+
+        0x39e1ff
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        82,
+        35,
+
+        "HANGAR CONTROL",
+
+        0x39e1ff
+
+    );
+
+}
+
+
+/*
+==================================================
+CARGO
+==================================================
+*/
+
+function createCargo(
+    scene,
+    collision
+) {
+
+    createRoom(
+
+        scene,
+        collision,
+
+        -82,
+        0,
+
+        16,
+        52,
+
+        materials.cargo,
+
+        {
+
+            east: 10
+
+        }
+
+    );
+
+
+    createCrates(
+
+        scene,
+
+        -82,
+        0,
+
+        18
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -82,
+        -20,
+
+        "CARGO SYSTEM",
+
+        0xffc247
+
+    );
+
+
+    createTaskTerminal(
+
+        scene,
+
+        -82,
+        20,
+
+        "LOGISTICS",
+
+        0xffc247
+
+    );
+
+}
+
+
+/*
+==================================================
+CONNECTING CORRIDORS
+==================================================
+*/
+
+function createConnections(
+    scene
+) {
+
+    /*
+    NORTH
+    */
+
+    createCorridor(
+
+        scene,
+
+        0,
+        -51,
+
+        12,
+        18,
+
+        0x3474ff
+
+    );
+
+
+    createCorridor(
+
+        scene,
+
+        0,
+        -71,
+
+        12,
+        14,
+
+        0x596cff
+
+    );
+
+
+    /*
+    SOUTH
+    */
+
+    createCorridor(
+
+        scene,
+
+        0,
+        51,
+
+        12,
+        18,
+
+        0xff3d55
+
+    );
+
+
+    /*
+    WEST
+    */
+
+    createCorridor(
+
+        scene,
+
+        -51,
+        0,
+
+        18,
+        12,
+
+        0x43e69a
+
+    );
+
+
+    createCorridor(
+
+        scene,
+
+        -71,
+        0,
+
+        14,
+        12,
+
+        0xffc247
+
+    );
+
+
+    /*
+    EAST
+    */
+
+    createCorridor(
+
+        scene,
+
+        51,
+        0,
+
+        18,
+        12,
+
+        0xffc247
+
+    );
+
+
+    createCorridor(
+
+        scene,
+
+        71,
+        0,
+
+        14,
+        12,
+
+        0x39e1ff
+
+    );
+
+
+    /*
+    Diagonal / secondary circulation
+    */
+
+    createCorridor(
+
+        scene,
+
+        -35,
+        -35,
+
+        10,
+        10,
+
+        0x3474ff
+
+    );
+
+
+    createCorridor(
+
+        scene,
+
+        35,
+        -35,
+
+        10,
+        10,
+
+        0x39e1ff
+
+    );
+
+
+    createCorridor(
+
+        scene,
+
+        -35,
+        35,
+
+        10,
+        10,
+
+        0x43e69a
+
+    );
+
+
+    createCorridor(
+
+        scene,
+
+        35,
+        35,
+
+        10,
+        10,
+
+        0xffc247
 
     );
 
@@ -2144,16 +2809,19 @@ function createOuterBoundary(
     collision
 ) {
 
+    const size =
+        WORLD_SIZE;
+
+
     createWall(
 
         scene,
         collision,
 
         0,
+        -HALF_WORLD,
 
-        -HALF_DEPTH,
-
-        WORLD_WIDTH,
+        size,
         WALL_THICKNESS,
         materials.wallDark
 
@@ -2166,10 +2834,9 @@ function createOuterBoundary(
         collision,
 
         0,
+        HALF_WORLD,
 
-        HALF_DEPTH,
-
-        WORLD_WIDTH,
+        size,
         WALL_THICKNESS,
         materials.wallDark
 
@@ -2181,12 +2848,11 @@ function createOuterBoundary(
         scene,
         collision,
 
-        -HALF_WIDTH,
-
+        -HALF_WORLD,
         0,
 
         WALL_THICKNESS,
-        WORLD_DEPTH,
+        size,
         materials.wallDark
 
     );
@@ -2197,13 +2863,46 @@ function createOuterBoundary(
         scene,
         collision,
 
-        HALF_WIDTH,
-
+        HALF_WORLD,
         0,
 
         WALL_THICKNESS,
-        WORLD_DEPTH,
+        size,
         materials.wallDark
+
+    );
+
+}
+
+
+/*
+==================================================
+WORLD FLOOR
+==================================================
+*/
+
+function createWorldFloor(
+    scene
+) {
+
+    /*
+    ONE giant floor only.
+
+    No overlapping floor slabs.
+    This prevents Z-fighting.
+    */
+
+    createFloor(
+
+        scene,
+
+        0,
+        0,
+
+        WORLD_SIZE - 2,
+        WORLD_SIZE - 2,
+
+        materials.floor
 
     );
 
@@ -2221,41 +2920,38 @@ function createDecoration(
 ) {
 
     /*
-    Central pillars
+    Central lights
     */
 
-    const positions = [
+    const lights = [
 
-        [-14, -10],
-        [14, -10],
-        [-14, 10],
-        [14, 10]
+        [-15, -15],
+
+        [15, -15],
+
+        [-15, 15],
+
+        [15, 15],
+
+        [0, 0]
 
     ];
 
 
     for (
-        const position
-        of positions
+        const [x, z] of lights
     ) {
 
-        createBox(
+        createLight(
 
             scene,
 
-            position[0],
+            x,
+            z,
 
-            1.25,
-
-            position[1],
-
-            0.5,
-
-            2.5,
-
-            0.5,
-
-            materials.metal
+            0x596cff,
+            5,
+            20
 
         );
 
@@ -2263,26 +2959,41 @@ function createDecoration(
 
 
     /*
-    Long navigation strips
+    Navigation strips
     */
 
     for (
-        let z = -60;
-        z <= 60;
-        z += 10
+        let i = -80;
+        i <= 80;
+        i += 20
     ) {
 
         createStrip(
 
             scene,
 
+            i,
             0,
 
-            z,
+            6,
+            0.12,
 
-            4,
+            0x273cff
 
-            0x243dff
+        );
+
+
+        createStrip(
+
+            scene,
+
+            0,
+            i,
+
+            0.12,
+            6,
+
+            0x273cff
 
         );
 
@@ -2304,9 +3015,9 @@ function(
 ) {
 
     /*
-    ==================================================
-    CLEAR COLLISION
-    ==================================================
+    ------------------------------------------
+    CLEAR OLD COLLISION
+    ------------------------------------------
     */
 
     if (
@@ -2321,177 +3032,157 @@ function(
 
 
     /*
-    ==================================================
-    CONTINUOUS MASTER FLOOR
-    ==================================================
-
-    One giant floor.
-
-    This is the important fix for the
-    old floor gaps.
+    ------------------------------------------
+    ONE GLOBAL FLOOR
+    ------------------------------------------
     */
 
-    createFloor(
-
-        scene,
-
-        0,
-
-        0,
-
-        WORLD_WIDTH,
-        WORLD_DEPTH,
-
-        materials.floor
-
+    createWorldFloor(
+        scene
     );
 
 
     /*
-    ==================================================
-    CENTRAL HUB
-    ==================================================
+    ------------------------------------------
+    CENTRAL
+    ------------------------------------------
     */
 
     createCentralHub(
-
         scene,
         collision
-
     );
 
 
     /*
-    ==================================================
-    SECTORS
-    ==================================================
+    ------------------------------------------
+    NORTH
+    ------------------------------------------
     */
 
-    createResearchSector(
-
+    createResearch(
         scene,
         collision
-
     );
 
 
-    createSecuritySector(
-
+    createCommand(
         scene,
         collision
-
-    );
-
-
-    createMedicalSector(
-
-        scene,
-        collision
-
-    );
-
-
-    createEngineeringSector(
-
-        scene,
-        collision
-
-    );
-
-
-    createLowerDeck(
-
-        scene,
-        collision
-
     );
 
 
     /*
-    ==================================================
-    CONNECTIONS
-    ==================================================
+    ------------------------------------------
+    SOUTH
+    ------------------------------------------
+    */
+
+    createSecurity(
+        scene,
+        collision
+    );
+
+
+    /*
+    ------------------------------------------
+    WEST
+    ------------------------------------------
+    */
+
+    createMedical(
+        scene,
+        collision
+    );
+
+
+    createCargo(
+        scene,
+        collision
+    );
+
+
+    /*
+    ------------------------------------------
+    EAST
+    ------------------------------------------
+    */
+
+    createEngineering(
+        scene,
+        collision
+    );
+
+
+    createHangar(
+        scene,
+        collision
+    );
+
+
+    /*
+    ------------------------------------------
+    CORRIDORS
+    ------------------------------------------
     */
 
     createConnections(
-
-        scene,
-        collision
-
+        scene
     );
 
 
     /*
-    ==================================================
-    OUTER WALL
-    ==================================================
+    ------------------------------------------
+    BOUNDARY
+    ------------------------------------------
     */
 
     createOuterBoundary(
-
         scene,
         collision
-
     );
 
 
     /*
-    ==================================================
+    ------------------------------------------
     DECORATION
-    ==================================================
+    ------------------------------------------
     */
 
     createDecoration(
-
         scene
-
     );
 
 
     /*
-    ==================================================
-    GLOBAL LIGHT
-    ==================================================
-    */
-
-    const ambient =
-        new THREE.HemisphereLight(
-
-            0x8090ff,
-
-            0x080a10,
-
-            1.15
-
-        );
-
-
-    scene.add(ambient);
-
-
-    /*
-    ==================================================
-    WORLD DATA
-    ==================================================
+    ------------------------------------------
+    WORLD INFORMATION
+    ------------------------------------------
     */
 
     return {
 
-        size: {
+        size:
+            WORLD_SIZE,
 
-            width:
-                WORLD_WIDTH,
+        height:
+            WALL_HEIGHT,
 
-            depth:
-                WORLD_DEPTH
-
-        },
-
-
-        map:
-
+        mapId:
             "VOID-STATION-01",
 
+        mapName:
+            "The Void Station",
+
+        spawn: {
+
+            x: 0,
+
+            y: 0,
+
+            z: 0
+
+        },
 
         rooms: [
 
@@ -2499,18 +3190,70 @@ function(
 
             "Research Sector",
 
+            "Command",
+
             "Security Sector",
 
             "Medical Sector",
 
+            "Quarantine",
+
+            "Cargo",
+
             "Engineering Sector",
 
-            "Cargo Deck",
+            "Maintenance",
 
-            "Reactor Deck"
+            "Reactor",
+
+            "Hangar",
+
+            "Docking"
 
         ],
 
+        maps: [
+
+            {
+
+                id:
+                    "VOID-STATION-01",
+
+                name:
+                    "The Void Station",
+
+                size:
+                    "180x180"
+
+            },
+
+            {
+
+                id:
+                    "VOID-STATION-02",
+
+                name:
+                    "Deep Research Facility",
+
+                size:
+                    "Coming Soon"
+
+            },
+
+            {
+
+                id:
+                    "VOID-STATION-03",
+
+                name:
+                    "Orbital Colony",
+
+                size:
+                    "Coming Soon"
+
+            }
+
+        ],
 
         sectors: [
 
@@ -2537,6 +3280,16 @@ function(
             {
 
                 id:
+                    "command",
+
+                name:
+                    "Command"
+
+            },
+
+            {
+
+                id:
                     "security",
 
                 name:
@@ -2557,10 +3310,10 @@ function(
             {
 
                 id:
-                    "engineering",
+                    "quarantine",
 
                 name:
-                    "Engineering Sector"
+                    "Quarantine"
 
             },
 
@@ -2570,7 +3323,27 @@ function(
                     "cargo",
 
                 name:
-                    "Cargo Deck"
+                    "Cargo"
+
+            },
+
+            {
+
+                id:
+                    "engineering",
+
+                name:
+                    "Engineering"
+
+            },
+
+            {
+
+                id:
+                    "maintenance",
+
+                name:
+                    "Maintenance"
 
             },
 
@@ -2580,76 +3353,79 @@ function(
                     "reactor",
 
                 name:
-                    "Reactor Deck"
-
-            }
-
-        ],
-
-
-        maps: [
-
-            {
-
-                id:
-                    "VOID-STATION-01",
-
-                name:
-                    "Void Station"
+                    "Reactor"
 
             },
 
             {
 
                 id:
-                    "VOID-STATION-02",
+                    "hangar",
 
                 name:
-                    "Orbital Colony"
+                    "Hangar"
 
             },
 
             {
 
                 id:
-                    "VOID-STATION-03",
+                    "docking",
 
                 name:
-                    "Deep Research Facility"
+                    "Docking"
 
             }
 
         ],
-
 
         tasks: [
 
             "CENTRAL CONTROL",
 
-            "RESEARCH TERMINAL",
+            "STATION NETWORK",
 
-            "LABORATORY SYSTEM",
+            "MISSION CONTROL",
+
+            "COMMUNICATIONS",
+
+            "RESEARCH CORE",
+
+            "LABORATORY",
+
+            "SPECIMEN CONTROL",
+
+            "DATA ANALYSIS",
+
+            "COMMAND",
+
+            "NAVIGATION",
 
             "SECURITY CONTROL",
 
-            "SURVEILLANCE SYSTEM",
+            "SURVEILLANCE",
 
             "MEDICAL SYSTEM",
 
             "LIFE SUPPORT",
 
+            "QUARANTINE CONTROL",
+
+            "CARGO SYSTEM",
+
+            "LOGISTICS",
+
             "ENGINE CONTROL",
 
             "POWER SYSTEM",
 
-            "CARGO CONTROL",
-
             "REACTOR CONTROL",
 
-            "POWER DISTRIBUTION"
+            "DOCKING CONTROL",
+
+            "HANGAR CONTROL"
 
         ],
-
 
         emergencyButton:
             true
