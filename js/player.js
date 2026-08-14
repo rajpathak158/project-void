@@ -19,11 +19,35 @@ class PlayerController {
 
         /*
         ==========================================
+        PLAYER IDENTITY
+        ==========================================
+        */
+
+        this.playerId =
+            this.createPlayerId();
+
+        this.playerName =
+            localStorage.getItem(
+                "void_player_name"
+            ) || "";
+
+
+        this.playerColor =
+            this.createPlayerColor();
+
+
+        this.ready =
+            false;
+
+
+        /*
+        ==========================================
         MOVEMENT
         ==========================================
         */
 
         this.speed = 4;
+
         this.runSpeed = 6.5;
 
         this.moveInput =
@@ -31,9 +55,11 @@ class PlayerController {
 
         this.keys = {};
 
-        this.joystickActive = false;
+        this.joystickActive =
+            false;
 
-        this.joystickTouchId = null;
+        this.joystickTouchId =
+            null;
 
 
         /*
@@ -63,9 +89,11 @@ class PlayerController {
         ==========================================
         */
 
-        this.cameraTouchId = null;
+        this.cameraTouchId =
+            null;
 
-        this.cameraTouchActive = false;
+        this.cameraTouchActive =
+            false;
 
         this.lastCameraX = 0;
 
@@ -74,11 +102,18 @@ class PlayerController {
 
         /*
         ==========================================
-        CREATE
+        CREATE PLAYER
         ==========================================
         */
 
         this.createPlayer();
+
+
+        /*
+        ==========================================
+        INPUT
+        ==========================================
+        */
 
         this.setupKeyboard();
 
@@ -87,6 +122,74 @@ class PlayerController {
         this.setupCameraTouch();
 
         this.setupMouseCamera();
+
+
+        /*
+        ==========================================
+        NAME SCREEN
+        ==========================================
+        */
+
+        this.createNameScreen();
+
+    }
+
+
+    /*
+    ==========================================
+    PLAYER ID
+    ==========================================
+    */
+
+    createPlayerId() {
+
+        return (
+            "VOID-" +
+            Date.now().toString(36) +
+            "-" +
+            Math.random()
+                .toString(36)
+                .substring(2, 8)
+        ).toUpperCase();
+
+    }
+
+
+    /*
+    ==========================================
+    PLAYER COLOR
+    ==========================================
+    */
+
+    createPlayerColor() {
+
+        const colors = [
+
+            0x3d6dff,
+
+            0xff3d5a,
+
+            0x38d9a9,
+
+            0xffc107,
+
+            0xb66cff,
+
+            0xff7a3d,
+
+            0x3ddcff,
+
+            0xff5ac8
+
+        ];
+
+
+        return colors[
+            Math.floor(
+                Math.random() *
+                colors.length
+            )
+        ];
 
     }
 
@@ -104,11 +207,14 @@ class PlayerController {
 
 
         /*
+        ==========================================
         BODY
+        ==========================================
         */
 
         const body =
             new THREE.Mesh(
+
                 new THREE.CapsuleGeometry(
                     0.45,
                     0.8,
@@ -117,25 +223,39 @@ class PlayerController {
                 ),
 
                 new THREE.MeshStandardMaterial({
-                    color: 0x3d6dff,
+
+                    color:
+                        this.playerColor,
+
                     roughness: 0.5
+
                 })
+
             );
 
 
-        body.position.y = 1.05;
+        body.position.y =
+            1.05;
 
-        body.castShadow = true;
 
-        this.player.add(body);
+        body.castShadow =
+            true;
+
+
+        this.player.add(
+            body
+        );
 
 
         /*
+        ==========================================
         HEAD
+        ==========================================
         */
 
         const head =
             new THREE.Mesh(
+
                 new THREE.SphereGeometry(
                     0.48,
                     24,
@@ -143,25 +263,39 @@ class PlayerController {
                 ),
 
                 new THREE.MeshStandardMaterial({
-                    color: 0x4778ff,
+
+                    color:
+                        this.playerColor,
+
                     roughness: 0.45
+
                 })
+
             );
 
 
-        head.position.y = 2;
+        head.position.y =
+            2;
 
-        head.castShadow = true;
 
-        this.player.add(head);
+        head.castShadow =
+            true;
+
+
+        this.player.add(
+            head
+        );
 
 
         /*
+        ==========================================
         VISOR
+        ==========================================
         */
 
         const visor =
             new THREE.Mesh(
+
                 new THREE.SphereGeometry(
                     0.28,
                     20,
@@ -169,12 +303,24 @@ class PlayerController {
                 ),
 
                 new THREE.MeshStandardMaterial({
-                    color: 0x8be9ff,
-                    metalness: 0.8,
-                    roughness: 0.15,
-                    emissive: 0x123c55,
-                    emissiveIntensity: 0.5
+
+                    color:
+                        0x8be9ff,
+
+                    metalness:
+                        0.8,
+
+                    roughness:
+                        0.15,
+
+                    emissive:
+                        0x123c55,
+
+                    emissiveIntensity:
+                        0.5
+
                 })
+
             );
 
 
@@ -192,15 +338,20 @@ class PlayerController {
         );
 
 
-        this.player.add(visor);
+        this.player.add(
+            visor
+        );
 
 
         /*
+        ==========================================
         BACKPACK
+        ==========================================
         */
 
         const backpack =
             new THREE.Mesh(
+
                 new THREE.BoxGeometry(
                     0.65,
                     0.9,
@@ -208,9 +359,15 @@ class PlayerController {
                 ),
 
                 new THREE.MeshStandardMaterial({
-                    color: 0x20263a,
-                    roughness: 0.7
+
+                    color:
+                        0x20263a,
+
+                    roughness:
+                        0.7
+
                 })
+
             );
 
 
@@ -221,13 +378,19 @@ class PlayerController {
         );
 
 
-        backpack.castShadow = true;
+        backpack.castShadow =
+            true;
 
-        this.player.add(backpack);
+
+        this.player.add(
+            backpack
+        );
 
 
         /*
+        ==========================================
         START POSITION
+        ==========================================
         */
 
         this.player.position.set(
@@ -239,6 +402,636 @@ class PlayerController {
 
         this.scene.add(
             this.player
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    NAME SCREEN
+    ==========================================
+    */
+
+    createNameScreen() {
+
+        this.nameScreen =
+            document.createElement(
+                "div"
+            );
+
+
+        this.nameScreen.id =
+            "void-name-screen";
+
+
+        this.nameScreen.innerHTML = `
+
+            <div id="void-name-box">
+
+                <div id="void-name-small">
+                    PROJECT: VOID
+                </div>
+
+                <div id="void-name-title">
+                    ENTER YOUR NAME
+                </div>
+
+                <div id="void-name-subtitle">
+                    Your identity will be used
+                    in multiplayer.
+                </div>
+
+                <input
+                    id="void-name-input"
+                    type="text"
+                    maxlength="16"
+                    autocomplete="off"
+                    placeholder="Enter player name"
+                >
+
+                <button
+                    id="void-name-button"
+                >
+                    ENTER STATION
+                </button>
+
+                <div id="void-player-id">
+                    ID: ${this.playerId}
+                </div>
+
+            </div>
+
+        `;
+
+
+        /*
+        ==========================================
+        STYLE
+        ==========================================
+        */
+
+        const style =
+            document.createElement(
+                "style"
+            );
+
+
+        style.textContent = `
+
+            #void-name-screen {
+
+                position: fixed;
+
+                inset: 0;
+
+                z-index: 99999;
+
+                display: flex;
+
+                align-items: center;
+
+                justify-content: center;
+
+                background:
+                    radial-gradient(
+                        circle at center,
+                        rgba(30,40,90,0.35),
+                        rgba(2,3,8,0.97)
+                    );
+
+                font-family:
+                    Arial,
+                    Helvetica,
+                    sans-serif;
+
+                color: white;
+
+            }
+
+
+            #void-name-box {
+
+                width:
+                    min(520px, 86vw);
+
+                padding:
+                    42px 34px;
+
+                border:
+                    1px solid
+                    rgba(100,130,255,0.45);
+
+                border-radius:
+                    24px;
+
+                background:
+                    rgba(12,15,29,0.96);
+
+                box-shadow:
+                    0 25px 80px
+                    rgba(0,0,0,0.7);
+
+                text-align:
+                    center;
+
+                backdrop-filter:
+                    blur(18px);
+
+            }
+
+
+            #void-name-small {
+
+                font-size:
+                    14px;
+
+                letter-spacing:
+                    6px;
+
+                color:
+                    #8994b8;
+
+                margin-bottom:
+                    18px;
+
+            }
+
+
+            #void-name-title {
+
+                font-size:
+                    32px;
+
+                font-weight:
+                    800;
+
+                letter-spacing:
+                    2px;
+
+                margin-bottom:
+                    12px;
+
+            }
+
+
+            #void-name-subtitle {
+
+                color:
+                    #858ba3;
+
+                font-size:
+                    14px;
+
+                line-height:
+                    1.5;
+
+                margin-bottom:
+                    28px;
+
+            }
+
+
+            #void-name-input {
+
+                width:
+                    100%;
+
+                height:
+                    58px;
+
+                padding:
+                    0 18px;
+
+                box-sizing:
+                    border-box;
+
+                border:
+                    1px solid
+                    rgba(120,140,255,0.35);
+
+                border-radius:
+                    14px;
+
+                outline:
+                    none;
+
+                background:
+                    rgba(255,255,255,0.06);
+
+                color:
+                    white;
+
+                font-size:
+                    17px;
+
+                text-align:
+                    center;
+
+                margin-bottom:
+                    14px;
+
+            }
+
+
+            #void-name-input:focus {
+
+                border-color:
+                    #4778ff;
+
+                box-shadow:
+                    0 0 20px
+                    rgba(71,120,255,0.25);
+
+            }
+
+
+            #void-name-button {
+
+                width:
+                    100%;
+
+                height:
+                    58px;
+
+                border:
+                    none;
+
+                border-radius:
+                    14px;
+
+                background:
+                    #3d6dff;
+
+                color:
+                    white;
+
+                font-size:
+                    15px;
+
+                font-weight:
+                    800;
+
+                letter-spacing:
+                    1.5px;
+
+                cursor:
+                    pointer;
+
+            }
+
+
+            #void-name-button:active {
+
+                transform:
+                    scale(0.98);
+
+            }
+
+
+            #void-player-id {
+
+                margin-top:
+                    22px;
+
+                color:
+                    #505772;
+
+                font-size:
+                    10px;
+
+                letter-spacing:
+                    1px;
+
+            }
+
+        `;
+
+
+        document.head.appendChild(
+            style
+        );
+
+
+        document.body.appendChild(
+            this.nameScreen
+        );
+
+
+        /*
+        ==========================================
+        ELEMENTS
+        ==========================================
+        */
+
+        const input =
+            this.nameScreen.querySelector(
+                "#void-name-input"
+            );
+
+
+        const button =
+            this.nameScreen.querySelector(
+                "#void-name-button"
+            );
+
+
+        /*
+        ==========================================
+        EXISTING NAME
+        ==========================================
+        */
+
+        if (
+            this.playerName
+        ) {
+
+            input.value =
+                this.playerName;
+
+        }
+
+
+        /*
+        ==========================================
+        ENTER BUTTON
+        ==========================================
+        */
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                this.confirmName();
+
+            }
+        );
+
+
+        /*
+        ==========================================
+        ENTER KEY
+        ==========================================
+        */
+
+        input.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    this.confirmName();
+
+                }
+
+            }
+        );
+
+
+        /*
+        ==========================================
+        FOCUS
+        ==========================================
+        */
+
+        setTimeout(
+            () => {
+
+                input.focus();
+
+            },
+            100
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    CONFIRM NAME
+    ==========================================
+    */
+
+    confirmName() {
+
+        const input =
+            this.nameScreen.querySelector(
+                "#void-name-input"
+            );
+
+
+        let name =
+            input.value.trim();
+
+
+        if (
+            !name
+        ) {
+
+            name =
+                "Player";
+
+        }
+
+
+        /*
+        Limit name
+        */
+
+        name =
+            name.substring(
+                0,
+                16
+            );
+
+
+        this.playerName =
+            name;
+
+
+        localStorage.setItem(
+            "void_player_name",
+            this.playerName
+        );
+
+
+        this.ready =
+            true;
+
+
+        /*
+        ==========================================
+        REMOVE SCREEN
+        ==========================================
+        */
+
+        this.nameScreen.style.opacity =
+            "0";
+
+
+        this.nameScreen.style.transition =
+            "opacity 0.35s ease";
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    this.nameScreen &&
+                    this.nameScreen.parentNode
+                ) {
+
+                    this.nameScreen.parentNode
+                        .removeChild(
+                            this.nameScreen
+                        );
+
+                }
+
+            },
+            350
+        );
+
+
+        /*
+        ==========================================
+        NAME TAG
+        ==========================================
+        */
+
+        this.createNameTag();
+
+
+        console.log(
+            "PLAYER READY:",
+            this.playerName
+        );
+
+
+        console.log(
+            "PLAYER ID:",
+            this.playerId
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    NAME TAG
+    ==========================================
+    */
+
+    createNameTag() {
+
+        const canvas =
+            document.createElement(
+                "canvas"
+            );
+
+
+        canvas.width =
+            512;
+
+        canvas.height =
+            128;
+
+
+        const context =
+            canvas.getContext(
+                "2d"
+            );
+
+
+        context.clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        context.font =
+            "bold 46px Arial";
+
+
+        context.textAlign =
+            "center";
+
+
+        context.textBaseline =
+            "middle";
+
+
+        context.fillStyle =
+            "#ffffff";
+
+
+        context.shadowColor =
+            "rgba(0,0,0,0.8)";
+
+
+        context.shadowBlur =
+            8;
+
+
+        context.fillText(
+            this.playerName,
+            256,
+            64
+        );
+
+
+        const texture =
+            new THREE.CanvasTexture(
+                canvas
+            );
+
+
+        texture.needsUpdate =
+            true;
+
+
+        const material =
+            new THREE.SpriteMaterial({
+
+                map:
+                    texture,
+
+                transparent:
+                    true,
+
+                depthTest:
+                    false
+
+            });
+
+
+        this.nameTag =
+            new THREE.Sprite(
+                material
+            );
+
+
+        this.nameTag.scale.set(
+            2.4,
+            0.6,
+            1
+        );
+
+
+        this.nameTag.position.set(
+            0,
+            2.8,
+            0
+        );
+
+
+        this.player.add(
+            this.nameTag
         );
 
     }
@@ -517,12 +1310,15 @@ class PlayerController {
 
 
         /*
-        Screen coordinates:
+        ==========================================
+        JOYSTICK AXIS
+        ==========================================
+
+        RIGHT = positive X
+        LEFT  = negative X
 
         UP    = negative Y
         DOWN  = positive Y
-        LEFT  = negative X
-        RIGHT = positive X
         */
 
         this.moveInput.set(
@@ -554,7 +1350,9 @@ class PlayerController {
             );
 
 
-        if (!canvas) {
+        if (
+            !canvas
+        ) {
 
             return;
 
@@ -570,14 +1368,10 @@ class PlayerController {
                     event.changedTouches
                 ) {
 
-                    /*
-                    Camera uses the
-                    right side of screen.
-                    */
-
                     if (
                         touch.clientX <
-                        window.innerWidth * 0.45
+                        window.innerWidth *
+                        0.45
                     ) {
 
                         continue;
@@ -647,18 +1441,10 @@ class PlayerController {
                         this.lastCameraY;
 
 
-                    /*
-                    Horizontal camera
-                    */
-
                     this.cameraYaw -=
                         dx *
                         this.cameraSensitivity;
 
-
-                    /*
-                    Vertical camera
-                    */
 
                     this.cameraPitch -=
                         dy *
@@ -667,9 +1453,13 @@ class PlayerController {
 
                     this.cameraPitch =
                         THREE.MathUtils.clamp(
+
                             this.cameraPitch,
+
                             this.cameraMinPitch,
+
                             this.cameraMaxPitch
+
                         );
 
 
@@ -738,7 +1528,8 @@ class PlayerController {
 
     setupMouseCamera() {
 
-        let dragging = false;
+        let dragging =
+            false;
 
         let lastX = 0;
 
@@ -749,7 +1540,8 @@ class PlayerController {
             "mousedown",
             event => {
 
-                dragging = true;
+                dragging =
+                    true;
 
                 lastX =
                     event.clientX;
@@ -765,7 +1557,8 @@ class PlayerController {
             "mouseup",
             () => {
 
-                dragging = false;
+                dragging =
+                    false;
 
             }
         );
@@ -775,7 +1568,9 @@ class PlayerController {
             "mousemove",
             event => {
 
-                if (!dragging) {
+                if (
+                    !dragging
+                ) {
 
                     return;
 
@@ -802,9 +1597,13 @@ class PlayerController {
 
                 this.cameraPitch =
                     THREE.MathUtils.clamp(
+
                         this.cameraPitch,
+
                         this.cameraMinPitch,
+
                         this.cameraMaxPitch
+
                     );
 
 
@@ -874,6 +1673,15 @@ class PlayerController {
         }
 
 
+        /*
+        IMPORTANT:
+        Always reset keyboard input.
+
+        This prevents the player from
+        continuing to move after releasing
+        a key.
+        */
+
         if (
             x !== 0 ||
             y !== 0
@@ -891,6 +1699,13 @@ class PlayerController {
                 y / length
             );
 
+        } else {
+
+            this.moveInput.set(
+                0,
+                0
+            );
+
         }
 
     }
@@ -904,7 +1719,9 @@ class PlayerController {
 
     update(delta) {
 
-        if (!this.player) {
+        if (
+            !this.player
+        ) {
 
             return;
 
@@ -912,7 +1729,27 @@ class PlayerController {
 
 
         /*
-        Keyboard controls
+        Don't move until player
+        has entered their name.
+        */
+
+        if (
+            !this.ready
+        ) {
+
+            this.updateCamera(
+                delta
+            );
+
+            return;
+
+        }
+
+
+        /*
+        ==========================================
+        KEYBOARD
+        ==========================================
         */
 
         if (
@@ -937,35 +1774,45 @@ class PlayerController {
             Math.abs(inputZ) > 0.01;
 
 
-        if (moving) {
+        if (
+            moving
+        ) {
 
             /*
-            ==================================
+            ======================================
             CAMERA RELATIVE MOVEMENT
-            ==================================
+            ======================================
             */
 
             const forward =
                 new THREE.Vector3(
+
                     Math.sin(
                         this.cameraYaw
                     ),
+
                     0,
+
                     Math.cos(
                         this.cameraYaw
                     )
+
                 );
 
 
             const right =
                 new THREE.Vector3(
+
                     Math.cos(
                         this.cameraYaw
                     ),
+
                     0,
+
                     -Math.sin(
                         this.cameraYaw
                     )
+
                 );
 
 
@@ -974,15 +1821,15 @@ class PlayerController {
 
 
             /*
-            ==================================
-            LEFT / RIGHT FIX
-            ==================================
+            ======================================
+            LEFT / RIGHT
+            ======================================
 
-            inputX positive = joystick RIGHT
+            Positive joystick X =
+            joystick moved RIGHT.
 
-            We use -inputX so that the
-            character moves in the expected
-            screen direction.
+            This is the direction fix
+            from our previous version.
             */
 
             direction.addScaledVector(
@@ -992,9 +1839,9 @@ class PlayerController {
 
 
             /*
-            ==================================
+            ======================================
             FORWARD / BACKWARD
-            ==================================
+            ======================================
             */
 
             direction.addScaledVector(
@@ -1007,9 +1854,9 @@ class PlayerController {
 
 
             /*
-            ==================================
+            ======================================
             SPEED
-            ==================================
+            ======================================
             */
 
             const running =
@@ -1024,9 +1871,9 @@ class PlayerController {
 
 
             /*
-            ==================================
-            POSITION
-            ==================================
+            ======================================
+            NEW POSITION
+            ======================================
             */
 
             const newX =
@@ -1044,9 +1891,9 @@ class PlayerController {
 
 
             /*
-            ==================================
+            ======================================
             COLLISION
-            ==================================
+            ======================================
             */
 
             if (
@@ -1073,9 +1920,9 @@ class PlayerController {
 
 
             /*
-            ==================================
+            ======================================
             PLAYER ROTATION
-            ==================================
+            ======================================
             */
 
             const targetRotation =
@@ -1087,12 +1934,16 @@ class PlayerController {
 
             this.player.rotation.y =
                 THREE.MathUtils.lerp(
+
                     this.player.rotation.y,
+
                     targetRotation,
+
                     Math.min(
                         1,
                         delta * 10
                     )
+
                 );
 
         }
@@ -1106,17 +1957,25 @@ class PlayerController {
 
         this.player.position.x =
             THREE.MathUtils.clamp(
+
                 this.player.position.x,
+
                 -15.2,
+
                 15.2
+
             );
 
 
         this.player.position.z =
             THREE.MathUtils.clamp(
+
                 this.player.position.z,
+
                 -15.2,
+
                 15.2
+
             );
 
 
@@ -1143,9 +2002,13 @@ class PlayerController {
 
         const target =
             new THREE.Vector3(
+
                 this.player.position.x,
+
                 this.player.position.y + 1.35,
+
                 this.player.position.z
+
             );
 
 
@@ -1189,22 +2052,60 @@ class PlayerController {
             verticalDistance;
 
 
-        /*
-        Smooth camera
-        */
-
         this.camera.position.lerp(
+
             desired,
+
             Math.min(
                 1,
                 delta * 8
             )
+
         );
 
 
         this.camera.lookAt(
             target
         );
+
+    }
+
+
+    /*
+    ==========================================
+    MULTIPLAYER DATA
+    ==========================================
+    */
+
+    getNetworkState() {
+
+        return {
+
+            id:
+                this.playerId,
+
+            name:
+                this.playerName,
+
+            color:
+                this.playerColor,
+
+            x:
+                this.player.position.x,
+
+            y:
+                this.player.position.y,
+
+            z:
+                this.player.position.z,
+
+            rotation:
+                this.player.rotation.y,
+
+            ready:
+                this.ready
+
+        };
 
     }
 
@@ -1225,6 +2126,34 @@ class PlayerController {
     getPosition() {
 
         return this.player.position;
+
+    }
+
+
+    getId() {
+
+        return this.playerId;
+
+    }
+
+
+    getName() {
+
+        return this.playerName;
+
+    }
+
+
+    getColor() {
+
+        return this.playerColor;
+
+    }
+
+
+    isReady() {
+
+        return this.ready;
 
     }
 
