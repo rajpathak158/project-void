@@ -22,11 +22,11 @@
 
 </head>
 
+
 <body>
 
-    <!-- =========================
-         HUD
-    ========================== -->
+
+    <!-- HUD -->
 
     <div id="hud">
 
@@ -41,18 +41,14 @@
     </div>
 
 
-    <!-- =========================
-         INTERACTION
-    ========================== -->
+    <!-- Interaction -->
 
     <div id="interaction">
         TAP TO INTERACT
     </div>
 
 
-    <!-- =========================
-         MOBILE JOYSTICK
-    ========================== -->
+    <!-- Mobile joystick -->
 
     <div id="joystick">
 
@@ -61,9 +57,7 @@
     </div>
 
 
-    <!-- =========================
-         GAME
-    ========================== -->
+    <!-- GAME -->
 
     <script type="module">
 
@@ -77,6 +71,10 @@
 
         import PlayerController from
             "./js/player.js";
+
+
+        import CollisionSystem from
+            "./js/collision.js";
 
 
         /*
@@ -217,26 +215,38 @@
 
         /*
         ==========================================
+        COLLISION SYSTEM
+        ==========================================
+        */
+
+        const collision =
+            new CollisionSystem();
+
+
+        /*
+        ==========================================
         BUILD WORLD
         ==========================================
         */
 
         const station =
             world.create(
-                scene
+                scene,
+                collision
             );
 
 
         /*
         ==========================================
-        CREATE PLAYER
+        PLAYER
         ==========================================
         */
 
         const player =
             new PlayerController(
                 scene,
-                camera
+                camera,
+                collision
             );
 
 
@@ -252,7 +262,7 @@
 
         /*
         ==========================================
-        ANIMATION
+        GAME LOOP
         ==========================================
         */
 
@@ -270,18 +280,10 @@
                 );
 
 
-            /*
-            Update player
-            */
-
             player.update(
                 delta
             );
 
-
-            /*
-            Render
-            */
 
             renderer.render(
                 scene,
@@ -324,9 +326,6 @@
         ==========================================
         */
 
-        animate();
-
-
         console.log(
             "PROJECT: VOID initialized."
         );
@@ -342,6 +341,9 @@
             "Tasks:",
             station.tasks
         );
+
+
+        animate();
 
     </script>
 
