@@ -13,6 +13,16 @@
         user-scalable=no"
     >
 
+    <meta
+        name="screen-orientation"
+        content="landscape"
+    >
+
+    <meta
+        name="orientation"
+        content="landscape"
+    >
+
     <title>PROJECT: VOID</title>
 
     <link
@@ -26,7 +36,31 @@
 <body>
 
 
-    <!-- HUD -->
+    <!-- ==========================================
+         LANDSCAPE WARNING
+    =========================================== -->
+
+    <div id="landscape-warning">
+
+        <div class="rotate-icon">
+            📱
+        </div>
+
+        <h2>
+            ROTATE YOUR PHONE
+        </h2>
+
+        <p>
+            PROJECT: VOID is designed
+            for landscape mode.
+        </p>
+
+    </div>
+
+
+    <!-- ==========================================
+         HUD
+    =========================================== -->
 
     <div id="hud">
 
@@ -41,14 +75,18 @@
     </div>
 
 
-    <!-- Interaction -->
+    <!-- ==========================================
+         INTERACTION
+    ========================================== -->
 
     <div id="interaction">
         TAP TO INTERACT
     </div>
 
 
-    <!-- Mobile joystick -->
+    <!-- ==========================================
+         MOBILE JOYSTICK
+    ========================================== -->
 
     <div id="joystick">
 
@@ -57,24 +95,61 @@
     </div>
 
 
-    <!-- GAME -->
+    <!-- ==========================================
+         GAME
+    ========================================== -->
 
     <script type="module">
+
+
+        /*
+        ==========================================
+        THREE.JS
+        ==========================================
+        */
 
         import * as THREE from
             "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 
+        /*
+        ==========================================
+        WORLD
+        ==========================================
+        */
+
         import world from
             "./js/world.js";
 
+
+        /*
+        ==========================================
+        PLAYER
+        ==========================================
+        */
 
         import PlayerController from
             "./js/player.js";
 
 
+        /*
+        ==========================================
+        COLLISION
+        ==========================================
+        */
+
         import CollisionSystem from
             "./js/collision.js";
+
+
+        /*
+        ==========================================
+        TASK SYSTEM
+        ==========================================
+        */
+
+        import TaskSystem from
+            "./js/tasks.js";
 
 
         /*
@@ -138,9 +213,12 @@
 
         const renderer =
             new THREE.WebGLRenderer({
+
                 antialias: true,
+
                 powerPreference:
                     "high-performance"
+
             });
 
 
@@ -164,6 +242,16 @@
 
         renderer.shadowMap.type =
             THREE.PCFSoftShadowMap;
+
+
+        /*
+        ==========================================
+        CANVAS
+        ==========================================
+        */
+
+        renderer.domElement.id =
+            "game-canvas";
 
 
         document.body.appendChild(
@@ -252,6 +340,62 @@
 
         /*
         ==========================================
+        TASK SYSTEM
+        ==========================================
+        */
+
+        const tasks =
+            new TaskSystem(
+                scene,
+                camera,
+                player
+            );
+
+
+        /*
+        ==========================================
+        REGISTER WORLD TASKS
+        ==========================================
+        */
+
+        const taskObjects =
+            [];
+
+
+        scene.traverse(
+            object => {
+
+                if (
+                    object.userData &&
+                    object.userData.type ===
+                    "task"
+                ) {
+
+                    taskObjects.push(
+                        object
+                    );
+
+                }
+
+            }
+        );
+
+
+        taskObjects.forEach(
+            object => {
+
+                tasks.register(
+                    object,
+                    object.userData.label ||
+                    "TASK"
+                );
+
+            }
+        );
+
+
+        /*
+        ==========================================
         CLOCK
         ==========================================
         */
@@ -285,6 +429,9 @@
             );
 
 
+            tasks.update();
+
+
             renderer.render(
                 scene,
                 camera
@@ -299,21 +446,44 @@
         ==========================================
         */
 
+        function resizeGame() {
+
+            const width =
+                window.innerWidth;
+
+
+            const height =
+                window.innerHeight;
+
+
+            camera.aspect =
+                width / height;
+
+
+            camera.updateProjectionMatrix();
+
+
+            renderer.setSize(
+                width,
+                height
+            );
+
+        }
+
+
         window.addEventListener(
             "resize",
+            resizeGame
+        );
+
+
+        window.addEventListener(
+            "orientationchange",
             () => {
 
-                camera.aspect =
-                    window.innerWidth /
-                    window.innerHeight;
-
-
-                camera.updateProjectionMatrix();
-
-
-                renderer.setSize(
-                    window.innerWidth,
-                    window.innerHeight
+                setTimeout(
+                    resizeGame,
+                    150
                 );
 
             }
@@ -322,7 +492,7 @@
 
         /*
         ==========================================
-        START
+        DEBUG
         ==========================================
         */
 
@@ -343,7 +513,22 @@
         );
 
 
+        console.log(
+            "Task objects:",
+            taskObjects.length
+        );
+
+
+        /*
+        ==========================================
+        START
+        ==========================================
+        */
+
+        resizeGame();
+
         animate();
+
 
     </script>
 
