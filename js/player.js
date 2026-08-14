@@ -243,7 +243,7 @@ class PlayerController {
         this.player.position.set(
             0,
             0,
-            5
+            0
         );
 
 
