@@ -4,15 +4,29 @@ import * as THREE from
 
 class PlayerController {
 
-    constructor(scene, camera) {
+    constructor(
+        scene,
+        camera,
+        collisionSystem
+    ) {
 
-        this.scene = scene;
-        this.camera = camera;
+        this.scene =
+            scene;
 
-        this.player = null;
+        this.camera =
+            camera;
 
-        this.speed = 4;
-        this.runSpeed = 6.5;
+        this.collision =
+            collisionSystem;
+
+        this.player =
+            null;
+
+        this.speed =
+            4;
+
+        this.runSpeed =
+            6.5;
 
         this.velocity =
             new THREE.Vector3();
@@ -22,14 +36,17 @@ class PlayerController {
 
         this.keys = {};
 
-        this.joystickActive = false;
+        this.joystickActive =
+            false;
 
         this.joystickStart =
             new THREE.Vector2();
 
-        this.cameraDistance = 7;
+        this.cameraDistance =
+            7;
 
-        this.cameraHeight = 4;
+        this.cameraHeight =
+            4;
 
         this.createPlayer();
 
@@ -53,7 +70,7 @@ class PlayerController {
 
 
         /*
-        Body
+        BODY
         */
 
         const bodyGeometry =
@@ -79,15 +96,20 @@ class PlayerController {
             );
 
 
-        body.position.y = 1.05;
+        body.position.y =
+            1.05;
 
-        body.castShadow = true;
+        body.castShadow =
+            true;
 
-        this.player.add(body);
+
+        this.player.add(
+            body
+        );
 
 
         /*
-        Head
+        HEAD
         */
 
         const headGeometry =
@@ -112,15 +134,20 @@ class PlayerController {
             );
 
 
-        head.position.y = 2;
+        head.position.y =
+            2;
 
-        head.castShadow = true;
+        head.castShadow =
+            true;
 
-        this.player.add(head);
+
+        this.player.add(
+            head
+        );
 
 
         /*
-        Visor
+        VISOR
         */
 
         const visorGeometry =
@@ -162,13 +189,13 @@ class PlayerController {
         );
 
 
-        visor.castShadow = true;
-
-        this.player.add(visor);
+        this.player.add(
+            visor
+        );
 
 
         /*
-        Backpack
+        BACKPACK
         */
 
         const backpackGeometry =
@@ -200,13 +227,17 @@ class PlayerController {
         );
 
 
-        backpack.castShadow = true;
+        backpack.castShadow =
+            true;
 
-        this.player.add(backpack);
+
+        this.player.add(
+            backpack
+        );
 
 
         /*
-        Player position
+        PLAYER POSITION
         */
 
         this.player.position.set(
@@ -235,8 +266,9 @@ class PlayerController {
             "keydown",
             event => {
 
-                this.keys[event.code] =
-                    true;
+                this.keys[
+                    event.code
+                ] = true;
 
             }
         );
@@ -246,8 +278,9 @@ class PlayerController {
             "keyup",
             event => {
 
-                this.keys[event.code] =
-                    false;
+                this.keys[
+                    event.code
+                ] = false;
 
             }
         );
@@ -275,14 +308,18 @@ class PlayerController {
             );
 
 
-        if (!joystick || !knob) {
+        if (
+            !joystick ||
+            !knob
+        ) {
 
             return;
 
         }
 
 
-        const maxDistance = 42;
+        const maxDistance =
+            42;
 
 
         joystick.addEventListener(
@@ -290,6 +327,7 @@ class PlayerController {
             event => {
 
                 event.preventDefault();
+
 
                 const touch =
                     event.touches[0];
@@ -366,6 +404,7 @@ class PlayerController {
 
                 event.preventDefault();
 
+
                 this.joystickActive =
                     false;
 
@@ -390,7 +429,7 @@ class PlayerController {
 
     /*
     ==========================================
-    JOYSTICK UPDATE
+    JOYSTICK
     ==========================================
     */
 
@@ -529,7 +568,7 @@ class PlayerController {
 
     /*
     ==========================================
-    MOVEMENT
+    UPDATE
     ==========================================
     */
 
@@ -543,11 +582,6 @@ class PlayerController {
 
         }
 
-
-        /*
-        Keyboard input only when
-        joystick isn't being used.
-        */
 
         if (
             !this.joystickActive
@@ -571,10 +605,12 @@ class PlayerController {
             Math.abs(inputZ) > 0.01;
 
 
-        if (moving) {
+        if (
+            moving
+        ) {
 
             /*
-            Camera-relative movement
+            CAMERA DIRECTION
             */
 
             const cameraDirection =
@@ -586,10 +622,16 @@ class PlayerController {
             );
 
 
-            cameraDirection.y = 0;
+            cameraDirection.y =
+                0;
+
 
             cameraDirection.normalize();
 
+
+            /*
+            RIGHT VECTOR
+            */
 
             const right =
                 new THREE.Vector3(
@@ -599,29 +641,31 @@ class PlayerController {
                 );
 
 
+            /*
+            MOVEMENT DIRECTION
+            */
+
             const direction =
                 new THREE.Vector3();
 
 
-            direction
-                .addScaledVector(
-                    right,
-                    inputX
-                );
+            direction.addScaledVector(
+                right,
+                inputX
+            );
 
 
-            direction
-                .addScaledVector(
-                    cameraDirection,
-                    -inputZ
-                );
+            direction.addScaledVector(
+                cameraDirection,
+                -inputZ
+            );
 
 
             direction.normalize();
 
 
             /*
-            Speed
+            SPEED
             */
 
             const running =
@@ -636,17 +680,46 @@ class PlayerController {
 
 
             /*
-            Movement
+            COLLISION-AWARE MOVEMENT
             */
 
-            this.player.position.addScaledVector(
-                direction,
-                speed * delta
-            );
+            const newX =
+                this.player.position.x +
+                direction.x *
+                speed *
+                delta;
+
+
+            const newZ =
+                this.player.position.z +
+                direction.z *
+                speed *
+                delta;
+
+
+            if (
+                this.collision
+            ) {
+
+                this.collision.movePlayer(
+                    this.player,
+                    newX,
+                    newZ
+                );
+
+            } else {
+
+                this.player.position.x =
+                    newX;
+
+                this.player.position.z =
+                    newZ;
+
+            }
 
 
             /*
-            Rotate character
+            ROTATE PLAYER
             */
 
             const targetRotation =
@@ -670,7 +743,7 @@ class PlayerController {
 
 
         /*
-        Station boundaries
+        STATION BOUNDARIES
         */
 
         this.player.position.x =
@@ -690,7 +763,7 @@ class PlayerController {
 
 
         /*
-        Camera
+        CAMERA
         */
 
         this.updateCamera(
@@ -702,7 +775,7 @@ class PlayerController {
 
     /*
     ==========================================
-    THIRD-PERSON CAMERA
+    CAMERA
     ==========================================
     */
 
@@ -745,7 +818,7 @@ class PlayerController {
 
     /*
     ==========================================
-    GET PLAYER
+    PLAYER OBJECT
     ==========================================
     */
 
@@ -758,7 +831,7 @@ class PlayerController {
 
     /*
     ==========================================
-    GET POSITION
+    PLAYER POSITION
     ==========================================
     */
 
