@@ -2,6 +2,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -14,112 +15,303 @@ body {
     touch-action: none;
 }
 
+body {
+    position: relative;
+}
+
 canvas {
-    display: block;
+    position: fixed;
+    inset: 0;
     width: 100%;
     height: 100%;
+    display: block;
+    touch-action: none;
 }
+
+
+/* ================================
+   HUD
+================================ */
 
 #hud {
     position: fixed;
-    top: 16px;
-    left: 16px;
+    top: 18px;
+    left: 18px;
     z-index: 10;
-
-    color: white;
-
     pointer-events: none;
-
+    color: white;
     text-shadow:
-        0 0 5px #000,
-        0 0 12px #6d4aff;
+        0 2px 8px #000;
 }
 
 #game-title {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 3px;
 }
 
 #location {
     margin-top: 5px;
-    font-size: 14px;
-    opacity: 0.75;
+    font-size: 11px;
+    letter-spacing: 2px;
+    opacity: 0.7;
 }
+
+
+/* ================================
+   INTERACTION
+================================ */
+
+#interaction {
+    position: fixed;
+    left: 50%;
+    bottom: 120px;
+    transform: translateX(-50%);
+
+    z-index: 20;
+
+    padding: 12px 20px;
+
+    border: 1px solid
+        rgba(255,255,255,0.25);
+
+    border-radius: 12px;
+
+    background:
+        rgba(5,8,18,0.85);
+
+    color: white;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    display: none;
+
+    pointer-events: none;
+
+    backdrop-filter: blur(8px);
+}
+
+
+/* ================================
+   JOYSTICK
+================================ */
 
 #joystick {
     position: fixed;
 
-    left: 25px;
-    bottom: 25px;
+    left: 28px;
+    bottom: 28px;
 
     width: 120px;
     height: 120px;
 
+    z-index: 30;
+
     border-radius: 50%;
 
-    border: 2px solid rgba(255,255,255,0.25);
+    background:
+        rgba(255,255,255,0.08);
 
-    background: rgba(255,255,255,0.06);
+    border:
+        2px solid
+        rgba(255,255,255,0.18);
 
-    z-index: 20;
+    box-shadow:
+        0 8px 30px
+        rgba(0,0,0,0.35);
 
-    display: none;
+    touch-action: none;
 }
 
 #joystick-knob {
     position: absolute;
 
-    width: 55px;
-    height: 55px;
-
     left: 50%;
     top: 50%;
 
-    transform: translate(-50%, -50%);
+    width: 54px;
+    height: 54px;
+
+    transform:
+        translate(-50%, -50%);
 
     border-radius: 50%;
 
-    background: rgba(120,100,255,0.65);
+    background:
+        rgba(100,150,255,0.65);
+
+    border:
+        2px solid
+        rgba(255,255,255,0.6);
 
     box-shadow:
-        0 0 15px rgba(120,100,255,0.8);
+        0 0 20px
+        rgba(70,120,255,0.5);
+
+    pointer-events: none;
 }
 
-#interaction {
+
+/* ================================
+   TASK UI
+================================ */
+
+#task-ui {
     position: fixed;
 
-    left: 50%;
-    bottom: 30px;
+    inset: 0;
 
-    transform: translateX(-50%);
+    z-index: 50;
 
-    padding: 10px 18px;
+    display: none;
 
-    border-radius: 20px;
+    align-items: center;
+    justify-content: center;
 
-    background: rgba(0,0,0,0.65);
+    background:
+        rgba(0,0,0,0.65);
+
+    backdrop-filter:
+        blur(5px);
+}
+
+#task-panel {
+    width: min(
+        90vw,
+        420px
+    );
+
+    padding: 25px;
+
+    border-radius: 18px;
+
+    background:
+        rgba(15,18,30,0.96);
+
+    border:
+        1px solid
+        rgba(120,150,255,0.35);
+
+    box-shadow:
+        0 20px 60px
+        rgba(0,0,0,0.6);
+
+    color: white;
+
+    text-align: center;
+}
+
+#task-header {
+    font-size: 12px;
+
+    letter-spacing: 3px;
+
+    opacity: 0.65;
+
+    margin-bottom: 15px;
+}
+
+#task-name {
+    font-size: 22px;
+
+    font-weight: 800;
+
+    margin-bottom: 12px;
+}
+
+#task-progress {
+    font-size: 13px;
+
+    opacity: 0.65;
+
+    margin-bottom: 22px;
+}
+
+#task-complete {
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background:
+        #386cff;
 
     color: white;
 
     font-size: 14px;
 
-    opacity: 0;
+    font-weight: 800;
 
-    transition: opacity 0.2s;
+    letter-spacing: 1px;
 
-    pointer-events: none;
-
-    z-index: 15;
+    cursor: pointer;
 }
 
-@media (max-width: 800px) {
+#task-complete:active {
+    transform: scale(0.97);
+}
 
-    #joystick {
-        display: block;
-    }
+
+/* ================================
+   CAMERA AREA
+================================ */
+
+canvas {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 700px) {
 
     #game-title {
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    #location {
+        font-size: 9px;
+    }
+
+    #joystick {
+        width: 115px;
+        height: 115px;
+
+        left: 22px;
+        bottom: 22px;
+    }
+
+    #joystick-knob {
+        width: 52px;
+        height: 52px;
+    }
+
+    #interaction {
+        bottom: 105px;
+        font-size: 10px;
+    }
+
+}
+
+
+/* ================================
+   DESKTOP
+================================ */
+
+@media (min-width: 701px) {
+
+    #joystick {
+        opacity: 0.55;
     }
 
 }
