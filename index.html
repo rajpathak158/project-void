@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -13,124 +15,68 @@
 
     <title>PROJECT: VOID</title>
 
-    <style>
+    <link
+        rel="stylesheet"
+        href="./css/style.css"
+    >
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #050509;
-            font-family: Arial, sans-serif;
-            touch-action: none;
-        }
-
-        canvas {
-            display: block;
-        }
-
-        #hud {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-
-            color: white;
-
-            z-index: 10;
-
-            text-shadow:
-                0 0 5px black,
-                0 0 12px #6d4aff;
-
-            pointer-events: none;
-        }
-
-        #title {
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        #status {
-            margin-top: 6px;
-            opacity: 0.8;
-        }
-
-        #crosshair {
-            position: fixed;
-
-            left: 50%;
-            top: 50%;
-
-            transform:
-                translate(-50%, -50%);
-
-            width: 8px;
-            height: 8px;
-
-            border: 1px solid white;
-            border-radius: 50%;
-
-            opacity: 0.7;
-
-            pointer-events: none;
-        }
-
-        #loading {
-            position: fixed;
-
-            inset: 0;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            background: #050509;
-
-            color: white;
-
-            font-size: 24px;
-
-            z-index: 100;
-        }
-
-    </style>
 </head>
 
 <body>
 
-    <div id="loading">
-        INITIALIZING VOID...
-    </div>
+    <!-- =========================
+         HUD
+    ========================== -->
 
     <div id="hud">
 
-        <div id="title">
+        <div id="game-title">
             PROJECT: VOID
         </div>
 
-        <div id="status">
-            Prototype 0.1
+        <div id="location">
+            CENTRAL HUB
         </div>
 
     </div>
 
-    <div id="crosshair"></div>
+
+    <!-- =========================
+         INTERACTION
+    ========================== -->
+
+    <div id="interaction">
+        TAP TO INTERACT
+    </div>
 
 
-    <!-- Three.js -->
+    <!-- =========================
+         MOBILE JOYSTICK
+    ========================== -->
+
+    <div id="joystick">
+
+        <div id="joystick-knob"></div>
+
+    </div>
+
+
+    <!-- =========================
+         GAME
+    ========================== -->
 
     <script type="module">
 
-        import * as THREE
-        from
-        "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+        import * as THREE from
+            "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+
+        import world from
+            "./js/world.js";
+
+
+        import PlayerController from
+            "./js/player.js";
 
 
         /*
@@ -151,24 +97,38 @@
 
         /*
         ==========================================
+        FOG
+        ==========================================
+        */
+
+        scene.fog =
+            new THREE.Fog(
+                0x050509,
+                12,
+                35
+            );
+
+
+        /*
+        ==========================================
         CAMERA
         ==========================================
         */
 
         const camera =
             new THREE.PerspectiveCamera(
-                70,
+                65,
                 window.innerWidth /
                 window.innerHeight,
                 0.1,
-                1000
+                100
             );
 
 
         camera.position.set(
             0,
-            2.2,
-            7
+            4,
+            12
         );
 
 
@@ -180,7 +140,9 @@
 
         const renderer =
             new THREE.WebGLRenderer({
-                antialias: true
+                antialias: true,
+                powerPreference:
+                    "high-performance"
             });
 
 
@@ -198,6 +160,14 @@
         );
 
 
+        renderer.shadowMap.enabled =
+            true;
+
+
+        renderer.shadowMap.type =
+            THREE.PCFSoftShadowMap;
+
+
         document.body.appendChild(
             renderer.domElement
         );
@@ -209,31 +179,35 @@
         ==========================================
         */
 
-        const ambientLight =
-            new THREE.AmbientLight(
-                0x8888aa,
-                1.5
+        const ambient =
+            new THREE.HemisphereLight(
+                0x7c7cff,
+                0x080810,
+                1.4
             );
 
 
         scene.add(
-            ambientLight
+            ambient
         );
 
 
         const mainLight =
-            new THREE.PointLight(
-                0x6644ff,
-                25,
-                30
+            new THREE.DirectionalLight(
+                0xffffff,
+                1.5
             );
 
 
         mainLight.position.set(
             0,
-            6,
-            0
+            10,
+            5
         );
+
+
+        mainLight.castShadow =
+            true;
 
 
         scene.add(
@@ -243,367 +217,44 @@
 
         /*
         ==========================================
-        FLOOR
+        BUILD WORLD
         ==========================================
         */
 
-        const floorGeometry =
-            new THREE.BoxGeometry(
-                30,
-                0.3,
-                30
+        const station =
+            world.create(
+                scene
             );
-
-
-        const floorMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x15151d,
-                roughness: 0.8
-            });
-
-
-        const floor =
-            new THREE.Mesh(
-                floorGeometry,
-                floorMaterial
-            );
-
-
-        floor.position.y =
-            -0.15;
-
-
-        scene.add(
-            floor
-        );
 
 
         /*
         ==========================================
-        WALL MATERIAL
-        ==========================================
-        */
-
-        const wallMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x242430,
-                roughness: 0.7
-            });
-
-
-        /*
-        ==========================================
-        WALL CREATION
-        ==========================================
-        */
-
-        function createWall(
-            x,
-            y,
-            z,
-            width,
-            height,
-            depth
-        ) {
-
-            const geometry =
-                new THREE.BoxGeometry(
-                    width,
-                    height,
-                    depth
-                );
-
-
-            const wall =
-                new THREE.Mesh(
-                    geometry,
-                    wallMaterial
-                );
-
-
-            wall.position.set(
-                x,
-                y,
-                z
-            );
-
-
-            scene.add(
-                wall
-            );
-
-        }
-
-
-        /*
-        ==========================================
-        ROOM
-        ==========================================
-        */
-
-        createWall(
-            0,
-            2,
-            -10,
-            20,
-            4,
-            0.5
-        );
-
-
-        createWall(
-            0,
-            2,
-            10,
-            20,
-            4,
-            0.5
-        );
-
-
-        createWall(
-            -10,
-            2,
-            0,
-            0.5,
-            4,
-            20
-        );
-
-
-        createWall(
-            10,
-            2,
-            0,
-            0.5,
-            4,
-            20
-        );
-
-
-        /*
-        ==========================================
-        PLAYER
+        CREATE PLAYER
         ==========================================
         */
 
         const player =
-            new THREE.Group();
-
-
-        /*
-        BODY
-        */
-
-        const bodyGeometry =
-            new THREE.CapsuleGeometry(
-                0.45,
-                0.8,
-                8,
-                16
-            );
-
-
-        const bodyMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x3366ff,
-                roughness: 0.5
-            });
-
-
-        const body =
-            new THREE.Mesh(
-                bodyGeometry,
-                bodyMaterial
-            );
-
-
-        body.position.y =
-            1.1;
-
-
-        player.add(
-            body
-        );
-
-
-        /*
-        HEAD
-        */
-
-        const headGeometry =
-            new THREE.SphereGeometry(
-                0.48,
-                20,
-                20
-            );
-
-
-        const headMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x4477ff
-            });
-
-
-        const head =
-            new THREE.Mesh(
-                headGeometry,
-                headMaterial
-            );
-
-
-        head.position.y =
-            2;
-
-
-        player.add(
-            head
-        );
-
-
-        /*
-        VISOR
-        */
-
-        const visorGeometry =
-            new THREE.SphereGeometry(
-                0.25,
-                16,
-                16
-            );
-
-
-        const visorMaterial =
-            new THREE.MeshStandardMaterial({
-                color: 0x66ddff,
-                metalness: 0.7,
-                roughness: 0.2
-            });
-
-
-        const visor =
-            new THREE.Mesh(
-                visorGeometry,
-                visorMaterial
-            );
-
-
-        visor.position.set(
-            0,
-            2.05,
-            -0.4
-        );
-
-
-        visor.scale.set(
-            1,
-            0.8,
-            0.4
-        );
-
-
-        player.add(
-            visor
-        );
-
-
-        /*
-        PLAYER POSITION
-        */
-
-        player.position.set(
-            0,
-            0,
-            5
-        );
-
-
-        scene.add(
-            player
-        );
-
-
-        /*
-        ==========================================
-        MOBILE MOVEMENT
-        ==========================================
-        */
-
-        let targetX = 0;
-        let targetZ = 5;
-
-
-        renderer.domElement
-            .addEventListener(
-                "touchstart",
-                event => {
-
-                    const touch =
-                        event.touches[0];
-
-
-                    targetX =
-                        (
-                            touch.clientX /
-                            window.innerWidth
-                            - 0.5
-                        ) * 10;
-
-
-                    targetZ =
-                        8 -
-                        (
-                            touch.clientY /
-                            window.innerHeight
-                        ) * 16;
-
-                }
-            );
-
-
-        renderer.domElement
-            .addEventListener(
-                "touchmove",
-                event => {
-
-                    const touch =
-                        event.touches[0];
-
-
-                    targetX =
-                        (
-                            touch.clientX /
-                            window.innerWidth
-                            - 0.5
-                        ) * 10;
-
-
-                    targetZ =
-                        8 -
-                        (
-                            touch.clientY /
-                            window.innerHeight
-                        ) * 16;
-
-
-                    event.preventDefault();
-
-                },
-                {
-                    passive: false
-                }
+            new PlayerController(
+                scene,
+                camera
             );
 
 
         /*
         ==========================================
-        ANIMATION LOOP
+        CLOCK
         ==========================================
         */
 
         const clock =
             new THREE.Clock();
 
+
+        /*
+        ==========================================
+        ANIMATION
+        ==========================================
+        */
 
         function animate() {
 
@@ -613,47 +264,18 @@
 
 
             const delta =
-                clock.getDelta();
+                Math.min(
+                    clock.getDelta(),
+                    0.05
+                );
 
 
             /*
-            Smooth movement
+            Update player
             */
 
-            player.position.x +=
-                (
-                    targetX -
-                    player.position.x
-                ) *
-                delta *
-                5;
-
-
-            player.position.z +=
-                (
-                    targetZ -
-                    player.position.z
-                ) *
-                delta *
-                5;
-
-
-            /*
-            Camera follows player
-            */
-
-            camera.position.x =
-                player.position.x;
-
-
-            camera.position.z =
-                player.position.z + 7;
-
-
-            camera.lookAt(
-                player.position.x,
-                1.5,
-                player.position.z
+            player.update(
+                delta
             );
 
 
@@ -671,7 +293,7 @@
 
         /*
         ==========================================
-        WINDOW RESIZE
+        RESIZE
         ==========================================
         */
 
@@ -702,15 +324,27 @@
         ==========================================
         */
 
-        document.getElementById(
-            "loading"
-        ).style.display =
-            "none";
-
-
         animate();
+
+
+        console.log(
+            "PROJECT: VOID initialized."
+        );
+
+
+        console.log(
+            "Rooms:",
+            station.rooms
+        );
+
+
+        console.log(
+            "Tasks:",
+            station.tasks
+        );
 
     </script>
 
 </body>
+
 </html>
