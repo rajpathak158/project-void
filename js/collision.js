@@ -8,14 +8,16 @@ class CollisionSystem {
 
         this.walls = [];
 
-        this.playerRadius = 0.45;
+        this.playerRadius = 0.42;
+
+        this.margin = 0.02;
 
     }
 
 
     /*
     ==================================================
-    ADD WALL
+    ADD RECTANGULAR COLLISION WALL
     ==================================================
     */
 
@@ -28,17 +30,13 @@ class CollisionSystem {
 
         this.walls.push({
 
-            minX:
-                x - width / 2,
+            minX: x - width / 2,
 
-            maxX:
-                x + width / 2,
+            maxX: x + width / 2,
 
-            minZ:
-                z - depth / 2,
+            minZ: z - depth / 2,
 
-            maxZ:
-                z + depth / 2
+            maxZ: z + depth / 2
 
         });
 
@@ -47,79 +45,82 @@ class CollisionSystem {
 
     /*
     ==================================================
-    REMOVE ALL COLLIDERS
+    ADD WALL ONLY IF VALID
     ==================================================
     */
 
-    clear() {
+    addWallSafe(
+        x,
+        z,
+        width,
+        depth
+    ) {
 
-        this.walls.length = 0;
+        if (
+            width <= 0 ||
+            depth <= 0
+        ) {
+
+            return;
+
+        }
+
+        this.addWall(
+            x,
+            z,
+            width,
+            depth
+        );
 
     }
 
 
     /*
     ==================================================
-    CHECK COLLISION
+    CHECK CIRCLE AGAINST WALL
     ==================================================
     */
 
-    collides(
+    circleHitsWall(
         x,
-        z
+        z,
+        wall
     ) {
 
+        const closestX =
+            THREE.MathUtils.clamp(
+                x,
+                wall.minX,
+                wall.maxX
+            );
+
+
+        const closestZ =
+            THREE.MathUtils.clamp(
+                z,
+                wall.minZ,
+                wall.maxZ
+            );
+
+
+        const dx =
+            x - closestX;
+
+
+        const dz =
+            z - closestZ;
+
+
         const radius =
-            this.playerRadius;
+            this.playerRadius +
+            this.margin;
 
 
-        for (
-            const wall of this.walls
-        ) {
-
-            /*
-            Closest point on wall
-            to player center.
-            */
-
-            const closestX =
-                THREE.MathUtils.clamp(
-                    x,
-                    wall.minX,
-                    wall.maxX
-                );
-
-
-            const closestZ =
-                THREE.MathUtils.clamp(
-                    z,
-                    wall.minZ,
-                    wall.maxZ
-                );
-
-
-            const dx =
-                x - closestX;
-
-
-            const dz =
-                z - closestZ;
-
-
-            if (
-                dx * dx +
-                dz * dz <
-                radius * radius
-            ) {
-
-                return true;
-
-            }
-
-        }
-
-
-        return false;
+        return (
+            dx * dx +
+            dz * dz <
+            radius * radius
+        );
 
     }
 
@@ -135,10 +136,26 @@ class CollisionSystem {
         z
     ) {
 
-        return !this.collides(
-            x,
-            z
-        );
+        for (
+            const wall of this.walls
+        ) {
+
+            if (
+                this.circleHitsWall(
+                    x,
+                    z,
+                    wall
+                )
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        return true;
 
     }
 
@@ -147,43 +164,39 @@ class CollisionSystem {
     ==================================================
     MOVE PLAYER
     ==================================================
-
-    Attempts the complete movement first.
-
-    If blocked, X and Z are tested separately.
-
-    This creates smooth wall sliding instead
-    of the shaking caused by repeatedly rejecting
-    the complete movement vector.
-    ==================================================
     */
 
     movePlayer(
         player,
-        newX,
-        newZ
+        targetX,
+        targetZ
     ) {
 
-        const currentX =
+        let x =
             player.position.x;
 
-
-        const currentZ =
+        let z =
             player.position.z;
 
 
         /*
-        No movement.
+        ----------------------------------------------
+        FIRST: TRY COMPLETE MOVEMENT
+        ----------------------------------------------
         */
 
         if (
-            Math.abs(
-                newX - currentX
-            ) < 0.000001 &&
-            Math.abs(
-                newZ - currentZ
-            ) < 0.000001
+            this.canMoveTo(
+                targetX,
+                targetZ
+            )
         ) {
+
+            player.position.x =
+                targetX;
+
+            player.position.z =
+                targetZ;
 
             return;
 
@@ -191,63 +204,262 @@ class CollisionSystem {
 
 
         /*
-        ==================================================
-        TRY COMPLETE MOVEMENT
-        ==================================================
+        ----------------------------------------------
+        SECOND: TRY X
+        ----------------------------------------------
         */
 
         if (
             this.canMoveTo(
-                newX,
-                newZ
+                targetX,
+                z
             )
         ) {
 
-            player.position.x =
-                newX;
-
-            player.position.z =
-                newZ;
-
-            return;
+            x =
+                targetX;
 
         }
 
 
         /*
-        ==================================================
-        TRY X
-        ==================================================
+        ----------------------------------------------
+        THIRD: TRY Z
+        ----------------------------------------------
         */
 
         if (
             this.canMoveTo(
-                newX,
-                currentZ
+                x,
+                targetZ
             )
         ) {
 
-            player.position.x =
-                newX;
+            z =
+                targetZ;
 
         }
 
 
         /*
-        ==================================================
-        TRY Z
-        ==================================================
+        ----------------------------------------------
+        APPLY
+        ----------------------------------------------
         */
 
-        if (
-            this.canMoveTo(
-                player.position.x,
-                newZ
-            )
+        player.position.x =
+            x;
+
+        player.position.z =
+            z;
+
+
+        /*
+        ----------------------------------------------
+        FINAL DEPENETRATION FIX
+        ----------------------------------------------
+        */
+
+        this.resolvePenetration(
+            player
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    DEPENETRATION
+    ==================================================
+    */
+
+    resolvePenetration(
+        player
+    ) {
+
+        const radius =
+            this.playerRadius +
+            this.margin;
+
+
+        /*
+        Only a few iterations are needed.
+        This prevents corner shaking.
+        */
+
+        for (
+            let iteration = 0;
+            iteration < 4;
+            iteration++
         ) {
 
-            player.position.z =
-                newZ;
+            let corrected =
+                false;
+
+
+            for (
+                const wall of
+                this.walls
+            ) {
+
+                const closestX =
+                    THREE.MathUtils.clamp(
+                        player.position.x,
+                        wall.minX,
+                        wall.maxX
+                    );
+
+
+                const closestZ =
+                    THREE.MathUtils.clamp(
+                        player.position.z,
+                        wall.minZ,
+                        wall.maxZ
+                    );
+
+
+                let dx =
+                    player.position.x -
+                    closestX;
+
+
+                let dz =
+                    player.position.z -
+                    closestZ;
+
+
+                const distanceSquared =
+                    dx * dx +
+                    dz * dz;
+
+
+                if (
+                    distanceSquared >=
+                    radius * radius
+                ) {
+
+                    continue;
+
+                }
+
+
+                let distance =
+                    Math.sqrt(
+                        distanceSquared
+                    );
+
+
+                /*
+                Player is exactly inside
+                the closest point.
+
+                Choose the nearest wall direction.
+                */
+
+                if (
+                    distance < 0.0001
+                ) {
+
+                    const left =
+                        Math.abs(
+                            player.position.x -
+                            wall.minX
+                        );
+
+                    const right =
+                        Math.abs(
+                            wall.maxX -
+                            player.position.x
+                        );
+
+                    const top =
+                        Math.abs(
+                            player.position.z -
+                            wall.minZ
+                        );
+
+                    const bottom =
+                        Math.abs(
+                            wall.maxZ -
+                            player.position.z
+                        );
+
+
+                    const minimum =
+                        Math.min(
+                            left,
+                            right,
+                            top,
+                            bottom
+                        );
+
+
+                    if (
+                        minimum === left
+                    ) {
+
+                        dx = -1;
+                        dz = 0;
+
+                    } else if (
+                        minimum === right
+                    ) {
+
+                        dx = 1;
+                        dz = 0;
+
+                    } else if (
+                        minimum === top
+                    ) {
+
+                        dx = 0;
+                        dz = -1;
+
+                    } else {
+
+                        dx = 0;
+                        dz = 1;
+
+                    }
+
+
+                    distance = 1;
+
+                }
+
+
+                const penetration =
+                    radius -
+                    distance;
+
+
+                dx /= distance;
+
+                dz /= distance;
+
+
+                player.position.x +=
+                    dx *
+                    penetration;
+
+                player.position.z +=
+                    dz *
+                    penetration;
+
+
+                corrected =
+                    true;
+
+            }
+
+
+            if (
+                !corrected
+            ) {
+
+                break;
+
+            }
 
         }
 
@@ -256,7 +468,20 @@ class CollisionSystem {
 
     /*
     ==================================================
-    GET WALL COUNT
+    CLEAR
+    ==================================================
+    */
+
+    clear() {
+
+        this.walls.length = 0;
+
+    }
+
+
+    /*
+    ==================================================
+    DEBUG
     ==================================================
     */
 
