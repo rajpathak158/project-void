@@ -8,7 +8,13 @@ class CollisionSystem {
 
         this.walls = [];
 
-        this.playerRadius = 0.45;
+        /*
+        ==========================================
+        PLAYER COLLISION SIZE
+        ==========================================
+        */
+
+        this.playerRadius = 0.42;
 
     }
 
@@ -25,6 +31,25 @@ class CollisionSystem {
         width,
         depth
     ) {
+
+        /*
+        Ignore invalid walls
+        */
+
+        if (
+            width <= 0 ||
+            depth <= 0
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+        Store exact rectangular
+        collision area.
+        */
 
         this.walls.push({
 
@@ -56,42 +81,42 @@ class CollisionSystem {
         z
     ) {
 
+        const radius =
+            this.playerRadius;
+
+
         for (
             const wall of this.walls
         ) {
 
-            const closestX =
-                THREE.MathUtils.clamp(
-                    x,
-                    wall.minX,
-                    wall.maxX
-                );
+            /*
+            Expand collision rectangle
+            by player radius.
+            */
+
+            const minX =
+                wall.minX - radius;
+
+            const maxX =
+                wall.maxX + radius;
+
+            const minZ =
+                wall.minZ - radius;
+
+            const maxZ =
+                wall.maxZ + radius;
 
 
-            const closestZ =
-                THREE.MathUtils.clamp(
-                    z,
-                    wall.minZ,
-                    wall.maxZ
-                );
-
-
-            const dx =
-                x - closestX;
-
-            const dz =
-                z - closestZ;
-
-
-            const distanceSquared =
-                dx * dx +
-                dz * dz;
-
+            /*
+            Player is inside the
+            expanded wall area.
+            */
 
             if (
-                distanceSquared <
-                this.playerRadius *
-                this.playerRadius
+                x >= minX &&
+                x <= maxX &&
+                z >= minZ &&
+                z <= maxZ
             ) {
 
                 return false;
@@ -108,7 +133,7 @@ class CollisionSystem {
 
     /*
     ==========================================
-    SAFE MOVE
+    SAFE PLAYER MOVEMENT
     ==========================================
     */
 
@@ -118,14 +143,23 @@ class CollisionSystem {
         newZ
     ) {
 
+        const currentX =
+            player.position.x;
+
+        const currentZ =
+            player.position.z;
+
+
         /*
-        Try X movement
+        ======================================
+        X AXIS
+        ======================================
         */
 
         if (
             this.canMoveTo(
                 newX,
-                player.position.z
+                currentZ
             )
         ) {
 
@@ -136,7 +170,9 @@ class CollisionSystem {
 
 
         /*
-        Try Z movement
+        ======================================
+        Z AXIS
+        ======================================
         */
 
         if (
@@ -156,17 +192,182 @@ class CollisionSystem {
 
     /*
     ==========================================
-    CLEAR
+    RESOLVE PLAYER POSITION
+    ==========================================
+    
+    Prevents the player from becoming
+    stuck inside a wall.
+    
+    ==========================================
+    */
+
+    resolvePlayerPosition(
+        player
+    ) {
+
+        let x =
+            player.position.x;
+
+        let z =
+            player.position.z;
+
+
+        const radius =
+            this.playerRadius;
+
+
+        for (
+            const wall of this.walls
+        ) {
+
+            const minX =
+                wall.minX - radius;
+
+            const maxX =
+                wall.maxX + radius;
+
+            const minZ =
+                wall.minZ - radius;
+
+            const maxZ =
+                wall.maxZ + radius;
+
+
+            /*
+            Is player inside wall?
+            */
+
+            if (
+                x >= minX &&
+                x <= maxX &&
+                z >= minZ &&
+                z <= maxZ
+            ) {
+
+                /*
+                Distance to each side
+                */
+
+                const distanceLeft =
+                    Math.abs(
+                        x - minX
+                    );
+
+                const distanceRight =
+                    Math.abs(
+                        maxX - x
+                    );
+
+                const distanceTop =
+                    Math.abs(
+                        z - minZ
+                    );
+
+                const distanceBottom =
+                    Math.abs(
+                        maxZ - z
+                    );
+
+
+                const smallest =
+                    Math.min(
+                        distanceLeft,
+                        distanceRight,
+                        distanceTop,
+                        distanceBottom
+                    );
+
+
+                /*
+                Push player toward
+                nearest safe side.
+                */
+
+                if (
+                    smallest ===
+                    distanceLeft
+                ) {
+
+                    x =
+                        minX;
+
+                }
+                else if (
+                    smallest ===
+                    distanceRight
+                ) {
+
+                    x =
+                        maxX;
+
+                }
+                else if (
+                    smallest ===
+                    distanceTop
+                ) {
+
+                    z =
+                        minZ;
+
+                }
+                else {
+
+                    z =
+                        maxZ;
+
+                }
+
+            }
+
+        }
+
+
+        player.position.x =
+            x;
+
+        player.position.z =
+            z;
+
+    }
+
+
+    /*
+    ==========================================
+    CHECK WALL COUNT
+    ==========================================
+    */
+
+    getWallCount() {
+
+        return this.walls.length;
+
+    }
+
+
+    /*
+    ==========================================
+    CLEAR ALL COLLISIONS
     ==========================================
     */
 
     clear() {
 
-        this.walls = [];
+        this.walls.length =
+            0;
 
     }
 
 }
 
 
-export default CollisionSystem;
+export default CollisionSystem;if (
+    this.collision &&
+    typeof this.collision.resolvePlayerPosition ===
+    "function"
+) {
+
+    this.collision.resolvePlayerPosition(
+        this.player
+    );
+
+}
