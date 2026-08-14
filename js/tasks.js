@@ -3,16 +3,10 @@ class TaskSystem {
     constructor(scene, camera, player) {
 
         this.scene = scene;
-
         this.camera = camera;
-
         this.player = player;
 
         this.tasks = [];
-
-        this.completed = 0;
-
-        this.total = 0;
 
         this.activeTask = null;
 
@@ -25,11 +19,32 @@ class TaskSystem {
 
     /*
     ==========================================
-    REGISTER TASKS
+    REGISTER TASK
     ==========================================
     */
 
     register(object, name) {
+
+        if (!object) {
+            return;
+        }
+
+
+        /*
+        Prevent duplicate registration.
+        */
+
+        const alreadyRegistered =
+            this.tasks.some(
+                task =>
+                    task.object === object
+            );
+
+
+        if (alreadyRegistered) {
+            return;
+        }
+
 
         this.tasks.push({
 
@@ -41,7 +56,37 @@ class TaskSystem {
 
         });
 
-        this.total++;
+
+        this.updateProgress();
+
+    }
+
+
+    /*
+    ==========================================
+    GET COMPLETED
+    ==========================================
+    */
+
+    getCompletedCount() {
+
+        return this.tasks.filter(
+            task =>
+                task.completed
+        ).length;
+
+    }
+
+
+    /*
+    ==========================================
+    GET TOTAL
+    ==========================================
+    */
+
+    getTotalCount() {
+
+        return this.tasks.length;
 
     }
 
@@ -57,8 +102,10 @@ class TaskSystem {
         this.container =
             document.createElement("div");
 
+
         this.container.id =
             "task-ui";
+
 
         this.container.innerHTML = `
 
@@ -76,13 +123,17 @@ class TaskSystem {
                     0 / 0 TASKS
                 </div>
 
-                <button id="task-complete">
+                <button
+                    id="task-complete"
+                    type="button"
+                >
                     COMPLETE TASK
                 </button>
 
             </div>
 
         `;
+
 
         document.body.appendChild(
             this.container
@@ -99,9 +150,18 @@ class TaskSystem {
             );
 
 
+        /*
+        Only the button completes
+        the currently open task.
+        */
+
         this.completeButton.addEventListener(
             "click",
-            () => {
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
 
                 this.completeCurrentTask();
 
@@ -120,6 +180,7 @@ class TaskSystem {
     getDistance(task) {
 
         if (
+            !task ||
             !task.object ||
             !this.player
         ) {
@@ -146,9 +207,12 @@ class TaskSystem {
 
     update() {
 
-        if (
-            this.activeTask
-        ) {
+        /*
+        Don't search for another
+        task while one is open.
+        */
+
+        if (this.activeTask) {
 
             return;
 
@@ -198,9 +262,7 @@ class TaskSystem {
         }
 
 
-        if (
-            closestTask
-        ) {
+        if (closestTask) {
 
             this.showPrompt(
                 closestTask
@@ -229,40 +291,75 @@ class TaskSystem {
             );
 
 
-        if (
-            interaction
-        ) {
+        if (!interaction) {
 
-            interaction.style.display =
-                "block";
-
-
-            interaction.textContent =
-                `TAP TO USE: ${task.name}`;
+            return;
 
         }
 
 
+        interaction.style.display =
+            "block";
+
+
+        interaction.textContent =
+            `TAP TO USE: ${task.name}`;
+
+
+        /*
+        Remove previous listener.
+        */
+
         if (
-            !this.promptHandler
+            this.promptHandler
         ) {
 
-            this.promptHandler =
-                () => {
-
-                    this.openTask(
-                        task
-                    );
-
-                };
-
-
-            document.addEventListener(
+            interaction.removeEventListener(
                 "click",
                 this.promptHandler
             );
 
         }
+
+
+        /*
+        Store the current task.
+        */
+
+        this.currentPromptTask =
+            task;
+
+
+        this.promptHandler =
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                if (
+                    this.currentPromptTask
+                ) {
+
+                    this.openTask(
+                        this.currentPromptTask
+                    );
+
+                }
+
+            };
+
+
+        /*
+        IMPORTANT:
+        Listen only on the interaction
+        button, NOT the entire document.
+        */
+
+        interaction.addEventListener(
+            "click",
+            this.promptHandler
+        );
 
     }
 
@@ -281,14 +378,33 @@ class TaskSystem {
             );
 
 
-        if (
-            interaction
-        ) {
+        if (interaction) {
 
             interaction.style.display =
                 "none";
 
         }
+
+
+        if (
+            interaction &&
+            this.promptHandler
+        ) {
+
+            interaction.removeEventListener(
+                "click",
+                this.promptHandler
+            );
+
+        }
+
+
+        this.promptHandler =
+            null;
+
+
+        this.currentPromptTask =
+            null;
 
     }
 
@@ -300,6 +416,16 @@ class TaskSystem {
     */
 
     openTask(task) {
+
+        if (
+            !task ||
+            task.completed
+        ) {
+
+            return;
+
+        }
+
 
         if (
             this.activeTask
@@ -330,24 +456,39 @@ class TaskSystem {
             );
 
 
-        panel.style.display =
-            "flex";
+        const name =
+            document.getElementById(
+                "task-name"
+            );
 
 
-        document.getElementById(
-            "task-name"
-        ).textContent =
-            task.name;
+        if (name) {
+
+            name.textContent =
+                task.name;
+
+        }
 
 
         this.updateProgress();
+
+
+        if (panel) {
+
+            panel.style.display =
+                "flex";
+
+        }
+
+
+        this.hidePrompt();
 
     }
 
 
     /*
     ==========================================
-    COMPLETE
+    COMPLETE CURRENT TASK
     ==========================================
     */
 
@@ -362,16 +503,87 @@ class TaskSystem {
         }
 
 
+        /*
+        Make sure it isn't already
+        completed.
+        */
+
+        if (
+            this.activeTask.completed
+        ) {
+
+            this.activeTask =
+                null;
+
+            this.closeTask();
+
+            return;
+
+        }
+
+
+        /*
+        Mark the actual task
+        as completed.
+        */
+
         this.activeTask.completed =
             true;
 
 
-        this.completed++;
+        console.log(
+            "Completed:",
+            this.activeTask.name
+        );
 
+
+        /*
+        Clear active task.
+        */
 
         this.activeTask =
             null;
 
+
+        /*
+        Close UI.
+        */
+
+        this.closeTask();
+
+
+        /*
+        Update counter from the
+        actual task array.
+        */
+
+        this.updateProgress();
+
+
+        /*
+        Check victory condition.
+        */
+
+        if (
+            this.allCompleted()
+        ) {
+
+            console.log(
+                "ALL TASKS COMPLETED!"
+            );
+
+        }
+
+    }
+
+
+    /*
+    ==========================================
+    CLOSE TASK
+    ==========================================
+    */
+
+    closeTask() {
 
         const panel =
             document.getElementById(
@@ -379,24 +591,12 @@ class TaskSystem {
             );
 
 
-        panel.style.display =
-            "none";
+        if (panel) {
 
+            panel.style.display =
+                "none";
 
-        this.updateProgress();
-
-
-        this.hidePrompt();
-
-
-        console.log(
-            "Task completed!"
-        );
-
-
-        console.log(
-            `${this.completed}/${this.total}`
-        );
+        }
 
     }
 
@@ -415,14 +615,23 @@ class TaskSystem {
             );
 
 
-        if (
-            progress
-        ) {
+        if (!progress) {
 
-            progress.textContent =
-                `${this.completed} / ${this.total} TASKS`;
+            return;
 
         }
+
+
+        const completed =
+            this.getCompletedCount();
+
+
+        const total =
+            this.getTotalCount();
+
+
+        progress.textContent =
+            `${completed} / ${total} TASKS`;
 
     }
 
@@ -435,11 +644,65 @@ class TaskSystem {
 
     allCompleted() {
 
+        const total =
+            this.getTotalCount();
+
+
         return (
-            this.total > 0 &&
-            this.completed ===
-            this.total
+            total > 0 &&
+            this.getCompletedCount() === total
         );
+
+    }
+
+
+    /*
+    ==========================================
+    RESET
+    ==========================================
+    */
+
+    reset() {
+
+        for (
+            const task of this.tasks
+        ) {
+
+            task.completed =
+                false;
+
+        }
+
+
+        this.activeTask =
+            null;
+
+
+        this.closeTask();
+
+
+        this.updateProgress();
+
+    }
+
+
+    /*
+    ==========================================
+    PUBLIC DATA
+    ==========================================
+    */
+
+    getProgress() {
+
+        return {
+
+            completed:
+                this.getCompletedCount(),
+
+            total:
+                this.getTotalCount()
+
+        };
 
     }
 
