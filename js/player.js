@@ -16,8 +16,11 @@ class PlayerController {
 
         this.player = null;
 
+
         /*
-        Movement
+        ==========================================
+        MOVEMENT
+        ==========================================
         */
 
         this.speed = 4;
@@ -30,51 +33,56 @@ class PlayerController {
 
         this.joystickActive = false;
 
-        this.joystickStart =
-            new THREE.Vector2();
+        this.joystickTouchId = null;
 
 
         /*
-        Camera
+        ==========================================
+        CAMERA
+        ==========================================
         */
 
-        this.cameraDistance = 7;
+        this.cameraDistance = 6.5;
 
-        this.cameraHeight = 3.2;
+        this.cameraHeight = 2.5;
 
         this.cameraYaw = 0;
 
-        this.cameraPitch = 0.15;
+        this.cameraPitch = 0.2;
 
-        this.cameraMinPitch = -0.35;
+        this.cameraMinPitch = -0.45;
 
-        this.cameraMaxPitch = 0.8;
+        this.cameraMaxPitch = 0.85;
 
-        this.cameraSensitivity = 0.006;
+        this.cameraSensitivity = 0.008;
 
 
         /*
-        Camera touch
+        ==========================================
+        CAMERA TOUCH
+        ==========================================
         */
-
-        this.cameraTouchActive = false;
 
         this.cameraTouchId = null;
 
-        this.cameraTouchX = 0;
+        this.cameraTouchActive = false;
 
-        this.cameraTouchY = 0;
+        this.lastCameraX = 0;
+
+        this.lastCameraY = 0;
 
 
         /*
-        Create everything
+        ==========================================
+        CREATE
+        ==========================================
         */
 
         this.createPlayer();
 
         this.setupKeyboard();
 
-        this.setupMovementJoystick();
+        this.setupJoystick();
 
         this.setupCameraTouch();
 
@@ -85,7 +93,7 @@ class PlayerController {
 
     /*
     ==========================================
-    CREATE PLAYER
+    PLAYER
     ==========================================
     */
 
@@ -107,6 +115,7 @@ class PlayerController {
                     8,
                     16
                 ),
+
                 new THREE.MeshStandardMaterial({
                     color: 0x3d6dff,
                     roughness: 0.5
@@ -132,6 +141,7 @@ class PlayerController {
                     24,
                     24
                 ),
+
                 new THREE.MeshStandardMaterial({
                     color: 0x4778ff,
                     roughness: 0.45
@@ -157,6 +167,7 @@ class PlayerController {
                     20,
                     20
                 ),
+
                 new THREE.MeshStandardMaterial({
                     color: 0x8be9ff,
                     metalness: 0.8,
@@ -195,6 +206,7 @@ class PlayerController {
                     0.9,
                     0.3
                 ),
+
                 new THREE.MeshStandardMaterial({
                     color: 0x20263a,
                     roughness: 0.7
@@ -215,7 +227,7 @@ class PlayerController {
 
 
         /*
-        START POSITION
+        START
         */
 
         this.player.position.set(
@@ -244,7 +256,8 @@ class PlayerController {
             "keydown",
             event => {
 
-                this.keys[event.code] = true;
+                this.keys[event.code] =
+                    true;
 
             }
         );
@@ -254,7 +267,8 @@ class PlayerController {
             "keyup",
             event => {
 
-                this.keys[event.code] = false;
+                this.keys[event.code] =
+                    false;
 
             }
         );
@@ -264,11 +278,11 @@ class PlayerController {
 
     /*
     ==========================================
-    MOVEMENT JOYSTICK
+    JOYSTICK
     ==========================================
     */
 
-    setupMovementJoystick() {
+    setupJoystick() {
 
         const joystick =
             document.getElementById(
@@ -282,11 +296,19 @@ class PlayerController {
             );
 
 
-        if (!joystick || !knob) {
+        if (
+            !joystick ||
+            !knob
+        ) {
 
             return;
 
         }
+
+
+        let centerX = 0;
+
+        let centerY = 0;
 
 
         const maxDistance = 42;
@@ -298,6 +320,7 @@ class PlayerController {
 
                 event.preventDefault();
 
+
                 const touch =
                     event.changedTouches[0];
 
@@ -306,23 +329,31 @@ class PlayerController {
                     joystick.getBoundingClientRect();
 
 
-                this.joystickStart.set(
+                centerX =
                     rect.left +
-                    rect.width / 2,
+                    rect.width / 2;
 
+
+                centerY =
                     rect.top +
-                    rect.height / 2
-                );
+                    rect.height / 2;
 
 
-                this.joystickActive = true;
+                this.joystickTouchId =
+                    touch.identifier;
+
+
+                this.joystickActive =
+                    true;
 
 
                 this.updateJoystick(
                     touch.clientX,
                     touch.clientY,
-                    knob,
-                    maxDistance
+                    centerX,
+                    centerY,
+                    maxDistance,
+                    knob
                 );
 
             },
@@ -348,16 +379,31 @@ class PlayerController {
                 }
 
 
-                const touch =
-                    event.changedTouches[0];
+                for (
+                    const touch of
+                    event.changedTouches
+                ) {
+
+                    if (
+                        touch.identifier !==
+                        this.joystickTouchId
+                    ) {
+
+                        continue;
+
+                    }
 
 
-                this.updateJoystick(
-                    touch.clientX,
-                    touch.clientY,
-                    knob,
-                    maxDistance
-                );
+                    this.updateJoystick(
+                        touch.clientX,
+                        touch.clientY,
+                        centerX,
+                        centerY,
+                        maxDistance,
+                        knob
+                    );
+
+                }
 
             },
             {
@@ -366,29 +412,55 @@ class PlayerController {
         );
 
 
-        joystick.addEventListener(
-            "touchend",
+        const stopJoystick =
             event => {
 
-                event.preventDefault();
+                for (
+                    const touch of
+                    event.changedTouches
+                ) {
+
+                    if (
+                        touch.identifier !==
+                        this.joystickTouchId
+                    ) {
+
+                        continue;
+
+                    }
 
 
-                this.joystickActive = false;
+                    this.joystickActive =
+                        false;
 
 
-                this.moveInput.set(
-                    0,
-                    0
-                );
+                    this.joystickTouchId =
+                        null;
 
 
-                knob.style.transform =
-                    "translate(-50%, -50%)";
+                    this.moveInput.set(
+                        0,
+                        0
+                    );
 
-            },
-            {
-                passive: false
-            }
+
+                    knob.style.transform =
+                        "translate(-50%, -50%)";
+
+                }
+
+            };
+
+
+        joystick.addEventListener(
+            "touchend",
+            stopJoystick
+        );
+
+
+        joystick.addEventListener(
+            "touchcancel",
+            stopJoystick
         );
 
     }
@@ -396,25 +468,27 @@ class PlayerController {
 
     /*
     ==========================================
-    JOYSTICK UPDATE
+    JOYSTICK CALCULATION
     ==========================================
     */
 
     updateJoystick(
         x,
         y,
-        knob,
-        maxDistance
+        centerX,
+        centerY,
+        maxDistance,
+        knob
     ) {
 
         let dx =
             x -
-            this.joystickStart.x;
+            centerX;
 
 
         let dy =
             y -
-            this.joystickStart.y;
+            centerY;
 
 
         const distance =
@@ -443,6 +517,15 @@ class PlayerController {
         }
 
 
+        /*
+        IMPORTANT:
+
+        Up = negative screen Y.
+
+        We convert it to positive
+        forward input.
+        */
+
         this.moveInput.set(
             dx / maxDistance,
             dy / maxDistance
@@ -460,7 +543,7 @@ class PlayerController {
 
     /*
     ==========================================
-    360 CAMERA TOUCH
+    CAMERA TOUCH
     ==========================================
     */
 
@@ -489,26 +572,13 @@ class PlayerController {
                 ) {
 
                     /*
-                    Ignore touches
-                    on the joystick.
+                    Only use the right side
+                    of the screen for camera.
                     */
 
-                    const target =
-                        document.elementFromPoint(
-                            touch.clientX,
-                            touch.clientY
-                        );
-
-
                     if (
-                        target &&
-                        (
-                            target.id ===
-                            "joystick" ||
-                            target.closest(
-                                "#joystick"
-                            )
-                        )
+                        touch.clientX <
+                        window.innerWidth * 0.45
                     ) {
 
                         continue;
@@ -516,19 +586,20 @@ class PlayerController {
                     }
 
 
-                    this.cameraTouchActive =
-                        true;
-
                     this.cameraTouchId =
                         touch.identifier;
 
-                    this.cameraTouchX =
+
+                    this.cameraTouchActive =
+                        true;
+
+
+                    this.lastCameraX =
                         touch.clientX;
 
-                    this.cameraTouchY =
-                        touch.clientY;
 
-                    break;
+                    this.lastCameraY =
+                        touch.clientY;
 
                 }
 
@@ -569,18 +640,26 @@ class PlayerController {
 
                     const dx =
                         touch.clientX -
-                        this.cameraTouchX;
+                        this.lastCameraX;
 
 
                     const dy =
                         touch.clientY -
-                        this.cameraTouchY;
+                        this.lastCameraY;
 
+
+                    /*
+                    Horizontal
+                    */
 
                     this.cameraYaw -=
                         dx *
                         this.cameraSensitivity;
 
+
+                    /*
+                    Vertical
+                    */
 
                     this.cameraPitch -=
                         dy *
@@ -595,11 +674,11 @@ class PlayerController {
                         );
 
 
-                    this.cameraTouchX =
+                    this.lastCameraX =
                         touch.clientX;
 
 
-                    this.cameraTouchY =
+                    this.lastCameraY =
                         touch.clientY;
 
                 }
@@ -611,8 +690,7 @@ class PlayerController {
         );
 
 
-        canvas.addEventListener(
-            "touchend",
+        const stopCamera =
             event => {
 
                 for (
@@ -628,6 +706,7 @@ class PlayerController {
                         this.cameraTouchActive =
                             false;
 
+
                         this.cameraTouchId =
                             null;
 
@@ -635,24 +714,18 @@ class PlayerController {
 
                 }
 
-            },
-            {
-                passive: true
-            }
+            };
+
+
+        canvas.addEventListener(
+            "touchend",
+            stopCamera
         );
 
 
         canvas.addEventListener(
             "touchcancel",
-            () => {
-
-                this.cameraTouchActive =
-                    false;
-
-                this.cameraTouchId =
-                    null;
-
-            }
+            stopCamera
         );
 
     }
@@ -679,9 +752,11 @@ class PlayerController {
 
                 dragging = true;
 
-                lastX = event.clientX;
+                lastX =
+                    event.clientX;
 
-                lastY = event.clientY;
+                lastY =
+                    event.clientY;
 
             }
         );
@@ -749,7 +824,7 @@ class PlayerController {
 
     /*
     ==========================================
-    KEYBOARD INPUT
+    KEYBOARD MOVEMENT
     ==========================================
     */
 
@@ -837,6 +912,10 @@ class PlayerController {
         }
 
 
+        /*
+        Keyboard controls
+        */
+
         if (
             !this.joystickActive
         ) {
@@ -862,7 +941,8 @@ class PlayerController {
         if (moving) {
 
             /*
-            Camera-relative movement
+            Camera-relative
+            direction
             */
 
             const forward =
@@ -899,6 +979,14 @@ class PlayerController {
             );
 
 
+            /*
+            FIX:
+
+            joystick UP is negative Y,
+            therefore -inputZ gives
+            forward movement.
+            */
+
             direction.addScaledVector(
                 forward,
                 -inputZ
@@ -907,10 +995,6 @@ class PlayerController {
 
             direction.normalize();
 
-
-            /*
-            Speed
-            */
 
             const running =
                 this.keys["ShiftLeft"] ||
@@ -922,10 +1006,6 @@ class PlayerController {
                     ? this.runSpeed
                     : this.speed;
 
-
-            /*
-            New position
-            */
 
             const newX =
                 this.player.position.x +
@@ -946,7 +1026,9 @@ class PlayerController {
             */
 
             if (
-                this.collision
+                this.collision &&
+                typeof this.collision.movePlayer ===
+                "function"
             ) {
 
                 this.collision.movePlayer(
@@ -967,7 +1049,7 @@ class PlayerController {
 
 
             /*
-            Character rotation
+            Character faces movement
             */
 
             const targetRotation =
@@ -991,7 +1073,7 @@ class PlayerController {
 
 
         /*
-        Station boundary
+        World boundary
         */
 
         this.player.position.x =
@@ -1023,7 +1105,7 @@ class PlayerController {
 
     /*
     ==========================================
-    CAMERA UPDATE
+    CAMERA
     ==========================================
     */
 
@@ -1036,10 +1118,6 @@ class PlayerController {
                 this.player.position.z
             );
 
-
-        /*
-        Spherical camera position
-        */
 
         const horizontalDistance =
             this.cameraDistance *
@@ -1081,10 +1159,6 @@ class PlayerController {
             verticalDistance;
 
 
-        /*
-        Smooth camera
-        */
-
         this.camera.position.lerp(
             desired,
             Math.min(
@@ -1103,7 +1177,7 @@ class PlayerController {
 
     /*
     ==========================================
-    GET PLAYER
+    PUBLIC METHODS
     ==========================================
     */
 
@@ -1113,12 +1187,6 @@ class PlayerController {
 
     }
 
-
-    /*
-    ==========================================
-    GET POSITION
-    ==========================================
-    */
 
     getPosition() {
 
