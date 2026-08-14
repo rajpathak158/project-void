@@ -2,15 +2,7 @@ import * as THREE from
     "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 
-/*
-==================================================
-VOID STATION — WORLD SYSTEM
-==================================================
-*/
-
-
 const world = {};
-
 
 
 /*
@@ -31,23 +23,10 @@ const materials = {
         roughness: 0.7
     }),
 
-    wallDark: new THREE.MeshStandardMaterial({
-        color: 0x111218,
-        roughness: 0.9
-    }),
-
     metal: new THREE.MeshStandardMaterial({
         color: 0x3a3d49,
         metalness: 0.7,
         roughness: 0.35
-    }),
-
-    glass: new THREE.MeshStandardMaterial({
-        color: 0x3bdcff,
-        transparent: true,
-        opacity: 0.25,
-        metalness: 0.3,
-        roughness: 0.15
     }),
 
     emergency: new THREE.MeshStandardMaterial({
@@ -65,10 +44,9 @@ const materials = {
 };
 
 
-
 /*
 ==================================================
-CREATE BOX
+BOX CREATOR
 ==================================================
 */
 
@@ -106,6 +84,7 @@ function createBox(
 
 
     mesh.castShadow = true;
+
     mesh.receiveShadow = true;
 
 
@@ -117,7 +96,6 @@ function createBox(
 }
 
 
-
 /*
 ==================================================
 FLOOR
@@ -126,23 +104,18 @@ FLOOR
 
 function createFloor(scene) {
 
-    const floor =
-        createBox(
-            scene,
-            0,
-            -0.15,
-            0,
-            32,
-            0.3,
-            32,
-            materials.floor
-        );
-
-
-    return floor;
+    return createBox(
+        scene,
+        0,
+        -0.15,
+        0,
+        32,
+        0.3,
+        32,
+        materials.floor
+    );
 
 }
-
 
 
 /*
@@ -153,6 +126,7 @@ WALL
 
 function createWall(
     scene,
+    collision,
     x,
     z,
     width,
@@ -160,24 +134,43 @@ function createWall(
     height = 4
 ) {
 
-    return createBox(
-        scene,
-        x,
-        height / 2,
-        z,
-        width,
-        height,
-        depth,
-        materials.wall
-    );
+    const wall =
+        createBox(
+            scene,
+            x,
+            height / 2,
+            z,
+            width,
+            height,
+            depth,
+            materials.wall
+        );
+
+
+    /*
+    Register wall with collision
+    */
+
+    if (collision) {
+
+        collision.addWall(
+            x,
+            z,
+            width,
+            depth
+        );
+
+    }
+
+
+    return wall;
 
 }
 
 
-
 /*
 ==================================================
-CORRIDOR LIGHT
+LIGHT
 ==================================================
 */
 
@@ -206,30 +199,25 @@ function createCeilingLight(
     scene.add(light);
 
 
-    const lamp =
-        createBox(
-            scene,
-            x,
-            3.95,
-            z,
-            1.4,
-            0.08,
-            0.25,
-            new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
-                emissiveIntensity: 3
-            })
-        );
+    createBox(
+        scene,
+        x,
+        3.95,
+        z,
+        1.4,
+        0.08,
+        0.25,
+        new THREE.MeshStandardMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: 3
+        })
+    );
 
 
-    return {
-        light,
-        lamp
-    };
+    return light;
 
 }
-
 
 
 /*
@@ -257,7 +245,7 @@ function createTaskTerminal(
 
 
     /*
-    Main terminal
+    Body
     */
 
     const body =
@@ -295,7 +283,7 @@ function createTaskTerminal(
 
     screen.position.set(
         0,
-        1.0,
+        1,
         -0.24
     );
 
@@ -304,7 +292,7 @@ function createTaskTerminal(
 
 
     /*
-    Glow
+    Task light
     */
 
     const light =
@@ -325,10 +313,6 @@ function createTaskTerminal(
     group.add(light);
 
 
-    /*
-    Label data
-    */
-
     group.userData = {
 
         type: "task",
@@ -346,7 +330,6 @@ function createTaskTerminal(
     return group;
 
 }
-
 
 
 /*
@@ -372,10 +355,6 @@ function createEmergencyButton(
     );
 
 
-    /*
-    Base
-    */
-
     const base =
         new THREE.Mesh(
             new THREE.CylinderGeometry(
@@ -394,10 +373,6 @@ function createEmergencyButton(
 
     group.add(base);
 
-
-    /*
-    Button
-    */
 
     const button =
         new THREE.Mesh(
@@ -435,7 +410,6 @@ function createEmergencyButton(
 }
 
 
-
 /*
 ==================================================
 ROOM
@@ -444,13 +418,14 @@ ROOM
 
 function createRoom(
     scene,
+    collision,
     centerX,
     centerZ,
     width,
     depth
 ) {
 
-    const wallThickness =
+    const thickness =
         0.35;
 
 
@@ -460,10 +435,11 @@ function createRoom(
 
     createWall(
         scene,
+        collision,
         centerX,
         centerZ - depth / 2,
         width,
-        wallThickness
+        thickness
     );
 
 
@@ -473,10 +449,11 @@ function createRoom(
 
     createWall(
         scene,
+        collision,
         centerX,
         centerZ + depth / 2,
         width,
-        wallThickness
+        thickness
     );
 
 
@@ -486,9 +463,10 @@ function createRoom(
 
     createWall(
         scene,
+        collision,
         centerX - width / 2,
         centerZ,
-        wallThickness,
+        thickness,
         depth
     );
 
@@ -499,15 +477,16 @@ function createRoom(
 
     createWall(
         scene,
+        collision,
         centerX + width / 2,
         centerZ,
-        wallThickness,
+        thickness,
         depth
     );
 
 
     /*
-    Ceiling lights
+    Lights
     */
 
     createCeilingLight(
@@ -526,30 +505,32 @@ function createRoom(
 }
 
 
-
 /*
 ==================================================
-VOID STATION
+CREATE STATION
 ==================================================
 */
 
 world.create =
-function(scene) {
-
+function(
+    scene,
+    collision
+) {
 
     /*
-    Main floor
+    Floor
     */
 
     createFloor(scene);
 
 
     /*
-    Central Hub
+    CENTRAL HUB
     */
 
     createRoom(
         scene,
+        collision,
         0,
         0,
         12,
@@ -558,11 +539,12 @@ function(scene) {
 
 
     /*
-    Laboratory
+    LABORATORY
     */
 
     createRoom(
         scene,
+        collision,
         -9,
         -7,
         7,
@@ -571,11 +553,12 @@ function(scene) {
 
 
     /*
-    Security
+    SECURITY
     */
 
     createRoom(
         scene,
+        collision,
         9,
         -7,
         7,
@@ -584,11 +567,12 @@ function(scene) {
 
 
     /*
-    Medbay
+    MEDBAY
     */
 
     createRoom(
         scene,
+        collision,
         -9,
         7,
         7,
@@ -597,11 +581,12 @@ function(scene) {
 
 
     /*
-    Engine Room
+    ENGINE
     */
 
     createRoom(
         scene,
+        collision,
         9,
         7,
         7,
@@ -610,7 +595,7 @@ function(scene) {
 
 
     /*
-    Task terminals
+    TASKS
     */
 
     createTaskTerminal(
@@ -646,7 +631,7 @@ function(scene) {
 
 
     /*
-    Emergency button
+    EMERGENCY BUTTON
     */
 
     createEmergencyButton(
@@ -657,7 +642,7 @@ function(scene) {
 
 
     /*
-    Extra lights
+    CENTRAL LIGHT
     */
 
     createCeilingLight(
@@ -669,11 +654,12 @@ function(scene) {
 
 
     /*
-    World boundaries
+    OUTER BOUNDARIES
     */
 
     createWall(
         scene,
+        collision,
         0,
         -16,
         32,
@@ -683,6 +669,7 @@ function(scene) {
 
     createWall(
         scene,
+        collision,
         0,
         16,
         32,
@@ -692,6 +679,7 @@ function(scene) {
 
     createWall(
         scene,
+        collision,
         -16,
         0,
         0.4,
@@ -701,6 +689,7 @@ function(scene) {
 
     createWall(
         scene,
+        collision,
         16,
         0,
         0.4,
@@ -709,27 +698,39 @@ function(scene) {
 
 
     /*
-    Return world information
+    WORLD DATA
     */
 
     return {
 
         rooms: [
+
             "Central Hub",
+
             "Laboratory",
+
             "Security",
+
             "Medbay",
+
             "Engine Room"
+
         ],
 
         tasks: [
+
             "LAB TERMINAL",
+
             "SECURITY SYSTEM",
+
             "MEDICAL SYSTEM",
+
             "ENGINE CONTROL"
+
         ],
 
-        emergencyButton: true
+        emergencyButton:
+            true
 
     };
 
