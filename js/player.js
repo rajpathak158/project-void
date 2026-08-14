@@ -227,7 +227,7 @@ class PlayerController {
 
 
         /*
-        START
+        START POSITION
         */
 
         this.player.position.set(
@@ -309,7 +309,6 @@ class PlayerController {
         let centerX = 0;
 
         let centerY = 0;
-
 
         const maxDistance = 42;
 
@@ -518,12 +517,12 @@ class PlayerController {
 
 
         /*
-        IMPORTANT:
+        Screen coordinates:
 
-        Up = negative screen Y.
-
-        We convert it to positive
-        forward input.
+        UP    = negative Y
+        DOWN  = positive Y
+        LEFT  = negative X
+        RIGHT = positive X
         */
 
         this.moveInput.set(
@@ -572,8 +571,8 @@ class PlayerController {
                 ) {
 
                     /*
-                    Only use the right side
-                    of the screen for camera.
+                    Camera uses the
+                    right side of screen.
                     */
 
                     if (
@@ -649,7 +648,7 @@ class PlayerController {
 
 
                     /*
-                    Horizontal
+                    Horizontal camera
                     */
 
                     this.cameraYaw -=
@@ -658,7 +657,7 @@ class PlayerController {
 
 
                     /*
-                    Vertical
+                    Vertical camera
                     */
 
                     this.cameraPitch -=
@@ -941,8 +940,9 @@ class PlayerController {
         if (moving) {
 
             /*
-            Camera-relative
-            direction
+            ==================================
+            CAMERA RELATIVE MOVEMENT
+            ==================================
             */
 
             const forward =
@@ -973,18 +973,28 @@ class PlayerController {
                 new THREE.Vector3();
 
 
+            /*
+            ==================================
+            LEFT / RIGHT FIX
+            ==================================
+
+            inputX positive = joystick RIGHT
+
+            We use -inputX so that the
+            character moves in the expected
+            screen direction.
+            */
+
             direction.addScaledVector(
                 right,
-                inputX
+                -inputX
             );
 
 
             /*
-            FIX:
-
-            joystick UP is negative Y,
-            therefore -inputZ gives
-            forward movement.
+            ==================================
+            FORWARD / BACKWARD
+            ==================================
             */
 
             direction.addScaledVector(
@@ -996,6 +1006,12 @@ class PlayerController {
             direction.normalize();
 
 
+            /*
+            ==================================
+            SPEED
+            ==================================
+            */
+
             const running =
                 this.keys["ShiftLeft"] ||
                 this.keys["ShiftRight"];
@@ -1006,6 +1022,12 @@ class PlayerController {
                     ? this.runSpeed
                     : this.speed;
 
+
+            /*
+            ==================================
+            POSITION
+            ==================================
+            */
 
             const newX =
                 this.player.position.x +
@@ -1022,7 +1044,9 @@ class PlayerController {
 
 
             /*
-            Collision
+            ==================================
+            COLLISION
+            ==================================
             */
 
             if (
@@ -1049,7 +1073,9 @@ class PlayerController {
 
 
             /*
-            Character faces movement
+            ==================================
+            PLAYER ROTATION
+            ==================================
             */
 
             const targetRotation =
@@ -1073,7 +1099,9 @@ class PlayerController {
 
 
         /*
-        World boundary
+        ==========================================
+        WORLD BOUNDARY
+        ==========================================
         */
 
         this.player.position.x =
@@ -1093,7 +1121,9 @@ class PlayerController {
 
 
         /*
-        Camera
+        ==========================================
+        CAMERA
+        ==========================================
         */
 
         this.updateCamera(
@@ -1105,7 +1135,7 @@ class PlayerController {
 
     /*
     ==========================================
-    CAMERA
+    CAMERA UPDATE
     ==========================================
     */
 
@@ -1158,6 +1188,10 @@ class PlayerController {
             this.cameraHeight +
             verticalDistance;
 
+
+        /*
+        Smooth camera
+        */
 
         this.camera.position.lerp(
             desired,
