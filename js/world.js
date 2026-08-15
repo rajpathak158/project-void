@@ -2,1285 +2,1579 @@ import * as THREE from
     "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 
-const world = {};
-
-
 /*
 ==================================================
-PROJECT VOID
-LARGE STATION
-==================================================
-
-WORLD:
-
-                    RESEARCH
-                       |
-                       |
-        MEDICAL -- CENTRAL -- ENGINEERING
-                       |
-                       |
-                    SECURITY
-
-WORLD SIZE:
-120 x 120
-
-FLOOR:
-y = 0
-
-WALL:
-0 → 4
-
-CEILING:
-4 → 4.2
-
+PROJECT: VOID
+WORLD SYSTEM
+SAFE REBUILD
 ==================================================
 */
 
+class VoidWorld {
 
-const WORLD_SIZE =
-    120;
+    constructor() {
 
+        this.rooms = [];
 
-const HALF =
-    WORLD_SIZE / 2;
-
-
-const WALL_HEIGHT =
-    4;
-
-
-const WALL_THICKNESS =
-    0.4;
-
-
-/*
-==================================================
-MATERIALS
-==================================================
-*/
-
-const materials = {
-
-    floor:
-        new THREE.MeshStandardMaterial({
-            color: 0x10131b,
-            roughness: 0.85
-        }),
-
-
-    floorMetal:
-        new THREE.MeshStandardMaterial({
-            color: 0x202632,
-            metalness: 0.65,
-            roughness: 0.4
-        }),
-
-
-    wall:
-        new THREE.MeshStandardMaterial({
-            color: 0x272c39,
-            roughness: 0.72
-        }),
-
-
-    ceiling:
-        new THREE.MeshStandardMaterial({
-            color: 0x11141d,
-            roughness: 0.8
-        }),
-
-
-    research:
-        new THREE.MeshStandardMaterial({
-            color: 0x31577c,
-            metalness: 0.35,
-            roughness: 0.45
-        }),
-
-
-    security:
-        new THREE.MeshStandardMaterial({
-            color: 0x59323e,
-            metalness: 0.35,
-            roughness: 0.5
-        }),
-
-
-    medical:
-        new THREE.MeshStandardMaterial({
-            color: 0x315b55,
-            metalness: 0.3,
-            roughness: 0.45
-        }),
-
-
-    engineering:
-        new THREE.MeshStandardMaterial({
-            color: 0x5a4829,
-            metalness: 0.45,
-            roughness: 0.45
-        }),
-
-
-    metal:
-        new THREE.MeshStandardMaterial({
-            color: 0x444a58,
-            metalness: 0.8,
-            roughness: 0.3
-        }),
-
-
-    blue:
-        new THREE.MeshStandardMaterial({
-            color: 0x3c75ff,
-            emissive: 0x122c88,
-            emissiveIntensity: 2
-        }),
-
-
-    cyan:
-        new THREE.MeshStandardMaterial({
-            color: 0x32e5ff,
-            emissive: 0x064a60,
-            emissiveIntensity: 2
-        }),
-
-
-    red:
-        new THREE.MeshStandardMaterial({
-            color: 0xff3040,
-            emissive: 0x700000,
-            emissiveIntensity: 2
-        }),
-
-
-    yellow:
-        new THREE.MeshStandardMaterial({
-            color: 0xffc247,
-            emissive: 0x593800,
-            emissiveIntensity: 1.5
-        })
-
-};
-
-
-/*
-==================================================
-BOX
-==================================================
-*/
-
-function box(
-    scene,
-    x,
-    y,
-    z,
-    width,
-    height,
-    depth,
-    material
-) {
-
-    const mesh =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                width,
-                height,
-                depth
-            ),
-            material
-        );
-
-
-    mesh.position.set(
-        x,
-        y,
-        z
-    );
-
-
-    mesh.castShadow =
-        true;
-
-    mesh.receiveShadow =
-        true;
-
-
-    scene.add(
-        mesh
-    );
-
-
-    return mesh;
-
-}
-
-
-/*
-==================================================
-FLOOR
-==================================================
-*/
-
-function floor(
-    scene,
-    x,
-    z,
-    width,
-    depth
-) {
-
-    box(
-        scene,
-        x,
-        -0.08,
-        z,
-        width,
-        0.16,
-        depth,
-        materials.floorMetal
-    );
-
-}
-
-
-/*
-==================================================
-WALL
-==================================================
-*/
-
-function wall(
-    scene,
-    collision,
-    x,
-    z,
-    width,
-    depth
-) {
-
-    box(
-        scene,
-        x,
-        WALL_HEIGHT / 2,
-        z,
-        width,
-        WALL_HEIGHT,
-        depth,
-        materials.wall
-    );
-
-
-    collision.addWall(
-        x,
-        z,
-        width,
-        depth
-    );
-
-}
-
-
-/*
-==================================================
-WALL WITH DOOR
-
-The wall is split into:
-
-LEFT SEGMENT
-DOOR
-RIGHT SEGMENT
-==================================================
-*/
-
-function horizontalDoorWall(
-    scene,
-    collision,
-    x,
-    z,
-    totalWidth,
-    doorWidth
-) {
-
-    const remaining =
-        totalWidth -
-        doorWidth;
-
-
-    const segment =
-        remaining / 2;
-
-
-    if (
-        segment > 0
-    ) {
-
-        wall(
-            scene,
-            collision,
-            x -
-            doorWidth / 2 -
-            segment / 2,
-            z,
-            segment,
-            WALL_THICKNESS
-        );
-
-
-        wall(
-            scene,
-            collision,
-            x +
-            doorWidth / 2 +
-            segment / 2,
-            z,
-            segment,
-            WALL_THICKNESS
-        );
-
-    }
-
-}
-
-
-/*
-==================================================
-VERTICAL DOOR WALL
-==================================================
-*/
-
-function verticalDoorWall(
-    scene,
-    collision,
-    x,
-    z,
-    totalDepth,
-    doorWidth
-) {
-
-    const remaining =
-        totalDepth -
-        doorWidth;
-
-
-    const segment =
-        remaining / 2;
-
-
-    if (
-        segment > 0
-    ) {
-
-        wall(
-            scene,
-            collision,
-            x,
-            z -
-            doorWidth / 2 -
-            segment / 2,
-            WALL_THICKNESS,
-            segment
-        );
-
-
-        wall(
-            scene,
-            collision,
-            x,
-            z +
-            doorWidth / 2 +
-            segment / 2,
-            WALL_THICKNESS,
-            segment
-        );
-
-    }
-
-}
-
-
-/*
-==================================================
-ROOM
-==================================================
-*/
-
-function room(
-    scene,
-    collision,
-    x,
-    z,
-    width,
-    depth,
-    material,
-    doorSide = "south"
-) {
-
-    floor(
-        scene,
-        x,
-        z,
-        width,
-        depth
-    );
-
-
-    /*
-    ----------------------------------------------
-    NORTH
-    ----------------------------------------------
-    */
-
-    if (
-        doorSide ===
-        "north"
-    ) {
-
-        horizontalDoorWall(
-            scene,
-            collision,
-            x,
-            z - depth / 2,
-            width,
-            5
-        );
-
-    } else {
-
-        wall(
-            scene,
-            collision,
-            x,
-            z - depth / 2,
-            width,
-            WALL_THICKNESS
-        );
+        this.tasks = [];
 
     }
 
 
     /*
-    SOUTH
-    ----------------------------------------------
+    ==================================================
+    MATERIALS
+    ==================================================
     */
 
-    if (
-        doorSide ===
-        "south"
+    material(
+        color,
+        roughness = 0.5,
+        metalness = 0.2
     ) {
 
-        horizontalDoorWall(
-            scene,
-            collision,
-            x,
-            z + depth / 2,
-            width,
-            5
-        );
+        return new THREE.MeshStandardMaterial({
 
-    } else {
-
-        wall(
-            scene,
-            collision,
-            x,
-            z + depth / 2,
-            width,
-            WALL_THICKNESS
-        );
-
-    }
-
-
-    /*
-    WEST
-    ----------------------------------------------
-    */
-
-    if (
-        doorSide ===
-        "west"
-    ) {
-
-        verticalDoorWall(
-            scene,
-            collision,
-            x - width / 2,
-            z,
-            depth,
-            5
-        );
-
-    } else {
-
-        wall(
-            scene,
-            collision,
-            x - width / 2,
-            z,
-            WALL_THICKNESS,
-            depth
-        );
-
-    }
-
-
-    /*
-    EAST
-    ----------------------------------------------
-    */
-
-    if (
-        doorSide ===
-        "east"
-    ) {
-
-        verticalDoorWall(
-            scene,
-            collision,
-            x + width / 2,
-            z,
-            depth,
-            5
-        );
-
-    } else {
-
-        wall(
-            scene,
-            collision,
-            x + width / 2,
-            z,
-            WALL_THICKNESS,
-            depth
-        );
-
-    }
-
-
-    /*
-    Ceiling
-    */
-
-    box(
-        scene,
-        x,
-        4.1,
-        z,
-        width,
-        0.2,
-        depth,
-        materials.ceiling
-    );
-
-
-    /*
-    Lights
-    */
-
-    light(
-        scene,
-        x,
-        z,
-        0x566cff
-    );
-
-
-    return {
-
-        x,
-        z,
-        width,
-        depth
-
-    };
-
-}
-
-
-/*
-==================================================
-CORRIDOR
-==================================================
-*/
-
-function corridor(
-    scene,
-    x,
-    z,
-    width,
-    depth
-) {
-
-    floor(
-        scene,
-        x,
-        z,
-        width,
-        depth
-    );
-
-
-    /*
-    Corridor ceiling
-    */
-
-    box(
-        scene,
-        x,
-        4.1,
-        z,
-        width,
-        0.2,
-        depth,
-        materials.ceiling
-    );
-
-
-    /*
-    Blue navigation strip
-    */
-
-    box(
-        scene,
-        x,
-        0.02,
-        z,
-        Math.min(
-            width,
-            1
-        ),
-        0.04,
-        Math.min(
-            depth,
-            1
-        ),
-        materials.blue
-    );
-
-}
-
-
-/*
-==================================================
-LIGHT
-==================================================
-*/
-
-function light(
-    scene,
-    x,
-    z,
-    color
-) {
-
-    const l =
-        new THREE.PointLight(
             color,
-            5,
-            18
-        );
+            roughness,
+            metalness
+
+        });
+
+    }
 
 
-    l.position.set(
-        x,
-        3.4,
-        z
-    );
+    glow(
+        color,
+        intensity = 2
+    ) {
 
+        return new THREE.MeshStandardMaterial({
 
-    scene.add(
-        l
-    );
-
-
-    box(
-        scene,
-        x,
-        3.92,
-        z,
-        2,
-        0.08,
-        0.3,
-        new THREE.MeshStandardMaterial({
             color,
+
             emissive: color,
-            emissiveIntensity: 2
-        })
-    );
 
-}
+            emissiveIntensity: intensity,
 
+            roughness: 0.25,
 
-/*
-==================================================
-CENTRAL HUB
-==================================================
-*/
+            metalness: 0.4
 
-function centralHub(
-    scene,
-    collision
-) {
-
-    floor(
-        scene,
-        0,
-        0,
-        30,
-        30
-    );
-
-
-    /*
-    Four open exits.
-    */
-
-    horizontalDoorWall(
-        scene,
-        collision,
-        0,
-        -15,
-        30,
-        7
-    );
-
-
-    horizontalDoorWall(
-        scene,
-        collision,
-        0,
-        15,
-        30,
-        7
-    );
-
-
-    verticalDoorWall(
-        scene,
-        collision,
-        -15,
-        0,
-        30,
-        7
-    );
-
-
-    verticalDoorWall(
-        scene,
-        collision,
-        15,
-        0,
-        30,
-        7
-    );
-
-
-    /*
-    Ceiling
-    */
-
-    box(
-        scene,
-        0,
-        4.1,
-        0,
-        30,
-        0.2,
-        30,
-        materials.ceiling
-    );
-
-
-    /*
-    Lights
-    */
-
-    light(
-        scene,
-        -8,
-        -8,
-        0x596cff
-    );
-
-
-    light(
-        scene,
-        8,
-        -8,
-        0x596cff
-    );
-
-
-    light(
-        scene,
-        -8,
-        8,
-        0x596cff
-    );
-
-
-    light(
-        scene,
-        8,
-        8,
-        0x596cff
-    );
-
-
-    /*
-    Central pillar
-    */
-
-    box(
-        scene,
-        0,
-        1.5,
-        0,
-        1,
-        3,
-        1,
-        materials.metal
-    );
-
-}
-
-
-/*
-==================================================
-RESEARCH
-==================================================
-*/
-
-function research(
-    scene,
-    collision
-) {
-
-    /*
-    Main research building
-    */
-
-    room(
-        scene,
-        collision,
-        -32,
-        -38,
-        26,
-        22,
-        materials.research,
-        "south"
-    );
-
-
-    room(
-        scene,
-        collision,
-        0,
-        -48,
-        22,
-        16,
-        materials.research,
-        "south"
-    );
-
-
-    /*
-    Connection corridor
-    */
-
-    corridor(
-        scene,
-        -16,
-        -23,
-        8,
-        20
-    );
-
-
-    corridor(
-        scene,
-        0,
-        -36,
-        8,
-        20
-    );
-
-}
-
-
-/*
-==================================================
-SECURITY
-==================================================
-*/
-
-function security(
-    scene,
-    collision
-) {
-
-    room(
-        scene,
-        collision,
-        -32,
-        38,
-        26,
-        22,
-        materials.security,
-        "north"
-    );
-
-
-    room(
-        scene,
-        collision,
-        0,
-        48,
-        22,
-        16,
-        materials.security,
-        "north"
-    );
-
-
-    corridor(
-        scene,
-        -16,
-        23,
-        8,
-        20
-    );
-
-
-    corridor(
-        scene,
-        0,
-        36,
-        8,
-        20
-    );
-
-}
-
-
-/*
-==================================================
-MEDICAL
-==================================================
-*/
-
-function medical(
-    scene,
-    collision
-) {
-
-    room(
-        scene,
-        collision,
-        -38,
-        -8,
-        22,
-        26,
-        materials.medical,
-        "east"
-    );
-
-
-    room(
-        scene,
-        collision,
-        -48,
-        18,
-        16,
-        22,
-        materials.medical,
-        "east"
-    );
-
-
-    corridor(
-        scene,
-        -23,
-        -8,
-        20,
-        8
-    );
-
-
-    corridor(
-        scene,
-        -36,
-        18,
-        20,
-        8
-    );
-
-}
-
-
-/*
-==================================================
-ENGINEERING
-==================================================
-*/
-
-function engineering(
-    scene,
-    collision
-) {
-
-    room(
-        scene,
-        collision,
-        38,
-        -8,
-        22,
-        26,
-        materials.engineering,
-        "west"
-    );
-
-
-    room(
-        scene,
-        collision,
-        48,
-        18,
-        16,
-        22,
-        materials.engineering,
-        "west"
-    );
-
-
-    corridor(
-        scene,
-        23,
-        -8,
-        20,
-        8
-    );
-
-
-    corridor(
-        scene,
-        36,
-        18,
-        20,
-        8
-    );
-
-}
-
-
-/*
-==================================================
-OUTER BOUNDARY
-==================================================
-*/
-
-function boundary(
-    scene,
-    collision
-) {
-
-    wall(
-        scene,
-        collision,
-        0,
-        -HALF,
-        WORLD_SIZE,
-        0.6
-    );
-
-
-    wall(
-        scene,
-        collision,
-        0,
-        HALF,
-        WORLD_SIZE,
-        0.6
-    );
-
-
-    wall(
-        scene,
-        collision,
-        -HALF,
-        0,
-        0.6,
-        WORLD_SIZE
-    );
-
-
-    wall(
-        scene,
-        collision,
-        HALF,
-        0,
-        0.6,
-        WORLD_SIZE
-    );
-
-}
-
-
-/*
-==================================================
-WORLD
-==================================================
-*/
-
-world.create =
-function(
-    scene,
-    collision
-) {
-
-    /*
-    Clear old collision.
-    */
-
-    if (
-        collision &&
-        typeof collision.clear ===
-        "function"
-    ) {
-
-        collision.clear();
+        });
 
     }
 
 
     /*
-    Massive base floor.
+    ==================================================
+    CREATE WORLD
+    ==================================================
     */
 
-    floor(
-        scene,
-        0,
-        0,
-        WORLD_SIZE,
-        WORLD_SIZE
-    );
+    create(scene, collision) {
 
-
-    /*
-    Main station.
-    */
-
-    centralHub(
-        scene,
-        collision
-    );
-
-
-    research(
-        scene,
-        collision
-    );
-
-
-    security(
-        scene,
-        collision
-    );
-
-
-    medical(
-        scene,
-        collision
-    );
-
-
-    engineering(
-        scene,
-        collision
-    );
-
-
-    /*
-    Outer boundary.
-    */
-
-    boundary(
-        scene,
-        collision
-    );
-
-
-    /*
-    Ambient light.
-    */
-
-    const ambient =
-        new THREE.HemisphereLight(
-            0x6677aa,
-            0x111111,
-            1.1
+        console.log(
+            "VOID WORLD: BUILDING..."
         );
 
 
-    scene.add(
-        ambient
-    );
+        /*
+        ==============================================
+        CLEAR OLD COLLISION DATA
+        ==============================================
+        */
 
+        if (collision) {
 
-    return {
+            try {
 
-        size:
-            WORLD_SIZE,
+                if (
+                    typeof collision.clear ===
+                    "function"
+                ) {
 
-        rooms: [
+                    collision.clear();
 
-            "Central Hub",
-            "Research Sector",
-            "Security Sector",
-            "Medical Sector",
-            "Engineering Sector"
+                }
 
-        ],
+                if (
+                    typeof collision.reset ===
+                    "function"
+                ) {
 
-        maps: [
+                    collision.reset();
 
-            "VOID-STATION-01"
+                }
 
-        ],
+                if (
+                    Array.isArray(
+                        collision.colliders
+                    )
+                ) {
 
-        sectors: [
+                    collision.colliders.length = 0;
 
-            {
-                id: "central",
-                name: "Central Hub"
-            },
+                }
 
-            {
-                id: "research",
-                name: "Research Sector"
-            },
+                if (
+                    Array.isArray(
+                        collision.objects
+                    )
+                ) {
 
-            {
-                id: "security",
-                name: "Security Sector"
-            },
+                    collision.objects.length = 0;
 
-            {
-                id: "medical",
-                name: "Medical Sector"
-            },
+                }
 
-            {
-                id: "engineering",
-                name: "Engineering Sector"
+            }
+            catch (error) {
+
+                console.warn(
+                    "VOID WORLD: collision cleanup skipped",
+                    error
+                );
+
             }
 
-        ]
+        }
 
-    };
 
-};
+        /*
+        ==============================================
+        MATERIAL PALETTE
+        ==============================================
+        */
+
+        const floorMat =
+            this.material(
+                0x111522,
+                0.72,
+                0.35
+            );
+
+
+        const wallMat =
+            this.material(
+                0x1b2030,
+                0.55,
+                0.55
+            );
+
+
+        const darkMat =
+            this.material(
+                0x080b12,
+                0.4,
+                0.7
+            );
+
+
+        const metalMat =
+            this.material(
+                0x30394c,
+                0.28,
+                0.85
+            );
+
+
+        const cyan =
+            this.glow(
+                0x20d9ff,
+                3
+            );
+
+
+        const blue =
+            this.glow(
+                0x376cff,
+                2.5
+            );
+
+
+        const purple =
+            this.glow(
+                0x9b4dff,
+                2.5
+            );
+
+
+        const green =
+            this.glow(
+                0x32ffb0,
+                2.5
+            );
+
+
+        const orange =
+            this.glow(
+                0xff8a32,
+                2.5
+            );
+
+
+        /*
+        ==============================================
+        FLOOR
+        ==============================================
+        */
+
+        const floor =
+            new THREE.Mesh(
+
+                new THREE.PlaneGeometry(
+                    80,
+                    80
+                ),
+
+                floorMat
+
+            );
+
+
+        floor.rotation.x =
+            -Math.PI / 2;
+
+
+        floor.position.y =
+            -0.02;
+
+
+        floor.receiveShadow =
+            true;
+
+
+        floor.userData.isFloor =
+            true;
+
+
+        scene.add(
+            floor
+        );
+
+
+        /*
+        ==============================================
+        FLOOR GRID
+        ==============================================
+        */
+
+        const grid =
+            new THREE.GridHelper(
+                80,
+                40,
+                0x28415c,
+                0x151d2c
+            );
+
+
+        grid.position.y =
+            0.005;
+
+
+        scene.add(
+            grid
+        );
+
+
+        /*
+        ==============================================
+        CENTRAL HUB
+        ==============================================
+        */
+
+        this.createRoom(
+            scene,
+            "CENTRAL HUB",
+            0,
+            0,
+            22,
+            18,
+            wallMat,
+            cyan,
+            collision
+        );
+
+
+        /*
+        ==============================================
+        NORTH ROOM
+        ==============================================
+        */
+
+        this.createRoom(
+            scene,
+            "COMMAND",
+            0,
+            -16,
+            18,
+            10,
+            wallMat,
+            blue,
+            collision
+        );
+
+
+        /*
+        ==============================================
+        SOUTH ROOM
+        ==============================================
+        */
+
+        this.createRoom(
+            scene,
+            "ENGINEERING",
+            0,
+            16,
+            18,
+            10,
+            wallMat,
+            orange,
+            collision
+        );
+
+
+        /*
+        ==============================================
+        WEST ROOM
+        ==============================================
+        */
+
+        this.createRoom(
+            scene,
+            "MEDICAL",
+            -18,
+            0,
+            10,
+            14,
+            wallMat,
+            green,
+            collision
+        );
+
+
+        /*
+        ==============================================
+        EAST ROOM
+        ==============================================
+        */
+
+        this.createRoom(
+            scene,
+            "REACTOR",
+            18,
+            0,
+            10,
+            14,
+            wallMat,
+            purple,
+            collision
+        );
+
+
+        /*
+        ==============================================
+        OPEN CONNECTIONS
+        ==============================================
+        */
+
+        /*
+        IMPORTANT:
+
+        The central hub remains open.
+
+        We deliberately DO NOT put collision walls
+        across these four entrances.
+        */
+
+
+        this.createDoorFrame(
+            scene,
+            0,
+            -9.0,
+            0,
+            cyan
+        );
+
+
+        this.createDoorFrame(
+            scene,
+            0,
+            9.0,
+            Math.PI,
+            orange
+        );
+
+
+        this.createDoorFrame(
+            scene,
+            -11,
+            0,
+            Math.PI / 2,
+            green
+        );
+
+
+        this.createDoorFrame(
+            scene,
+            11,
+            0,
+            -Math.PI / 2,
+            purple
+        );
+
+
+        /*
+        ==============================================
+        CENTRAL PLATFORM
+        ==============================================
+        */
+
+        const platform =
+            new THREE.Mesh(
+
+                new THREE.CylinderGeometry(
+                    4.2,
+                    4.2,
+                    0.25,
+                    48
+                ),
+
+                metalMat
+
+            );
+
+
+        platform.position.set(
+            0,
+            0.125,
+            0
+        );
+
+
+        platform.receiveShadow =
+            true;
+
+
+        platform.castShadow =
+            true;
+
+
+        scene.add(
+            platform
+        );
+
+
+        /*
+        CENTRAL RING
+        */
+
+        const ring =
+            new THREE.Mesh(
+
+                new THREE.TorusGeometry(
+                    3.7,
+                    0.08,
+                    12,
+                    64
+                ),
+
+                cyan
+
+            );
+
+
+        ring.rotation.x =
+            Math.PI / 2;
+
+
+        ring.position.y =
+            0.28;
+
+
+        scene.add(
+            ring
+        );
+
+
+        /*
+        ==============================================
+        CENTRAL TERMINAL
+        ==============================================
+        */
+
+        this.createTerminal(
+            scene,
+            -3.5,
+            0,
+            cyan
+        );
+
+
+        this.createTerminal(
+            scene,
+            3.5,
+            0,
+            blue
+        );
+
+
+        /*
+        ==============================================
+        NORTH COMMAND TERMINAL
+        ==============================================
+        */
+
+        this.createTerminal(
+            scene,
+            -3,
+            -16,
+            blue
+        );
+
+
+        /*
+        ==============================================
+        SOUTH ENGINEERING TERMINAL
+        ==============================================
+        */
+
+        this.createTerminal(
+            scene,
+            3,
+            16,
+            orange
+        );
+
+
+        /*
+        ==============================================
+        WEST MEDICAL TERMINAL
+        ==============================================
+        */
+
+        this.createTerminal(
+            scene,
+            -18,
+            0,
+            green
+        );
+
+
+        /*
+        ==============================================
+        EAST REACTOR TERMINAL
+        ==============================================
+        */
+
+        this.createTerminal(
+            scene,
+            18,
+            0,
+            purple
+        );
+
+
+        /*
+        ==============================================
+        TASKS
+        ==============================================
+        */
+
+        this.tasks = [];
+
+
+        this.tasks.push(
+            this.createTask(
+                scene,
+                "POWER CORE",
+                -3.5,
+                0,
+                cyan
+            )
+        );
+
+
+        this.tasks.push(
+            this.createTask(
+                scene,
+                "NAVIGATION",
+                3.5,
+                0,
+                blue
+            )
+        );
+
+
+        this.tasks.push(
+            this.createTask(
+                scene,
+                "COMMAND",
+                -3,
+                -16,
+                blue
+            )
+        );
+
+
+        this.tasks.push(
+            this.createTask(
+                scene,
+                "ENGINEERING",
+                3,
+                16,
+                orange
+            )
+        );
+
+
+        this.tasks.push(
+            this.createTask(
+                scene,
+                "MEDICAL",
+                -18,
+                0,
+                green
+            )
+        );
+
+
+        this.tasks.push(
+            this.createTask(
+                scene,
+                "REACTOR",
+                18,
+                0,
+                purple
+            )
+        );
+
+
+        /*
+        ==============================================
+        DECORATION
+        ==============================================
+        */
+
+        this.createLights(
+            scene,
+            cyan,
+            blue,
+            purple
+        );
+
+
+        this.createCeilingLights(
+            scene,
+            0,
+            -5,
+            cyan
+        );
+
+
+        this.createCeilingLights(
+            scene,
+            0,
+            5,
+            blue
+        );
+
+
+        /*
+        ==============================================
+        ROOMS DATA
+        ==============================================
+        */
+
+        this.rooms = [
+
+            "CENTRAL HUB",
+
+            "COMMAND",
+
+            "ENGINEERING",
+
+            "MEDICAL",
+
+            "REACTOR"
+
+        ];
+
+
+        console.log(
+            "VOID WORLD: READY"
+        );
+
+
+        console.log(
+            "Rooms:",
+            this.rooms
+        );
+
+
+        console.log(
+            "Tasks:",
+            this.tasks.length
+        );
+
+
+        /*
+        ==============================================
+        RETURN OBJECT
+        ==============================================
+        */
+
+        return {
+
+            rooms:
+                this.rooms,
+
+            tasks:
+                this.tasks,
+
+            spawn: {
+
+                x: 0,
+
+                y: 0,
+
+                z: 4
+
+            }
+
+        };
+
+    }
+
+
+    /*
+    ==================================================
+    ROOM CREATOR
+    ==================================================
+    */
+
+    createRoom(
+        scene,
+        name,
+        x,
+        z,
+        width,
+        depth,
+        wallMat,
+        glowMat,
+        collision
+    ) {
+
+        /*
+        ----------------------------------------------
+        ROOM FLOOR
+        ----------------------------------------------
+        */
+
+        const roomFloor =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    width,
+                    0.18,
+                    depth
+                ),
+
+                wallMat
+
+            );
+
+
+        roomFloor.position.set(
+            x,
+            0.09,
+            z
+        );
+
+
+        roomFloor.receiveShadow =
+            true;
+
+
+        scene.add(
+            roomFloor
+        );
+
+
+        /*
+        ----------------------------------------------
+        WALL HEIGHT
+        ----------------------------------------------
+        */
+
+        const wallHeight =
+            3.2;
+
+
+        const wallThickness =
+            0.35;
+
+
+        /*
+        ----------------------------------------------
+        NORTH WALL
+        ----------------------------------------------
+        */
+
+        const north =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    width,
+                    wallHeight,
+                    wallThickness
+                ),
+
+                wallMat
+
+            );
+
+
+        north.position.set(
+            x,
+            wallHeight / 2,
+            z - depth / 2
+        );
+
+
+        scene.add(
+            north
+        );
+
+
+        /*
+        ----------------------------------------------
+        SOUTH WALL
+        ----------------------------------------------
+        */
+
+        const south =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    width,
+                    wallHeight,
+                    wallThickness
+                ),
+
+                wallMat
+
+            );
+
+
+        south.position.set(
+            x,
+            wallHeight / 2,
+            z + depth / 2
+        );
+
+
+        scene.add(
+            south
+        );
+
+
+        /*
+        ----------------------------------------------
+        WEST WALL
+        ----------------------------------------------
+        */
+
+        const west =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    wallThickness,
+                    wallHeight,
+                    depth
+                ),
+
+                wallMat
+
+            );
+
+
+        west.position.set(
+            x - width / 2,
+            wallHeight / 2,
+            z
+        );
+
+
+        scene.add(
+            west
+        );
+
+
+        /*
+        ----------------------------------------------
+        EAST WALL
+        ----------------------------------------------
+        */
+
+        const east =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    wallThickness,
+                    wallHeight,
+                    depth
+                ),
+
+                wallMat
+
+            );
+
+
+        east.position.set(
+            x + width / 2,
+            wallHeight / 2,
+            z
+        );
+
+
+        scene.add(
+            east
+        );
+
+
+        /*
+        ----------------------------------------------
+        GLOW STRIPS
+        ----------------------------------------------
+        */
+
+        const strip1 =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    width - 0.8,
+                    0.07,
+                    0.04
+                ),
+
+                glowMat
+
+            );
+
+
+        strip1.position.set(
+            x,
+            2.5,
+            z - depth / 2 - 0.2
+        );
+
+
+        scene.add(
+            strip1
+        );
+
+
+        const strip2 =
+            strip1.clone();
+
+
+        strip2.position.z =
+            z + depth / 2 + 0.2;
+
+
+        scene.add(
+            strip2
+        );
+
+
+        /*
+        ----------------------------------------------
+        IMPORTANT COLLISION DESIGN
+        ----------------------------------------------
+
+        We intentionally DO NOT register the room
+        walls with collision here.
+
+        This prevents the old invisible-wall problem.
+
+        The player is therefore free to move while
+        we verify that rendering/world generation works.
+        ----------------------------------------------
+        */
+
+    }
+
+
+    /*
+    ==================================================
+    DOOR FRAME
+    ==================================================
+    */
+
+    createDoorFrame(
+        scene,
+        x,
+        z,
+        rotation,
+        material
+    ) {
+
+        const frame =
+            new THREE.Group();
+
+
+        frame.position.set(
+            x,
+            0,
+            z
+        );
+
+
+        frame.rotation.y =
+            rotation;
+
+
+        /*
+        LEFT
+        */
+
+        const left =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    0.18,
+                    3,
+                    0.18
+                ),
+
+                material
+
+            );
+
+
+        left.position.set(
+            -2,
+            1.5,
+            0
+        );
+
+
+        frame.add(
+            left
+        );
+
+
+        /*
+        RIGHT
+        */
+
+        const right =
+            left.clone();
+
+
+        right.position.x =
+            2;
+
+
+        frame.add(
+            right
+        );
+
+
+        /*
+        TOP
+        */
+
+        const top =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    4,
+                    0.18,
+                    0.18
+                ),
+
+                material
+
+            );
+
+
+        top.position.set(
+            0,
+            3,
+            0
+        );
+
+
+        frame.add(
+            top
+        );
+
+
+        scene.add(
+            frame
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    TERMINAL
+    ==================================================
+    */
+
+    createTerminal(
+        scene,
+        x,
+        z,
+        glowMaterial
+    ) {
+
+        const group =
+            new THREE.Group();
+
+
+        group.position.set(
+            x,
+            0,
+            z
+        );
+
+
+        /*
+        BODY
+        */
+
+        const body =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    1.1,
+                    1.35,
+                    0.65
+                ),
+
+                this.material(
+                    0x111725,
+                    0.4,
+                    0.7
+                )
+
+            );
+
+
+        body.position.y =
+            0.68;
+
+
+        body.castShadow =
+            true;
+
+
+        group.add(
+            body
+        );
+
+
+        /*
+        SCREEN
+        */
+
+        const screen =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    0.75,
+                    0.48,
+                    0.04
+                ),
+
+                glowMaterial
+
+            );
+
+
+        screen.position.set(
+            0,
+            0.85,
+            -0.35
+        );
+
+
+        group.add(
+            screen
+        );
+
+
+        /*
+        BASE
+        */
+
+        const base =
+            new THREE.Mesh(
+
+                new THREE.BoxGeometry(
+                    1.35,
+                    0.18,
+                    0.85
+                ),
+
+                this.material(
+                    0x080b12,
+                    0.35,
+                    0.8
+                )
+
+            );
+
+
+        base.position.y =
+            0.09;
+
+
+        group.add(
+            base
+        );
+
+
+        /*
+        GLOW RING
+        */
+
+        const ring =
+            new THREE.Mesh(
+
+                new THREE.TorusGeometry(
+                    0.32,
+                    0.035,
+                    8,
+                    24
+                ),
+
+                glowMaterial
+
+            );
+
+
+        ring.rotation.x =
+            Math.PI / 2;
+
+
+        ring.position.y =
+            0.04;
+
+
+        group.add(
+            ring
+        );
+
+
+        scene.add(
+            group
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    TASK OBJECT
+    ==================================================
+    */
+
+    createTask(
+        scene,
+        label,
+        x,
+        z,
+        material
+    ) {
+
+        const group =
+            new THREE.Group();
+
+
+        group.position.set(
+            x,
+            0,
+            z
+        );
+
+
+        /*
+        PLATFORM
+        */
+
+        const platform =
+            new THREE.Mesh(
+
+                new THREE.CylinderGeometry(
+                    0.75,
+                    0.75,
+                    0.12,
+                    24
+                ),
+
+                this.material(
+                    0x111827,
+                    0.4,
+                    0.6
+                )
+
+            );
+
+
+        platform.position.y =
+            0.06;
+
+
+        group.add(
+            platform
+        );
+
+
+        /*
+        TASK CORE
+        */
+
+        const core =
+            new THREE.Mesh(
+
+                new THREE.SphereGeometry(
+                    0.28,
+                    16,
+                    16
+                ),
+
+                material
+
+            );
+
+
+        core.position.y =
+            0.65;
+
+
+        core.userData.type =
+            "task";
+
+
+        core.userData.label =
+            label;
+
+
+        core.userData.task =
+            true;
+
+
+        core.castShadow =
+            true;
+
+
+        group.add(
+            core
+        );
+
+
+        /*
+        RING
+        */
+
+        const ring =
+            new THREE.Mesh(
+
+                new THREE.TorusGeometry(
+                    0.48,
+                    0.045,
+                    8,
+                    32
+                ),
+
+                material
+
+            );
+
+
+        ring.rotation.x =
+            Math.PI / 2;
+
+
+        ring.position.y =
+            0.65;
+
+
+        group.add(
+            ring
+        );
+
+
+        /*
+        LIGHT
+        */
+
+        const light =
+            new THREE.PointLight(
+                material.color,
+                2.5,
+                5
+            );
+
+
+        light.position.y =
+            0.7;
+
+
+        group.add(
+            light
+        );
+
+
+        scene.add(
+            group
+        );
+
+
+        return core;
+
+    }
+
+
+    /*
+    ==================================================
+    LIGHTING
+    ==================================================
+    */
+
+    createLights(
+        scene,
+        cyan,
+        blue,
+        purple
+    ) {
+
+        const light1 =
+            new THREE.PointLight(
+                0x20d9ff,
+                4,
+                18
+            );
+
+
+        light1.position.set(
+            0,
+            4,
+            0
+        );
+
+
+        scene.add(
+            light1
+        );
+
+
+        const light2 =
+            new THREE.PointLight(
+                0x376cff,
+                3,
+                15
+            );
+
+
+        light2.position.set(
+            -12,
+            3,
+            -12
+        );
+
+
+        scene.add(
+            light2
+        );
+
+
+        const light3 =
+            new THREE.PointLight(
+                0x9b4dff,
+                3,
+                15
+            );
+
+
+        light3.position.set(
+            12,
+            3,
+            12
+        );
+
+
+        scene.add(
+            light3
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    CEILING LIGHTS
+    ==================================================
+    */
+
+    createCeilingLights(
+        scene,
+        x,
+        z,
+        material
+    ) {
+
+        for (
+            let i = -2;
+            i <= 2;
+            i++
+        ) {
+
+            const light =
+                new THREE.Mesh(
+
+                    new THREE.BoxGeometry(
+                        2.2,
+                        0.08,
+                        0.12
+                    ),
+
+                    material
+
+                );
+
+
+            light.position.set(
+                x + i * 3,
+                3.05,
+                z
+            );
+
+
+            scene.add(
+                light
+            );
+
+        }
+
+    }
+
+}
+
+
+/*
+==================================================
+EXPORT SINGLE WORLD INSTANCE
+==================================================
+*/
+
+const world =
+    new VoidWorld();
 
 
 export default world;
