@@ -2,7 +2,6 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -10,22 +9,59 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #050509;
-    font-family: Arial, sans-serif;
-    touch-action: none;
-}
 
-body {
-    position: relative;
+    background: #03050a;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    touch-action: none;
 }
 
 canvas {
     position: fixed;
+
     inset: 0;
-    width: 100%;
-    height: 100%;
+
+    width: 100vw;
+    height: 100vh;
+
     display: block;
-    touch-action: none;
+
+    z-index: 1;
+}
+
+
+/* ================================
+   LOADING
+================================ */
+
+#loading {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1000;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #03050a;
+
+    color: #ffffff;
+
+    font-size: 20px;
+
+    font-weight: 900;
+
+    letter-spacing: 7px;
+
+    transition:
+        opacity 0.5s ease;
 }
 
 
@@ -35,64 +71,46 @@ canvas {
 
 #hud {
     position: fixed;
-    top: 18px;
-    left: 18px;
-    z-index: 10;
-    pointer-events: none;
-    color: white;
-    text-shadow:
-        0 2px 8px #000;
-}
 
-#game-title {
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: 3px;
-}
-
-#location {
-    margin-top: 5px;
-    font-size: 11px;
-    letter-spacing: 2px;
-    opacity: 0.7;
-}
-
-
-/* ================================
-   INTERACTION
-================================ */
-
-#interaction {
-    position: fixed;
-    left: 50%;
-    bottom: 120px;
-    transform: translateX(-50%);
+    top: 25px;
+    left: 28px;
 
     z-index: 20;
 
-    padding: 12px 20px;
-
-    border: 1px solid
-        rgba(255,255,255,0.25);
-
-    border-radius: 12px;
-
-    background:
-        rgba(5,8,18,0.85);
+    pointer-events: none;
 
     color: white;
+}
+
+#title {
+    font-size: 24px;
+
+    font-weight: 900;
+
+    letter-spacing: 5px;
+
+    text-shadow:
+        0 0 15px rgba(40, 210, 255, 0.45);
+}
+
+#location {
+    margin-top: 8px;
+
+    color: #6e82a8;
 
     font-size: 12px;
 
-    font-weight: 700;
+    letter-spacing: 3px;
+}
 
-    letter-spacing: 1px;
+#task-count {
+    margin-top: 6px;
 
-    display: none;
+    color: #36e8ff;
 
-    pointer-events: none;
+    font-size: 11px;
 
-    backdrop-filter: blur(8px);
+    letter-spacing: 2px;
 }
 
 
@@ -103,26 +121,30 @@ canvas {
 #joystick {
     position: fixed;
 
-    left: 28px;
-    bottom: 28px;
+    left: 35px;
+    bottom: 35px;
 
-    width: 120px;
-    height: 120px;
-
-    z-index: 30;
+    width: 160px;
+    height: 160px;
 
     border-radius: 50%;
 
+    z-index: 100;
+
     background:
-        rgba(255,255,255,0.08);
+        radial-gradient(
+            circle,
+            rgba(40, 80, 130, 0.18),
+            rgba(10, 15, 25, 0.5)
+        );
 
     border:
         2px solid
-        rgba(255,255,255,0.18);
+        rgba(100, 180, 255, 0.22);
 
     box-shadow:
-        0 8px 30px
-        rgba(0,0,0,0.35);
+        inset 0 0 30px rgba(20, 120, 255, 0.08),
+        0 0 25px rgba(20, 120, 255, 0.08);
 
     touch-action: none;
 }
@@ -133,8 +155,8 @@ canvas {
     left: 50%;
     top: 50%;
 
-    width: 54px;
-    height: 54px;
+    width: 75px;
+    height: 75px;
 
     transform:
         translate(-50%, -50%);
@@ -142,130 +164,126 @@ canvas {
     border-radius: 50%;
 
     background:
-        rgba(100,150,255,0.65);
+        radial-gradient(
+            circle at 35% 30%,
+            #78dfff,
+            #3165a5 60%,
+            #17243c
+        );
 
     border:
         2px solid
-        rgba(255,255,255,0.6);
+        rgba(255,255,255,0.65);
 
     box-shadow:
-        0 0 20px
-        rgba(70,120,255,0.5);
-
-    pointer-events: none;
+        0 0 25px
+        rgba(40, 180, 255, 0.35);
 }
 
 
 /* ================================
-   TASK UI
+   INTERACTION
 ================================ */
 
-#task-ui {
+#interaction {
+    position: fixed;
+
+    left: 50%;
+    bottom: 35px;
+
+    transform:
+        translateX(-50%);
+
+    z-index: 30;
+
+    padding:
+        10px 18px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(5, 10, 20, 0.75);
+
+    border:
+        1px solid
+        rgba(50, 220, 255, 0.25);
+
+    color: #5eeaff;
+
+    font-size: 11px;
+
+    letter-spacing: 2px;
+
+    opacity: 0;
+
+    transition:
+        opacity 0.2s ease;
+
+    pointer-events: none;
+}
+
+#interaction.visible {
+    opacity: 1;
+}
+
+
+/* ================================
+   ERROR
+================================ */
+
+#error-screen {
     position: fixed;
 
     inset: 0;
 
-    z-index: 50;
+    z-index: 9999;
 
     display: none;
 
     align-items: center;
     justify-content: center;
 
-    background:
-        rgba(0,0,0,0.65);
+    padding: 25px;
 
-    backdrop-filter:
-        blur(5px);
+    background:
+        rgba(0,0,0,0.95);
 }
 
-#task-panel {
-    width: min(
-        90vw,
-        420px
-    );
+#error-box {
+    width:
+        min(700px, 90vw);
 
-    padding: 25px;
+    max-height: 80vh;
+
+    overflow: auto;
+
+    padding: 28px;
 
     border-radius: 18px;
 
-    background:
-        rgba(15,18,30,0.96);
+    background: #0d111b;
 
     border:
         1px solid
-        rgba(120,150,255,0.35);
-
-    box-shadow:
-        0 20px 60px
-        rgba(0,0,0,0.6);
+        rgba(255, 50, 80, 0.5);
 
     color: white;
-
-    text-align: center;
 }
 
-#task-header {
-    font-size: 12px;
+#error-box h2 {
+    margin-bottom: 15px;
 
     letter-spacing: 3px;
-
-    opacity: 0.65;
-
-    margin-bottom: 15px;
 }
 
-#task-name {
-    font-size: 22px;
+#error-message {
+    color: #ff8294;
 
-    font-weight: 800;
+    white-space: pre-wrap;
 
-    margin-bottom: 12px;
-}
+    line-height: 1.6;
 
-#task-progress {
     font-size: 13px;
-
-    opacity: 0.65;
-
-    margin-bottom: 22px;
-}
-
-#task-complete {
-    width: 100%;
-
-    padding: 14px;
-
-    border: none;
-
-    border-radius: 10px;
-
-    background:
-        #386cff;
-
-    color: white;
-
-    font-size: 14px;
-
-    font-weight: 800;
-
-    letter-spacing: 1px;
-
-    cursor: pointer;
-}
-
-#task-complete:active {
-    transform: scale(0.97);
-}
-
-
-/* ================================
-   CAMERA AREA
-================================ */
-
-canvas {
-    user-select: none;
-    -webkit-user-select: none;
 }
 
 
@@ -273,45 +291,29 @@ canvas {
    MOBILE
 ================================ */
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
 
-    #game-title {
-        font-size: 16px;
+    #hud {
+        top: 18px;
+        left: 18px;
     }
 
-    #location {
-        font-size: 9px;
+    #title {
+        font-size: 19px;
+        letter-spacing: 4px;
     }
 
     #joystick {
-        width: 115px;
-        height: 115px;
+        width: 145px;
+        height: 145px;
 
-        left: 22px;
-        bottom: 22px;
+        left: 25px;
+        bottom: 25px;
     }
 
     #joystick-knob {
-        width: 52px;
-        height: 52px;
-    }
-
-    #interaction {
-        bottom: 105px;
-        font-size: 10px;
-    }
-
-}
-
-
-/* ================================
-   DESKTOP
-================================ */
-
-@media (min-width: 701px) {
-
-    #joystick {
-        opacity: 0.55;
+        width: 68px;
+        height: 68px;
     }
 
 }
