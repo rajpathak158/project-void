@@ -27,8 +27,169 @@
 
     <link
         rel="stylesheet"
-        href="./css/style.css?v=3"
+        href="./css/style.css?v=4"
     >
+
+    <style>
+
+        /*
+        ==========================================
+        GAME CANVAS
+        ==========================================
+        */
+
+        #game-canvas {
+
+            position: fixed;
+
+            inset: 0;
+
+            width: 100vw !important;
+
+            height: 100vh !important;
+
+            display: block;
+
+            z-index: 1;
+
+            touch-action: none;
+
+        }
+
+
+        /*
+        ==========================================
+        HUD
+        ==========================================
+        */
+
+        #hud {
+
+            position: fixed;
+
+            z-index: 20;
+
+            pointer-events: none;
+
+        }
+
+
+        /*
+        ==========================================
+        JOYSTICK
+        ==========================================
+        */
+
+        #joystick {
+
+            z-index: 30;
+
+        }
+
+
+        /*
+        ==========================================
+        ERROR SCREEN
+        ==========================================
+        */
+
+        #void-error {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 999999;
+
+            display: none;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 25px;
+
+            box-sizing: border-box;
+
+            background:
+                rgba(3,4,10,0.97);
+
+            color: white;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+        }
+
+
+        #void-error-box {
+
+            width:
+                min(650px, 92vw);
+
+            max-height: 80vh;
+
+            overflow: auto;
+
+            padding: 25px;
+
+            border-radius: 18px;
+
+            border:
+                1px solid
+                rgba(255,80,100,0.45);
+
+            background:
+                #10121c;
+
+            box-shadow:
+                0 20px 80px
+                rgba(0,0,0,0.7);
+
+        }
+
+
+        #void-error-title {
+
+            font-size: 22px;
+
+            font-weight: 800;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        #void-error-message {
+
+            color: #ff8d9b;
+
+            font-size: 13px;
+
+            line-height: 1.6;
+
+            white-space: pre-wrap;
+
+            word-break: break-word;
+
+        }
+
+
+        #void-error-help {
+
+            margin-top: 18px;
+
+            color: #9da4bc;
+
+            font-size: 12px;
+
+            line-height: 1.6;
+
+        }
+
+    </style>
 
 </head>
 
@@ -96,10 +257,117 @@
 
 
     <!-- ==========================================
+         ERROR DISPLAY
+    ========================================== -->
+
+    <div id="void-error">
+
+        <div id="void-error-box">
+
+            <div id="void-error-title">
+                PROJECT: VOID — ERROR
+            </div>
+
+            <div id="void-error-message">
+                Unknown error.
+            </div>
+
+            <div id="void-error-help">
+
+                The game stopped while loading.
+                Send me a screenshot of this
+                error and I can identify the
+                exact file causing it.
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
          GAME
     ========================================== -->
 
     <script type="module">
+
+        /*
+        ==========================================
+        ERROR HANDLER
+        ==========================================
+        */
+
+        function showVoidError(
+            message
+        ) {
+
+            console.error(
+                "PROJECT: VOID ERROR:",
+                message
+            );
+
+
+            const screen =
+                document.getElementById(
+                    "void-error"
+                );
+
+
+            const output =
+                document.getElementById(
+                    "void-error-message"
+                );
+
+
+            if (
+                screen &&
+                output
+            ) {
+
+                output.textContent =
+                    String(message);
+
+                screen.style.display =
+                    "flex";
+
+            }
+
+        }
+
+
+        window.addEventListener(
+            "error",
+            event => {
+
+                showVoidError(
+                    event.error
+                        ? (
+                            event.error.stack ||
+                            event.error.message
+                        )
+                        : event.message
+                );
+
+            }
+        );
+
+
+        window.addEventListener(
+            "unhandledrejection",
+            event => {
+
+                showVoidError(
+                    event.reason &&
+                    event.reason.stack
+                        ? event.reason.stack
+                        : String(
+                            event.reason
+                        )
+                );
+
+            }
+        );
 
 
         /*
@@ -119,7 +387,7 @@
         */
 
         import world from
-            "./js/world.js?v=3";
+            "./js/world.js?v=4";
 
 
         /*
@@ -129,7 +397,7 @@
         */
 
         import PlayerController from
-            "./js/player.js?v=3";
+            "./js/player.js?v=4";
 
 
         /*
@@ -139,7 +407,7 @@
         */
 
         import CollisionSystem from
-            "./js/collision.js?v=3";
+            "./js/collision.js?v=4";
 
 
         /*
@@ -149,7 +417,7 @@
         */
 
         import TaskSystem from
-            "./js/tasks.js?v=3";
+            "./js/tasks.js?v=4";
 
 
         /*
@@ -194,7 +462,7 @@
                 window.innerWidth /
                 window.innerHeight,
                 0.1,
-                100
+                200
             );
 
 
@@ -227,12 +495,6 @@
             window.innerHeight
         );
 
-
-        /*
-        ==========================================
-        PERFORMANCE
-        ==========================================
-        */
 
         renderer.setPixelRatio(
             Math.min(
@@ -338,6 +600,23 @@
 
         /*
         ==========================================
+        SAFETY CHECK
+        ==========================================
+        */
+
+        if (
+            !station
+        ) {
+
+            throw new Error(
+                "world.create() did not return a station object."
+            );
+
+        }
+
+
+        /*
+        ==========================================
         PLAYER
         ==========================================
         */
@@ -398,10 +677,6 @@
                 }
 
 
-                /*
-                Prevent duplicate objects.
-                */
-
                 if (
                     registeredObjects.has(
                         object
@@ -437,9 +712,12 @@
         ) {
 
             tasks.register(
+
                 object,
+
                 object.userData.label ||
                 "TASK"
+
             );
 
         }
@@ -476,7 +754,7 @@
 
 
             /*
-            Player
+            PLAYER
             */
 
             player.update(
@@ -485,14 +763,14 @@
 
 
             /*
-            Tasks
+            TASKS
             */
 
             tasks.update();
 
 
             /*
-            Render
+            RENDER
             */
 
             renderer.render(
@@ -512,11 +790,17 @@
         function resizeGame() {
 
             const width =
-                window.innerWidth;
+                Math.max(
+                    1,
+                    window.innerWidth
+                );
 
 
             const height =
-                window.innerHeight;
+                Math.max(
+                    1,
+                    window.innerHeight
+                );
 
 
             camera.aspect =
@@ -581,8 +865,13 @@
         );
 
         console.log(
+            "Station:",
+            station
+        );
+
+        console.log(
             "Rooms:",
-            station.rooms
+            station.rooms || []
         );
 
         console.log(
@@ -590,25 +879,33 @@
             taskObjects.length
         );
 
+
+        /*
+        IMPORTANT:
+        Do NOT assume station.tasks exists.
+        */
+
+        const expectedTasks =
+            Array.isArray(
+                station.tasks
+            )
+                ? station.tasks.length
+                : taskObjects.length;
+
+
         console.log(
             "Expected tasks:",
-            station.tasks.length
+            expectedTasks
         );
 
 
-        /*
-        ==========================================
-        TASK COUNT CHECK
-        ==========================================
-        */
-
         if (
             taskObjects.length !==
-            station.tasks.length
+            expectedTasks
         ) {
 
             console.warn(
-                "WARNING: Task object count does not match station task count."
+                "WARNING: Task object count does not match expected task count."
             );
 
         } else {
@@ -630,6 +927,16 @@
 
         animate();
 
+
+        /*
+        ==========================================
+        SUCCESS MESSAGE
+        ==========================================
+        */
+
+        console.log(
+            "PROJECT: VOID ENGINE STARTED"
+        );
 
     </script>
 
