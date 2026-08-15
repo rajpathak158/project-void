@@ -2,15 +2,6 @@ import * as THREE from
     "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
 
 
-/*
-==================================================
-PROJECT: VOID
-WORLD SYSTEM
-VERSION 2
-==================================================
-*/
-
-
 class VoidWorld {
 
     constructor() {
@@ -21,17 +12,7 @@ class VoidWorld {
     }
 
 
-    /*
-    ==================================================
-    MATERIALS
-    ==================================================
-    */
-
-    material(
-        color,
-        roughness = 0.5,
-        metalness = 0.2
-    ) {
+    material(color, roughness = 0.5, metalness = 0.3) {
 
         return new THREE.MeshStandardMaterial({
 
@@ -44,10 +25,7 @@ class VoidWorld {
     }
 
 
-    glow(
-        color,
-        intensity = 2
-    ) {
+    glow(color, intensity = 2.5) {
 
         return new THREE.MeshStandardMaterial({
 
@@ -55,56 +33,54 @@ class VoidWorld {
 
             emissive: color,
 
-            emissiveIntensity:
-                intensity,
+            emissiveIntensity: intensity,
 
             roughness: 0.25,
 
-            metalness: 0.45
+            metalness: 0.4
 
         });
 
     }
 
 
-    /*
-    ==================================================
-    CREATE WORLD
-    ==================================================
-    */
-
     create(scene, collision) {
 
-        console.log(
-            "VOID WORLD: BUILDING..."
-        );
+        this.rooms = [];
+        this.tasks = [];
+
+        if (collision && typeof collision.clear === "function") {
+
+            collision.clear();
+
+        }
 
 
         /*
-        ==============================================
-        MATERIAL PALETTE
-        ==============================================
+        ==================================================
+        MATERIALS
+        ==================================================
         */
 
         const floorMat =
             this.material(
-                0x111522,
+                0x171c2b,
                 0.72,
                 0.35
             );
 
 
-        const centralWall =
+        const hubWall =
             this.material(
-                0x252d40,
-                0.48,
+                0x20283b,
+                0.45,
                 0.65
             );
 
 
         const commandWall =
             this.material(
-                0x243b68,
+                0x172b48,
                 0.42,
                 0.7
             );
@@ -112,15 +88,15 @@ class VoidWorld {
 
         const engineeringWall =
             this.material(
-                0x59351e,
-                0.45,
-                0.68
+                0x3a2618,
+                0.48,
+                0.65
             );
 
 
         const medicalWall =
             this.material(
-                0x204b3f,
+                0x17352e,
                 0.42,
                 0.7
             );
@@ -128,44 +104,22 @@ class VoidWorld {
 
         const reactorWall =
             this.material(
-                0x3d285e,
+                0x2b1b42,
                 0.42,
-                0.72
+                0.7
             );
 
-
-        const metal =
-            this.material(
-                0x39445b,
-                0.25,
-                0.9
-            );
-
-
-        const darkMetal =
-            this.material(
-                0x080c15,
-                0.3,
-                0.85
-            );
-
-
-        /*
-        ==============================================
-        ROOM COLORS
-        ==============================================
-        */
 
         const cyan =
             this.glow(
-                0x20d9ff,
-                3
+                0x20eaff,
+                3.5
             );
 
 
         const blue =
             this.glow(
-                0x376cff,
+                0x347cff,
                 3
             );
 
@@ -186,23 +140,31 @@ class VoidWorld {
 
         const purple =
             this.glow(
-                0x9b4dff,
+                0xb14dff,
                 3
             );
 
 
+        const metal =
+            this.material(
+                0x343e55,
+                0.28,
+                0.9
+            );
+
+
         /*
-        ==============================================
+        ==================================================
         FLOOR
-        ==============================================
+        ==================================================
         */
 
         const floor =
             new THREE.Mesh(
 
                 new THREE.PlaneGeometry(
-                    80,
-                    80
+                    110,
+                    110
                 ),
 
                 floorMat
@@ -222,144 +184,179 @@ class VoidWorld {
             true;
 
 
-        floor.userData.isFloor =
-            true;
-
-
-        scene.add(
-            floor
-        );
+        scene.add(floor);
 
 
         /*
-        ==============================================
-        FLOOR GRID
-        ==============================================
+        ==================================================
+        GRID
+        ==================================================
         */
 
         const grid =
             new THREE.GridHelper(
-                80,
-                40,
-                0x28415c,
-                0x111827
+                110,
+                55,
+                0x28405d,
+                0x151c2b
             );
 
 
         grid.position.y =
-            0.006;
+            0.01;
 
 
-        scene.add(
-            grid
-        );
+        scene.add(grid);
 
 
         /*
-        ==============================================
+        ==================================================
         CENTRAL HUB
-        ==============================================
+        ==================================================
         */
 
         this.createRoom(
+
             scene,
+
             "CENTRAL HUB",
+
             0,
             0,
-            22,
-            18,
-            centralWall,
+
+            30,
+            24,
+
+            hubWall,
             cyan,
-            null
+
+            ["north", "south", "west", "east"],
+
+            collision
+
         );
 
 
         /*
-        ==============================================
+        ==================================================
         COMMAND
-        ==============================================
+        ==================================================
         */
 
         this.createRoom(
+
             scene,
+
             "COMMAND",
+
             0,
-            -16,
-            18,
-            10,
+            -20,
+
+            24,
+            16,
+
             commandWall,
             blue,
-            null
+
+            ["south"],
+
+            collision
+
         );
 
 
         /*
-        ==============================================
+        ==================================================
         ENGINEERING
-        ==============================================
+        ==================================================
         */
 
         this.createRoom(
+
             scene,
+
             "ENGINEERING",
+
             0,
+            20,
+
+            24,
             16,
-            18,
-            10,
+
             engineeringWall,
             orange,
-            null
+
+            ["north"],
+
+            collision
+
         );
 
 
         /*
-        ==============================================
+        ==================================================
         MEDICAL
-        ==============================================
+        ==================================================
         */
 
         this.createRoom(
+
             scene,
-            "MEDICAL",
-            -18,
+
+            -23,
             0,
-            10,
-            14,
+
+            16,
+            20,
+
             medicalWall,
             green,
-            null
+
+            ["east"],
+
+            collision
+
         );
 
 
         /*
-        ==============================================
+        ==================================================
         REACTOR
-        ==============================================
+        ==================================================
         */
 
         this.createRoom(
+
             scene,
+
             "REACTOR",
-            18,
+
+            23,
             0,
-            10,
-            14,
+
+            16,
+            20,
+
             reactorWall,
             purple,
-            null
+
+            ["west"],
+
+            collision
+
         );
 
 
         /*
-        ==============================================
-        DOORS
-        ==============================================
+        ==================================================
+        DOOR FRAMES
+        ==================================================
         */
 
         this.createDoorFrame(
             scene,
             0,
-            -9,
+            -12,
             0,
             cyan
         );
@@ -368,7 +365,7 @@ class VoidWorld {
         this.createDoorFrame(
             scene,
             0,
-            9,
+            12,
             Math.PI,
             orange
         );
@@ -376,7 +373,7 @@ class VoidWorld {
 
         this.createDoorFrame(
             scene,
-            -11,
+            -15,
             0,
             Math.PI / 2,
             green
@@ -385,7 +382,7 @@ class VoidWorld {
 
         this.createDoorFrame(
             scene,
-            11,
+            15,
             0,
             -Math.PI / 2,
             purple
@@ -393,19 +390,19 @@ class VoidWorld {
 
 
         /*
-        ==============================================
+        ==================================================
         CENTRAL PLATFORM
-        ==============================================
+        ==================================================
         */
 
         const platform =
             new THREE.Mesh(
 
                 new THREE.CylinderGeometry(
-                    4.3,
-                    4.3,
-                    0.28,
-                    48
+                    5.5,
+                    5.5,
+                    0.3,
+                    64
                 ),
 
                 metal
@@ -413,11 +410,8 @@ class VoidWorld {
             );
 
 
-        platform.position.set(
-            0,
-            0.14,
-            0
-        );
+        platform.position.y =
+            0.15;
 
 
         platform.castShadow =
@@ -428,25 +422,17 @@ class VoidWorld {
             true;
 
 
-        scene.add(
-            platform
-        );
+        scene.add(platform);
 
-
-        /*
-        ==============================================
-        CENTRAL ENERGY RING
-        ==============================================
-        */
 
         const ring =
             new THREE.Mesh(
 
                 new THREE.TorusGeometry(
-                    3.7,
-                    0.09,
-                    12,
-                    64
+                    5,
+                    0.11,
+                    16,
+                    80
                 ),
 
                 cyan
@@ -459,76 +445,21 @@ class VoidWorld {
 
 
         ring.position.y =
-            0.31;
+            0.34;
 
 
-        scene.add(
-            ring
-        );
-
-
-        /*
-        ==============================================
-        CENTRAL ENERGY CORE
-        ==============================================
-        */
-
-        const core =
-            new THREE.Mesh(
-
-                new THREE.SphereGeometry(
-                    0.8,
-                    24,
-                    24
-                ),
-
-                cyan
-
-            );
-
-
-        core.position.y =
-            1.05;
-
-
-        core.castShadow =
-            true;
-
-
-        scene.add(
-            core
-        );
-
-
-        const coreLight =
-            new THREE.PointLight(
-                0x20d9ff,
-                5,
-                10
-            );
-
-
-        coreLight.position.set(
-            0,
-            1.2,
-            0
-        );
-
-
-        scene.add(
-            coreLight
-        );
+        scene.add(ring);
 
 
         /*
-        ==============================================
+        ==================================================
         TERMINALS
-        ==============================================
+        ==================================================
         */
 
         this.createTerminal(
             scene,
-            -3.5,
+            -4,
             0,
             cyan
         );
@@ -536,7 +467,7 @@ class VoidWorld {
 
         this.createTerminal(
             scene,
-            3.5,
+            4,
             0,
             blue
         );
@@ -544,23 +475,23 @@ class VoidWorld {
 
         this.createTerminal(
             scene,
-            -3,
-            -16,
+            -4,
+            -20,
             blue
         );
 
 
         this.createTerminal(
             scene,
-            3,
-            16,
+            4,
+            20,
             orange
         );
 
 
         this.createTerminal(
             scene,
-            -18,
+            -23,
             0,
             green
         );
@@ -568,140 +499,109 @@ class VoidWorld {
 
         this.createTerminal(
             scene,
-            18,
+            23,
             0,
             purple
         );
 
 
         /*
-        ==============================================
+        ==================================================
         TASKS
-        ==============================================
+        ==================================================
         */
 
-        this.tasks = [];
-
-
         this.tasks.push(
+
             this.createTask(
                 scene,
                 "POWER CORE",
-                -3.5,
+                -4,
                 0,
                 cyan
             )
+
         );
 
 
         this.tasks.push(
+
             this.createTask(
                 scene,
                 "NAVIGATION",
-                3.5,
+                4,
                 0,
                 blue
             )
+
         );
 
 
         this.tasks.push(
+
             this.createTask(
                 scene,
                 "COMMAND",
-                -3,
-                -16,
+                -4,
+                -20,
                 blue
             )
+
         );
 
 
         this.tasks.push(
+
             this.createTask(
                 scene,
                 "ENGINEERING",
-                3,
-                16,
+                4,
+                20,
                 orange
             )
+
         );
 
 
         this.tasks.push(
+
             this.createTask(
                 scene,
                 "MEDICAL",
-                -18,
+                -23,
                 0,
                 green
             )
+
         );
 
 
         this.tasks.push(
+
             this.createTask(
                 scene,
                 "REACTOR",
-                18,
+                23,
                 0,
                 purple
             )
+
         );
 
 
         /*
-        ==============================================
-        LIGHTING
-        ==============================================
+        ==================================================
+        LIGHTS
+        ==================================================
         */
 
-        this.createLights(
-            scene
-        );
+        this.createLights(scene);
 
 
         /*
-        ==============================================
-        ROOM CEILING LIGHTS
-        ==============================================
-        */
-
-        this.createCeilingLights(
-            scene,
-            0,
-            -5,
-            cyan
-        );
-
-
-        this.createCeilingLights(
-            scene,
-            0,
-            5,
-            orange
-        );
-
-
-        this.createCeilingLights(
-            scene,
-            -18,
-            0,
-            green
-        );
-
-
-        this.createCeilingLights(
-            scene,
-            18,
-            0,
-            purple
-        );
-
-
-        /*
-        ==============================================
-        ROOMS DATA
-        ==============================================
+        ==================================================
+        DATA
+        ==================================================
         */
 
         this.rooms = [
@@ -716,41 +616,22 @@ class VoidWorld {
 
 
         console.log(
-            "VOID WORLD: READY"
-        );
-
-
-        console.log(
-            "Rooms:",
+            "VOID WORLD READY",
             this.rooms
         );
 
 
-        console.log(
-            "Tasks:",
-            this.tasks.length
-        );
-
-
-        /*
-        ==============================================
-        RETURN WORLD DATA
-        ==============================================
-        */
-
         return {
 
-            rooms:
-                this.rooms,
+            rooms: this.rooms,
 
-            tasks:
-                this.tasks,
+            tasks: this.tasks,
 
             spawn: {
 
                 x: 0,
                 y: 0,
-                z: 5
+                z: 7
 
             }
 
@@ -774,21 +655,28 @@ class VoidWorld {
         depth,
         wallMaterial,
         glowMaterial,
+        openings,
         collision
     ) {
 
+        const wallHeight =
+            5.5;
+
+
+        const wallThickness =
+            0.6;
+
+
         /*
-        ==============================================
-        ROOM FLOOR
-        ==============================================
+        FLOOR
         */
 
-        const roomFloor =
+        const floor =
             new THREE.Mesh(
 
                 new THREE.BoxGeometry(
                     width,
-                    0.18,
+                    0.25,
                     depth
                 ),
 
@@ -797,117 +685,265 @@ class VoidWorld {
             );
 
 
-        roomFloor.position.set(
+        floor.position.set(
             x,
-            0.09,
+            0.125,
             z
         );
 
 
-        roomFloor.receiveShadow =
+        floor.receiveShadow =
             true;
 
 
-        scene.add(
-            roomFloor
-        );
+        scene.add(floor);
 
 
         /*
-        ==============================================
-        WALL SETTINGS
-        ==============================================
+        WALL CREATOR
         */
 
-        const wallHeight =
-            3.2;
+        const addWall =
+            (
+                px,
+                pz,
+                sx,
+                sz
+            ) => {
+
+                const wall =
+                    new THREE.Mesh(
+
+                        new THREE.BoxGeometry(
+                            sx,
+                            wallHeight,
+                            sz
+                        ),
+
+                        wallMaterial
+
+                    );
 
 
-        const thickness =
-            0.35;
+                wall.position.set(
+
+                    px,
+
+                    wallHeight / 2,
+
+                    pz
+
+                );
+
+
+                wall.castShadow =
+                    true;
+
+
+                wall.receiveShadow =
+                    true;
+
+
+                scene.add(wall);
+
+
+                if (collision) {
+
+                    collision.addBox(
+
+                        px,
+                        pz,
+                        sx,
+                        sz
+
+                    );
+
+                }
+
+            };
 
 
         /*
-        ==============================================
+        ==================================================
         NORTH WALL
-        ==============================================
+        ==================================================
         */
 
-        this.createWall(
-            scene,
-            width,
-            wallHeight,
-            thickness,
-            x,
-            z - depth / 2,
-            wallMaterial
-        );
+        if (openings.includes("north")) {
+
+            const opening =
+                6;
+
+
+            const side =
+                (width - opening) / 2;
+
+
+            addWall(
+                x - (opening + side) / 2,
+                z - depth / 2,
+                side,
+                wallThickness
+            );
+
+
+            addWall(
+                x + (opening + side) / 2,
+                z - depth / 2,
+                side,
+                wallThickness
+            );
+
+        }
+        else {
+
+            addWall(
+                x,
+                z - depth / 2,
+                width,
+                wallThickness
+            );
+
+        }
 
 
         /*
-        ==============================================
-        SOUTH WALL
-        ==============================================
+        SOUTH
         */
 
-        this.createWall(
-            scene,
-            width,
-            wallHeight,
-            thickness,
-            x,
-            z + depth / 2,
-            wallMaterial
-        );
+        if (openings.includes("south")) {
+
+            const opening =
+                6;
+
+
+            const side =
+                (width - opening) / 2;
+
+
+            addWall(
+                x - (opening + side) / 2,
+                z + depth / 2,
+                side,
+                wallThickness
+            );
+
+
+            addWall(
+                x + (opening + side) / 2,
+                z + depth / 2,
+                side,
+                wallThickness
+            );
+
+        }
+        else {
+
+            addWall(
+                x,
+                z + depth / 2,
+                width,
+                wallThickness
+            );
+
+        }
 
 
         /*
-        ==============================================
-        WEST WALL
-        ==============================================
+        WEST
         */
 
-        this.createSideWall(
-            scene,
-            thickness,
-            wallHeight,
-            depth,
-            x - width / 2,
-            z,
-            wallMaterial
-        );
+        if (openings.includes("west")) {
+
+            const opening =
+                6;
+
+
+            const side =
+                (depth - opening) / 2;
+
+
+            addWall(
+                x - width / 2,
+                z - (opening + side) / 2,
+                wallThickness,
+                side
+            );
+
+
+            addWall(
+                x - width / 2,
+                z + (opening + side) / 2,
+                wallThickness,
+                side
+            );
+
+        }
+        else {
+
+            addWall(
+                x - width / 2,
+                z,
+                wallThickness,
+                depth
+            );
+
+        }
 
 
         /*
-        ==============================================
-        EAST WALL
-        ==============================================
+        EAST
         */
 
-        this.createSideWall(
-            scene,
-            thickness,
-            wallHeight,
-            depth,
-            x + width / 2,
-            z,
-            wallMaterial
-        );
+        if (openings.includes("east")) {
+
+            const opening =
+                6;
+
+
+            const side =
+                (depth - opening) / 2;
+
+
+            addWall(
+                x + width / 2,
+                z - (opening + side) / 2,
+                wallThickness,
+                side
+            );
+
+
+            addWall(
+                x + width / 2,
+                z + (opening + side) / 2,
+                wallThickness,
+                side
+            );
+
+        }
+        else {
+
+            addWall(
+                x + width / 2,
+                z,
+                wallThickness,
+                depth
+            );
+
+        }
 
 
         /*
-        ==============================================
         GLOW STRIPS
-        ==============================================
         */
 
         const strip =
             new THREE.Mesh(
 
                 new THREE.BoxGeometry(
-                    width - 0.8,
-                    0.08,
-                    0.06
+                    width - 1,
+                    0.1,
+                    0.08
                 ),
 
                 glowMaterial
@@ -917,14 +953,12 @@ class VoidWorld {
 
         strip.position.set(
             x,
-            2.55,
-            z - depth / 2 - 0.2
+            4.4,
+            z - depth / 2 - 0.05
         );
 
 
-        scene.add(
-            strip
-        );
+        scene.add(strip);
 
 
         const strip2 =
@@ -932,131 +966,10 @@ class VoidWorld {
 
 
         strip2.position.z =
-            z + depth / 2 + 0.2;
+            z + depth / 2 + 0.05;
 
 
-        scene.add(
-            strip2
-        );
-
-
-        /*
-        ==============================================
-        ROOM NAME PLATE
-        ==============================================
-        */
-
-        this.createRoomMarker(
-            scene,
-            name,
-            x,
-            z,
-            glowMaterial
-        );
-
-    }
-
-
-    /*
-    ==================================================
-    WALL
-    ==================================================
-    */
-
-    createWall(
-        scene,
-        width,
-        height,
-        thickness,
-        x,
-        z,
-        material
-    ) {
-
-        const wall =
-            new THREE.Mesh(
-
-                new THREE.BoxGeometry(
-                    width,
-                    height,
-                    thickness
-                ),
-
-                material
-
-            );
-
-
-        wall.position.set(
-            x,
-            height / 2,
-            z
-        );
-
-
-        wall.castShadow =
-            true;
-
-
-        wall.receiveShadow =
-            true;
-
-
-        scene.add(
-            wall
-        );
-
-    }
-
-
-    /*
-    ==================================================
-    SIDE WALL
-    ==================================================
-    */
-
-    createSideWall(
-        scene,
-        thickness,
-        height,
-        depth,
-        x,
-        z,
-        material
-    ) {
-
-        const wall =
-            new THREE.Mesh(
-
-                new THREE.BoxGeometry(
-                    thickness,
-                    height,
-                    depth
-                ),
-
-                material
-
-            );
-
-
-        wall.position.set(
-            x,
-            height / 2,
-            z
-        );
-
-
-        wall.castShadow =
-            true;
-
-
-        wall.receiveShadow =
-            true;
-
-
-        scene.add(
-            wall
-        );
+        scene.add(strip2);
 
     }
 
@@ -1090,16 +1003,12 @@ class VoidWorld {
             rotation;
 
 
-        /*
-        LEFT PILLAR
-        */
-
         const left =
             new THREE.Mesh(
 
                 new THREE.BoxGeometry(
-                    0.2,
-                    3,
+                    0.25,
+                    5,
                     0.25
                 ),
 
@@ -1109,48 +1018,32 @@ class VoidWorld {
 
 
         left.position.set(
-            -2,
-            1.5,
+            -3,
+            2.5,
             0
         );
 
 
-        left.castShadow =
-            true;
+        group.add(left);
 
-
-        group.add(
-            left
-        );
-
-
-        /*
-        RIGHT PILLAR
-        */
 
         const right =
             left.clone();
 
 
         right.position.x =
-            2;
+            3;
 
 
-        group.add(
-            right
-        );
+        group.add(right);
 
-
-        /*
-        TOP
-        */
 
         const top =
             new THREE.Mesh(
 
                 new THREE.BoxGeometry(
-                    4.2,
-                    0.2,
+                    6,
+                    0.25,
                     0.25
                 ),
 
@@ -1160,59 +1053,13 @@ class VoidWorld {
 
 
         top.position.y =
-            3;
+            5;
 
 
-        group.add(
-            top
-        );
+        group.add(top);
 
 
-        scene.add(
-            group
-        );
-
-    }
-
-
-    /*
-    ==================================================
-    ROOM MARKER
-    ==================================================
-    */
-
-    createRoomMarker(
-        scene,
-        name,
-        x,
-        z,
-        material
-    ) {
-
-        const marker =
-            new THREE.Mesh(
-
-                new THREE.BoxGeometry(
-                    2.8,
-                    0.08,
-                    0.08
-                ),
-
-                material
-
-            );
-
-
-        marker.position.set(
-            x,
-            2.85,
-            z
-        );
-
-
-        scene.add(
-            marker
-        );
+        scene.add(group);
 
     }
 
@@ -1241,22 +1088,18 @@ class VoidWorld {
         );
 
 
-        /*
-        BODY
-        */
-
         const body =
             new THREE.Mesh(
 
                 new THREE.BoxGeometry(
-                    1.15,
-                    1.35,
-                    0.7
+                    1.5,
+                    1.8,
+                    0.8
                 ),
 
                 this.material(
-                    0x101522,
-                    0.32,
+                    0x0c111d,
+                    0.35,
                     0.8
                 )
 
@@ -1264,28 +1107,22 @@ class VoidWorld {
 
 
         body.position.y =
-            0.68;
+            0.9;
 
 
         body.castShadow =
             true;
 
 
-        group.add(
-            body
-        );
+        group.add(body);
 
-
-        /*
-        SCREEN
-        */
 
         const screen =
             new THREE.Mesh(
 
                 new THREE.BoxGeometry(
-                    0.78,
-                    0.5,
+                    1.05,
+                    0.65,
                     0.05
                 ),
 
@@ -1296,82 +1133,40 @@ class VoidWorld {
 
         screen.position.set(
             0,
-            0.9,
-            -0.37
+            1.15,
+            -0.43
         );
 
 
-        group.add(
-            screen
-        );
+        group.add(screen);
 
-
-        /*
-        BASE
-        */
 
         const base =
             new THREE.Mesh(
 
                 new THREE.BoxGeometry(
-                    1.4,
-                    0.18,
-                    0.9
+                    1.8,
+                    0.22,
+                    1.05
                 ),
 
                 this.material(
                     0x080b12,
                     0.3,
-                    0.85
+                    0.9
                 )
 
             );
 
 
         base.position.y =
-            0.09;
+            0.11;
 
 
-        group.add(
-            base
-        );
+        group.add(base);
 
 
-        /*
-        GLOW RING
-        */
-
-        const ring =
-            new THREE.Mesh(
-
-                new THREE.TorusGeometry(
-                    0.32,
-                    0.035,
-                    8,
-                    24
-                ),
-
-                glowMaterial
-
-            );
-
-
-        ring.rotation.x =
-            Math.PI / 2;
-
-
-        ring.position.y =
-            0.05;
-
-
-        group.add(
-            ring
-        );
-
-
-        scene.add(
-            group
-        );
+        scene.add(group);
 
     }
 
@@ -1401,18 +1196,14 @@ class VoidWorld {
         );
 
 
-        /*
-        PLATFORM
-        */
-
         const platform =
             new THREE.Mesh(
 
                 new THREE.CylinderGeometry(
-                    0.78,
-                    0.78,
-                    0.14,
-                    24
+                    1,
+                    1,
+                    0.18,
+                    32
                 ),
 
                 this.material(
@@ -1425,29 +1216,19 @@ class VoidWorld {
 
 
         platform.position.y =
-            0.07;
+            0.09;
 
 
-        platform.receiveShadow =
-            true;
+        group.add(platform);
 
-
-        group.add(
-            platform
-        );
-
-
-        /*
-        CORE
-        */
 
         const core =
             new THREE.Mesh(
 
                 new THREE.SphereGeometry(
-                    0.28,
-                    18,
-                    18
+                    0.38,
+                    20,
+                    20
                 ),
 
                 material
@@ -1456,15 +1237,7 @@ class VoidWorld {
 
 
         core.position.y =
-            0.65;
-
-
-        core.castShadow =
-            true;
-
-
-        core.userData.type =
-            "task";
+            0.8;
 
 
         core.userData.task =
@@ -1475,23 +1248,21 @@ class VoidWorld {
             label;
 
 
-        group.add(
-            core
-        );
+        core.castShadow =
+            true;
 
 
-        /*
-        RING
-        */
+        group.add(core);
+
 
         const ring =
             new THREE.Mesh(
 
                 new THREE.TorusGeometry(
-                    0.48,
-                    0.045,
-                    8,
-                    32
+                    0.65,
+                    0.06,
+                    10,
+                    40
                 ),
 
                 material
@@ -1504,38 +1275,13 @@ class VoidWorld {
 
 
         ring.position.y =
-            0.65;
+            0.8;
 
 
-        group.add(
-            ring
-        );
+        group.add(ring);
 
 
-        /*
-        LIGHT
-        */
-
-        const light =
-            new THREE.PointLight(
-                material.color,
-                2.5,
-                5
-            );
-
-
-        light.position.y =
-            0.7;
-
-
-        group.add(
-            light
-        );
-
-
-        scene.add(
-            group
-        );
+        scene.add(group);
 
 
         return core;
@@ -1549,188 +1295,111 @@ class VoidWorld {
     ==================================================
     */
 
-    createLights(
-        scene
-    ) {
+    createLights(scene) {
 
         const ambient =
             new THREE.HemisphereLight(
-                0x7184c8,
+                0x7890c8,
                 0x080b12,
-                1.5
+                1.8
             );
 
 
-        scene.add(
-            ambient
-        );
+        scene.add(ambient);
 
 
-        const central =
+        const cyan =
             new THREE.PointLight(
-                0x20d9ff,
-                4,
-                20
+                0x20eaff,
+                7,
+                30
             );
 
 
-        central.position.set(
+        cyan.position.set(
             0,
-            4,
+            5,
             0
         );
 
 
-        central.castShadow =
-            true;
-
-
-        scene.add(
-            central
-        );
+        scene.add(cyan);
 
 
         const blue =
             new THREE.PointLight(
-                0x376cff,
-                3,
-                15
+                0x347cff,
+                5,
+                25
             );
 
 
         blue.position.set(
             0,
-            3,
-            -16
+            5,
+            -20
         );
 
 
-        scene.add(
-            blue
-        );
+        scene.add(blue);
 
 
         const orange =
             new THREE.PointLight(
                 0xff8a32,
-                3,
-                15
+                5,
+                25
             );
 
 
         orange.position.set(
             0,
-            3,
-            16
+            5,
+            20
         );
 
 
-        scene.add(
-            orange
+        scene.add(orange);
+
+
+        const purple =
+            new THREE.PointLight(
+                0xb14dff,
+                5,
+                25
+            );
+
+
+        purple.position.set(
+            23,
+            5,
+            0
         );
+
+
+        scene.add(purple);
 
 
         const green =
             new THREE.PointLight(
                 0x32ffb0,
-                3,
-                14
+                5,
+                25
             );
 
 
         green.position.set(
-            -18,
-            3,
+            -23,
+            5,
             0
         );
 
 
-        scene.add(
-            green
-        );
-
-
-        const purple =
-            new THREE.PointLight(
-                0x9b4dff,
-                3,
-                14
-            );
-
-
-        purple.position.set(
-            18,
-            3,
-            0
-        );
-
-
-        scene.add(
-            purple
-        );
-
-    }
-
-
-    /*
-    ==================================================
-    CEILING LIGHTS
-    ==================================================
-    */
-
-    createCeilingLights(
-        scene,
-        x,
-        z,
-        material
-    ) {
-
-        for (
-            let i = -2;
-            i <= 2;
-            i++
-        ) {
-
-            const light =
-                new THREE.Mesh(
-
-                    new THREE.BoxGeometry(
-                        2.2,
-                        0.08,
-                        0.14
-                    ),
-
-                    material
-
-                );
-
-
-            light.position.set(
-                x + i * 3,
-                3.05,
-                z
-            );
-
-
-            scene.add(
-                light
-            );
-
-        }
+        scene.add(green);
 
     }
 
 }
 
 
-/*
-==================================================
-SINGLE WORLD INSTANCE
-==================================================
-*/
-
-const world =
-    new VoidWorld();
-
-
-export default world;
+export default new VoidWorld();
