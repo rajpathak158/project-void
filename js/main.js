@@ -8,7 +8,21 @@ import world from "./world.js";
 ==================================================
 PROJECT: VOID
 MAIN GAME ENGINE
-VERSION 3.0
+VERSION 4.0
+
+FEATURES
+--------------------------------------------------
+• Large 160 x 160 world
+• Solid wall collision
+• Smooth wall sliding
+• Anti-tunneling movement
+• Mobile joystick
+• Touch camera
+• Mouse camera
+• Keyboard movement
+• Third-person camera
+• Player bob
+• Error screen
 ==================================================
 */
 
@@ -27,13 +41,22 @@ function showError(error) {
     );
 
     const screen =
-        document.getElementById("void-error");
+        document.getElementById(
+            "void-error"
+        );
 
     const message =
-        document.getElementById("void-error-message");
+        document.getElementById(
+            "void-error-message"
+        );
 
-    if (!screen || !message) {
+    if (
+        !screen ||
+        !message
+    ) {
+
         return;
+
     }
 
     message.textContent =
@@ -41,7 +64,9 @@ function showError(error) {
             ? error.stack || error.message
             : String(error);
 
-    screen.style.display = "flex";
+    screen.style.display =
+        "flex";
+
 }
 
 
@@ -105,8 +130,14 @@ const camera =
 
         65,
 
-        window.innerWidth /
-        window.innerHeight,
+        Math.max(
+            1,
+            window.innerWidth
+        ) /
+        Math.max(
+            1,
+            window.innerHeight
+        ),
 
         0.1,
 
@@ -131,7 +162,8 @@ RENDERER
 const renderer =
     new THREE.WebGLRenderer({
 
-        antialias: true,
+        antialias:
+            true,
 
         powerPreference:
             "high-performance"
@@ -146,10 +178,15 @@ renderer.setSize(
 
 
 renderer.setPixelRatio(
+
     Math.min(
+
         window.devicePixelRatio,
+
         1.5
+
     )
+
 );
 
 
@@ -163,6 +200,10 @@ renderer.shadowMap.type =
 
 renderer.domElement.id =
     "game-canvas";
+
+
+renderer.domElement.style.touchAction =
+    "none";
 
 
 document.body.appendChild(
@@ -180,7 +221,9 @@ const ambientLight =
     new THREE.HemisphereLight(
 
         0x8aa0ff,
+
         0x080a12,
+
         1.8
 
     );
@@ -195,6 +238,7 @@ const mainLight =
     new THREE.DirectionalLight(
 
         0xffffff,
+
         2.4
 
     );
@@ -226,47 +270,19 @@ scene.add(
 
 /*
 ==================================================
-COLLISION SYSTEM
-==================================================
-*/
-
-const collision = {
-
-    colliders: [],
-
-    objects: [],
-
-    clear() {
-
-        this.colliders.length = 0;
-        this.objects.length = 0;
-
-    },
-
-    reset() {
-
-        this.colliders.length = 0;
-        this.objects.length = 0;
-
-    }
-
-};
-
-
-/*
-==================================================
-BUILD WORLD
+WORLD
 ==================================================
 */
 
 let station;
+
 
 try {
 
     station =
         world.create(
             scene,
-            collision
+            {}
         );
 
 }
@@ -292,6 +308,10 @@ if (!station) {
 
 
 console.log(
+    "================================"
+);
+
+console.log(
     "PROJECT: VOID"
 );
 
@@ -307,6 +327,10 @@ console.log(
 console.log(
     "TASKS:",
     station.tasks
+);
+
+console.log(
+    "================================"
 );
 
 
@@ -326,7 +350,7 @@ player.position.set(
 
     station.spawn?.y ?? 0,
 
-    station.spawn?.z ?? 4
+    station.spawn?.z ?? 10
 
 );
 
@@ -338,7 +362,7 @@ scene.add(
 
 /*
 ==================================================
-PLAYER COLLISION SIZE
+PLAYER SETTINGS
 ==================================================
 */
 
@@ -348,6 +372,10 @@ const PLAYER_RADIUS =
 
 const PLAYER_HEIGHT =
     2.7;
+
+
+const PLAYER_SPEED =
+    5.5;
 
 
 /*
@@ -402,10 +430,15 @@ const body =
     new THREE.Mesh(
 
         new THREE.CapsuleGeometry(
+
             0.55,
+
             1.1,
+
             8,
+
             16
+
         ),
 
         bodyMaterial
@@ -440,9 +473,13 @@ const head =
     new THREE.Mesh(
 
         new THREE.SphereGeometry(
+
             0.52,
+
             20,
+
             16
+
         ),
 
         bodyMaterial
@@ -477,9 +514,13 @@ const visor =
     new THREE.Mesh(
 
         new THREE.SphereGeometry(
+
             0.32,
+
             20,
+
             12
+
         ),
 
         visorMaterial
@@ -488,16 +529,24 @@ const visor =
 
 
 visor.position.set(
+
     0,
+
     2.25,
+
     -0.43
+
 );
 
 
 visor.scale.set(
+
     1.2,
+
     0.65,
+
     0.3
+
 );
 
 
@@ -535,9 +584,13 @@ const playerCore =
     new THREE.Mesh(
 
         new THREE.SphereGeometry(
+
             0.13,
+
             12,
+
             12
+
         ),
 
         coreMaterial
@@ -546,9 +599,13 @@ const playerCore =
 
 
 playerCore.position.set(
+
     0,
+
     1.35,
+
     -0.53
+
 );
 
 
@@ -573,10 +630,15 @@ function createArm(x) {
         new THREE.Mesh(
 
             new THREE.CapsuleGeometry(
+
                 0.16,
+
                 0.7,
+
                 6,
+
                 10
+
             ),
 
             bodyMaterial
@@ -585,9 +647,13 @@ function createArm(x) {
 
 
     arm.position.set(
+
         x,
+
         1.25,
+
         0
+
     );
 
 
@@ -628,10 +694,15 @@ function createLeg(x) {
         new THREE.Mesh(
 
             new THREE.CapsuleGeometry(
+
                 0.19,
+
                 0.75,
+
                 6,
+
                 10
+
             ),
 
             bodyMaterial
@@ -640,9 +711,13 @@ function createLeg(x) {
 
 
     leg.position.set(
+
         x,
+
         0.45,
+
         0
+
     );
 
 
@@ -667,27 +742,62 @@ createLeg(0.28);
 
 /*
 ==================================================
-WORLD COLLIDERS
+WORLD COLLISION SYSTEM
 ==================================================
 */
 
 /*
-IMPORTANT:
+The world.js creates real 3D wall meshes.
 
-The player is created BEFORE this function.
-
-This fixes:
-
-Cannot access 'player'
-before initialization
+Instead of manually registering every wall,
+we scan the finished world and automatically
+create collision boxes around solid objects.
 */
 
 const worldColliders = [];
 
 
+/*
+--------------------------------------------------
+CHECK IF OBJECT BELONGS TO PLAYER
+--------------------------------------------------
+*/
+
+function isPlayerObject(object) {
+
+    let current =
+        object;
+
+    while (current) {
+
+        if (
+            current === player
+        ) {
+
+            return true;
+
+        }
+
+        current =
+            current.parent;
+
+    }
+
+    return false;
+
+}
+
+
+/*
+--------------------------------------------------
+BUILD COLLIDERS
+--------------------------------------------------
+*/
+
 function buildWorldColliders() {
 
-    worldColliders.length = 0;
+    worldColliders.length =
+        0;
 
 
     scene.updateMatrixWorld(
@@ -698,8 +808,12 @@ function buildWorldColliders() {
     scene.traverse(
         object => {
 
-            if (!object.isMesh) {
+            if (
+                !object.isMesh
+            ) {
+
                 return;
+
             }
 
 
@@ -708,9 +822,8 @@ function buildWorldColliders() {
             */
 
             if (
-                object === player ||
-                player.getObjectById(
-                    object.id
+                isPlayerObject(
+                    object
                 )
             ) {
 
@@ -720,14 +833,14 @@ function buildWorldColliders() {
 
 
             /*
-            Ignore objects marked
-            as non-collidable.
+            Ignore explicitly decorative
+            objects.
             */
 
             if (
                 object.userData?.noCollision ||
-                object.userData?.task ||
-                object.userData?.decoration
+                object.userData?.decoration ||
+                object.userData?.task
             ) {
 
                 return;
@@ -744,8 +857,12 @@ function buildWorldColliders() {
             );
 
 
-            if (box.isEmpty()) {
+            if (
+                box.isEmpty()
+            ) {
+
                 return;
+
             }
 
 
@@ -759,7 +876,7 @@ function buildWorldColliders() {
 
 
             /*
-            Ignore tiny objects.
+            Ignore extremely tiny objects.
             */
 
             if (
@@ -775,12 +892,11 @@ function buildWorldColliders() {
             /*
             Ignore floors.
 
-            A floor is usually:
-            very wide + very thin.
+            Floors are wide and very thin.
             */
 
             if (
-                size.y < 0.3 &&
+                size.y < 0.30 &&
                 size.x > 8 &&
                 size.z > 8
             ) {
@@ -791,7 +907,24 @@ function buildWorldColliders() {
 
 
             /*
-            Ignore giant world bases.
+            Ignore ceilings.
+
+            They are also wide and thin.
+            */
+
+            if (
+                size.y < 0.40 &&
+                size.x > 8 &&
+                size.z > 8
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+            Ignore gigantic world bases.
             */
 
             if (
@@ -804,11 +937,26 @@ function buildWorldColliders() {
             }
 
 
+            /*
+            Only objects that can reasonably
+            behave like walls/solid structures.
+            */
+
+            if (
+                size.y < 0.5
+            ) {
+
+                return;
+
+            }
+
+
             worldColliders.push({
 
-                box: box.clone(),
+                box:
+                    box.clone(),
 
-                object: object
+                object
 
             });
 
@@ -817,7 +965,7 @@ function buildWorldColliders() {
 
 
     console.log(
-        "WALL COLLIDERS:",
+        "SOLID COLLIDERS:",
         worldColliders.length
     );
 
@@ -829,47 +977,56 @@ buildWorldColliders();
 
 /*
 ==================================================
-PLAYER COLLISION
+COLLISION CHECK
 ==================================================
 */
+
+const collisionBox =
+    new THREE.Box3();
+
+
+const collisionMin =
+    new THREE.Vector3();
+
+
+const collisionMax =
+    new THREE.Vector3();
+
 
 function canMoveTo(
     x,
     z
 ) {
 
-    const playerBox =
-        new THREE.Box3();
+    collisionMin.set(
+
+        x - PLAYER_RADIUS,
+
+        player.position.y,
+
+        z - PLAYER_RADIUS
+
+    );
 
 
-    const min =
-        new THREE.Vector3(
+    collisionMax.set(
 
-            x - PLAYER_RADIUS,
+        x + PLAYER_RADIUS,
 
-            player.position.y,
+        player.position.y +
+        PLAYER_HEIGHT,
 
-            z - PLAYER_RADIUS
+        z + PLAYER_RADIUS
 
-        );
-
-
-    const max =
-        new THREE.Vector3(
-
-            x + PLAYER_RADIUS,
-
-            player.position.y +
-            PLAYER_HEIGHT,
-
-            z + PLAYER_RADIUS
-
-        );
+    );
 
 
-    playerBox.set(
-        min,
-        max
+    collisionBox.set(
+
+        collisionMin,
+
+        collisionMax
+
     );
 
 
@@ -879,7 +1036,7 @@ function canMoveTo(
     ) {
 
         if (
-            playerBox.intersectsBox(
+            collisionBox.intersectsBox(
                 collider.box
             )
         ) {
@@ -902,55 +1059,112 @@ PLAYER MOVEMENT
 ==================================================
 */
 
+/*
+Small movement steps prevent the player
+from jumping through thin walls when
+moving quickly.
+*/
+
 function movePlayer(
     dx,
     dz
 ) {
 
-    const nextX =
-        player.position.x +
-        dx;
+    const distance =
+        Math.sqrt(
 
+            dx * dx +
+            dz * dz
 
-    const nextZ =
-        player.position.z +
-        dz;
+        );
 
-
-    /*
-    X AXIS
-
-    Allows sliding along walls.
-    */
 
     if (
-        canMoveTo(
-            nextX,
-            player.position.z
-        )
+        distance <= 0
     ) {
 
-        player.position.x =
-            nextX;
+        return;
 
     }
 
 
-    /*
-    Z AXIS
+    const maxStep =
+        0.20;
 
-    Allows sliding along walls.
-    */
 
-    if (
-        canMoveTo(
-            player.position.x,
-            nextZ
-        )
+    const steps =
+        Math.max(
+
+            1,
+
+            Math.ceil(
+                distance /
+                maxStep
+            )
+
+        );
+
+
+    const stepX =
+        dx /
+        steps;
+
+
+    const stepZ =
+        dz /
+        steps;
+
+
+    for (
+        let i = 0;
+        i < steps;
+        i++
     ) {
 
-        player.position.z =
-            nextZ;
+        /*
+        Try X.
+        */
+
+        const nextX =
+            player.position.x +
+            stepX;
+
+
+        if (
+            canMoveTo(
+                nextX,
+                player.position.z
+            )
+        ) {
+
+            player.position.x =
+                nextX;
+
+        }
+
+
+        /*
+        Try Z separately.
+
+        This creates smooth wall sliding.
+        */
+
+        const nextZ =
+            player.position.z +
+            stepZ;
+
+
+        if (
+            canMoveTo(
+                player.position.x,
+                nextZ
+            )
+        ) {
+
+            player.position.z =
+                nextZ;
+
+        }
 
     }
 
@@ -959,12 +1173,12 @@ function movePlayer(
 
 /*
 ==================================================
-LARGE WORLD BOUNDARY
+WORLD BOUNDARY
 ==================================================
 */
 
 const WORLD_LIMIT =
-    80;
+    79;
 
 
 function applyWorldBoundary() {
@@ -1028,7 +1242,7 @@ window.addEventListener(
 
 /*
 ==================================================
-JOYSTICK
+MOBILE JOYSTICK
 ==================================================
 */
 
@@ -1060,13 +1274,23 @@ let joystickId =
     null;
 
 
+/*
+--------------------------------------------------
+UPDATE JOYSTICK
+--------------------------------------------------
+*/
+
 function updateJoystick(
     x,
     y
 ) {
 
-    if (!joystick) {
+    if (
+        !joystick
+    ) {
+
         return;
+
     }
 
 
@@ -1085,11 +1309,13 @@ function updateJoystick(
 
 
     let dx =
-        x - centerX;
+        x -
+        centerX;
 
 
     let dy =
-        y - centerY;
+        y -
+        centerY;
 
 
     const maxDistance =
@@ -1098,8 +1324,10 @@ function updateJoystick(
 
     const distance =
         Math.sqrt(
+
             dx * dx +
             dy * dy
+
         );
 
 
@@ -1132,7 +1360,9 @@ function updateJoystick(
         maxDistance;
 
 
-    if (knob) {
+    if (
+        knob
+    ) {
 
         knob.style.transform =
             `translate(
@@ -1144,6 +1374,12 @@ function updateJoystick(
 
 }
 
+
+/*
+--------------------------------------------------
+STOP JOYSTICK
+--------------------------------------------------
+*/
 
 function stopJoystick() {
 
@@ -1163,7 +1399,9 @@ function stopJoystick() {
         0;
 
 
-    if (knob) {
+    if (
+        knob
+    ) {
 
         knob.style.transform =
             "translate(-50%, -50%)";
@@ -1173,10 +1411,20 @@ function stopJoystick() {
 }
 
 
-if (joystick) {
+/*
+--------------------------------------------------
+JOYSTICK EVENTS
+--------------------------------------------------
+*/
+
+if (
+    joystick
+) {
 
     joystick.addEventListener(
+
         "touchstart",
+
         event => {
 
             event.preventDefault();
@@ -1195,26 +1443,37 @@ if (joystick) {
 
 
             updateJoystick(
+
                 touch.clientX,
+
                 touch.clientY
+
             );
 
         },
+
         {
             passive: false
         }
+
     );
 
 
     joystick.addEventListener(
+
         "touchmove",
+
         event => {
 
             event.preventDefault();
 
 
-            if (!joystickActive) {
+            if (
+                !joystickActive
+            ) {
+
                 return;
+
             }
 
 
@@ -1229,8 +1488,11 @@ if (joystick) {
                 ) {
 
                     updateJoystick(
+
                         touch.clientX,
+
                         touch.clientY
+
                     );
 
                 }
@@ -1238,21 +1500,29 @@ if (joystick) {
             }
 
         },
+
         {
             passive: false
         }
+
     );
 
 
     joystick.addEventListener(
+
         "touchend",
+
         stopJoystick
+
     );
 
 
     joystick.addEventListener(
+
         "touchcancel",
+
         stopJoystick
+
     );
 
 }
@@ -1288,8 +1558,16 @@ let lastTouchY =
     0;
 
 
+/*
+--------------------------------------------------
+TOUCH CAMERA START
+--------------------------------------------------
+*/
+
 renderer.domElement.addEventListener(
+
     "touchstart",
+
     event => {
 
         for (
@@ -1298,13 +1576,13 @@ renderer.domElement.addEventListener(
         ) {
 
             /*
-            Left 40% =
-            joystick area.
+            Left 40% is joystick.
             */
 
             if (
                 touch.clientX <
-                window.innerWidth * 0.4
+                window.innerWidth *
+                0.4
             ) {
 
                 continue;
@@ -1326,14 +1604,24 @@ renderer.domElement.addEventListener(
         }
 
     },
+
     {
         passive: true
     }
+
 );
 
 
+/*
+--------------------------------------------------
+TOUCH CAMERA MOVE
+--------------------------------------------------
+*/
+
 renderer.domElement.addEventListener(
+
     "touchmove",
+
     event => {
 
         if (
@@ -1371,11 +1659,13 @@ renderer.domElement.addEventListener(
 
 
             cameraYaw -=
-                dx * 0.008;
+                dx *
+                0.008;
 
 
             cameraPitch -=
-                dy * 0.006;
+                dy *
+                0.006;
 
 
             cameraPitch =
@@ -1400,14 +1690,24 @@ renderer.domElement.addEventListener(
         }
 
     },
+
     {
         passive: true
     }
+
 );
 
 
+/*
+--------------------------------------------------
+TOUCH CAMERA END
+--------------------------------------------------
+*/
+
 renderer.domElement.addEventListener(
+
     "touchend",
+
     event => {
 
         for (
@@ -1428,6 +1728,7 @@ renderer.domElement.addEventListener(
         }
 
     }
+
 );
 
 
@@ -1450,7 +1751,9 @@ let mouseY =
 
 
 window.addEventListener(
+
     "mousedown",
+
     event => {
 
         mouseDown =
@@ -1465,26 +1768,36 @@ window.addEventListener(
             event.clientY;
 
     }
+
 );
 
 
 window.addEventListener(
+
     "mouseup",
+
     () => {
 
         mouseDown =
             false;
 
     }
+
 );
 
 
 window.addEventListener(
+
     "mousemove",
+
     event => {
 
-        if (!mouseDown) {
+        if (
+            !mouseDown
+        ) {
+
             return;
+
         }
 
 
@@ -1499,11 +1812,13 @@ window.addEventListener(
 
 
         cameraYaw -=
-            dx * 0.006;
+            dx *
+            0.006;
 
 
         cameraPitch -=
-            dy * 0.006;
+            dy *
+            0.006;
 
 
         cameraPitch =
@@ -1526,6 +1841,7 @@ window.addEventListener(
             event.clientY;
 
     }
+
 );
 
 
@@ -1559,7 +1875,14 @@ function updateMovement(
             : 0;
 
 
-    if (!joystickActive) {
+    /*
+    Keyboard only when joystick
+    is inactive.
+    */
+
+    if (
+        !joystickActive
+    ) {
 
         if (
             keys["KeyA"] ||
@@ -1622,6 +1945,10 @@ function updateMovement(
     }
 
 
+    /*
+    Prevent diagonal speed boost.
+    */
+
     if (
         magnitude > 1
     ) {
@@ -1636,9 +1963,9 @@ function updateMovement(
     }
 
 
-    const speed =
-        5.5;
-
+    /*
+    Camera-relative movement.
+    */
 
     const sin =
         Math.sin(
@@ -1665,11 +1992,11 @@ function updateMovement(
     movePlayer(
 
         dx *
-        speed *
+        PLAYER_SPEED *
         delta,
 
         dz *
-        speed *
+        PLAYER_SPEED *
         delta
 
     );
@@ -1678,11 +2005,23 @@ function updateMovement(
     applyWorldBoundary();
 
 
-    player.rotation.y =
-        Math.atan2(
-            dx,
-            dz
-        );
+    /*
+    Face movement direction.
+    */
+
+    if (
+        Math.abs(dx) +
+        Math.abs(dz) >
+        0.01
+    ) {
+
+        player.rotation.y =
+            Math.atan2(
+                dx,
+                dz
+            );
+
+    }
 
 
     return true;
@@ -1723,16 +2062,22 @@ function updateCamera(
         new THREE.Vector3(
 
             player.position.x -
-            Math.sin(cameraYaw) *
+            Math.sin(
+                cameraYaw
+            ) *
             horizontal,
 
             player.position.y +
             5.2 +
             cameraDistance *
-            Math.sin(cameraPitch),
+            Math.sin(
+                cameraPitch
+            ),
 
             player.position.z -
-            Math.cos(cameraYaw) *
+            Math.cos(
+                cameraYaw
+            ) *
             horizontal
 
         );
@@ -1743,8 +2088,11 @@ function updateCamera(
         desiredCamera,
 
         Math.min(
+
             1,
+
             delta * 6
+
         )
 
     );
@@ -1781,8 +2129,12 @@ function updateTasks(
         station.tasks
     ) {
 
-        if (!task) {
+        if (
+            !task
+        ) {
+
             continue;
+
         }
 
 
@@ -1795,9 +2147,13 @@ function updateTasks(
 
 
         task.scale.set(
+
             pulse,
+
             pulse,
+
             pulse
+
         );
 
 
@@ -1846,11 +2202,16 @@ function animate() {
     PLAYER BOB
     */
 
-    if (moving) {
+    if (
+        moving
+    ) {
 
         player.position.y =
             Math.sin(
-                time * 0.012
+
+                time *
+                0.012
+
             ) *
             0.025;
 
@@ -1891,15 +2252,21 @@ function resize() {
 
     const width =
         Math.max(
+
             1,
+
             window.innerWidth
+
         );
 
 
     const height =
         Math.max(
+
             1,
+
             window.innerHeight
+
         );
 
 
@@ -1912,8 +2279,11 @@ function resize() {
 
 
     renderer.setSize(
+
         width,
+
         height
+
     );
 
 
@@ -1943,8 +2313,11 @@ window.addEventListener(
     () => {
 
         setTimeout(
+
             resize,
+
             150
+
         );
 
     }
@@ -1953,7 +2326,7 @@ window.addEventListener(
 
 /*
 ==================================================
-START
+START GAME
 ==================================================
 */
 
@@ -1974,9 +2347,12 @@ const loading =
     );
 
 
-if (loading) {
+if (
+    loading
+) {
 
     setTimeout(
+
         () => {
 
             loading.style.opacity =
@@ -1984,16 +2360,21 @@ if (loading) {
 
 
             setTimeout(
+
                 () => {
 
                     loading.remove();
 
                 },
+
                 450
+
             );
 
         },
+
         500
+
     );
 
 }
@@ -2014,7 +2395,7 @@ console.log(
 );
 
 console.log(
-    "MAIN.JS 3.0 CONNECTED"
+    "MAIN.JS 4.0 CONNECTED"
 );
 
 console.log(
@@ -2028,13 +2409,13 @@ console.log(
 );
 
 console.log(
-    "COLLIDERS:",
+    "SOLID COLLIDERS:",
     worldColliders.length
 );
 
 console.log(
-    "WORLD LIMIT:",
-    WORLD_LIMIT
+    "WORLD SIZE:",
+    station.size ?? 160
 );
 
 console.log(
