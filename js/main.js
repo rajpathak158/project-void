@@ -8,7 +8,7 @@ import world from "./world.js";
 ==================================================
 PROJECT: VOID
 MAIN GAME ENGINE
-VERSION: 2.0
+VERSION 3.0
 ==================================================
 */
 
@@ -79,16 +79,18 @@ SCENE
 const scene =
     new THREE.Scene();
 
+
 scene.background =
     new THREE.Color(
         0x05070d
     );
 
+
 scene.fog =
     new THREE.Fog(
         0x05070d,
-        45,
-        180
+        55,
+        220
     );
 
 
@@ -108,15 +110,15 @@ const camera =
 
         0.1,
 
-        400
+        500
 
     );
 
 
 camera.position.set(
     0,
-    6,
-    16
+    7,
+    18
 );
 
 
@@ -179,7 +181,7 @@ const ambientLight =
 
         0x8aa0ff,
         0x080a12,
-        1.7
+        1.8
 
     );
 
@@ -193,15 +195,15 @@ const mainLight =
     new THREE.DirectionalLight(
 
         0xffffff,
-        2.2
+        2.4
 
     );
 
 
 mainLight.position.set(
-    20,
-    30,
-    15
+    25,
+    35,
+    20
 );
 
 
@@ -211,6 +213,7 @@ mainLight.castShadow =
 
 mainLight.shadow.mapSize.width =
     1024;
+
 
 mainLight.shadow.mapSize.height =
     1024;
@@ -309,140 +312,6 @@ console.log(
 
 /*
 ==================================================
-AUTO COLLISION BUILDER
-==================================================
-
-Automatically detects static world objects.
-
-This means walls don't need to manually
-register themselves inside main.js.
-==================================================
-*/
-
-const worldColliders = [];
-
-
-function buildWorldColliders() {
-
-    worldColliders.length = 0;
-
-    scene.updateMatrixWorld(
-        true
-    );
-
-
-    scene.traverse(
-        object => {
-
-            if (!object.isMesh) {
-                return;
-            }
-
-
-            /*
-            Ignore objects that should
-            never block the player.
-            */
-
-            if (
-                object === player ||
-                object.userData?.noCollision ||
-                object.userData?.task ||
-                object.userData?.decoration
-            ) {
-
-                return;
-
-            }
-
-
-            const box =
-                new THREE.Box3().setFromObject(
-                    object
-                );
-
-
-            if (box.isEmpty()) {
-                return;
-            }
-
-
-            const size =
-                new THREE.Vector3();
-
-            box.getSize(
-                size
-            );
-
-
-            /*
-            Ignore extremely small objects.
-            */
-
-            if (
-                size.x < 0.15 &&
-                size.z < 0.15
-            ) {
-
-                return;
-
-            }
-
-
-            /*
-            Ignore giant floor-like objects.
-
-            Floors are normally very wide but
-            extremely thin.
-            */
-
-            if (
-                size.y < 0.25 &&
-                size.x > 10 &&
-                size.z > 10
-            ) {
-
-                return;
-
-            }
-
-
-            /*
-            Ignore the huge world base.
-            */
-
-            if (
-                size.x > 100 &&
-                size.z > 100
-            ) {
-
-                return;
-
-            }
-
-
-            worldColliders.push({
-                box,
-                object
-            });
-
-        }
-    );
-
-
-    console.log(
-        "COLLISION OBJECTS:",
-        worldColliders.length
-    );
-
-}
-
-
-buildWorldColliders();
-
-
-/*
-==================================================
 PLAYER
 ==================================================
 */
@@ -469,7 +338,7 @@ scene.add(
 
 /*
 ==================================================
-PLAYER SIZE
+PLAYER COLLISION SIZE
 ==================================================
 */
 
@@ -477,9 +346,13 @@ const PLAYER_RADIUS =
     0.65;
 
 
+const PLAYER_HEIGHT =
+    2.7;
+
+
 /*
 ==================================================
-PLAYER MATERIAL
+PLAYER MATERIALS
 ==================================================
 */
 
@@ -794,7 +667,169 @@ createLeg(0.28);
 
 /*
 ==================================================
-COLLISION CHECK
+WORLD COLLIDERS
+==================================================
+*/
+
+/*
+IMPORTANT:
+
+The player is created BEFORE this function.
+
+This fixes:
+
+Cannot access 'player'
+before initialization
+*/
+
+const worldColliders = [];
+
+
+function buildWorldColliders() {
+
+    worldColliders.length = 0;
+
+
+    scene.updateMatrixWorld(
+        true
+    );
+
+
+    scene.traverse(
+        object => {
+
+            if (!object.isMesh) {
+                return;
+            }
+
+
+            /*
+            Never collide with player.
+            */
+
+            if (
+                object === player ||
+                player.getObjectById(
+                    object.id
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+            Ignore objects marked
+            as non-collidable.
+            */
+
+            if (
+                object.userData?.noCollision ||
+                object.userData?.task ||
+                object.userData?.decoration
+            ) {
+
+                return;
+
+            }
+
+
+            const box =
+                new THREE.Box3();
+
+
+            box.setFromObject(
+                object
+            );
+
+
+            if (box.isEmpty()) {
+                return;
+            }
+
+
+            const size =
+                new THREE.Vector3();
+
+
+            box.getSize(
+                size
+            );
+
+
+            /*
+            Ignore tiny objects.
+            */
+
+            if (
+                size.x < 0.15 &&
+                size.z < 0.15
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+            Ignore floors.
+
+            A floor is usually:
+            very wide + very thin.
+            */
+
+            if (
+                size.y < 0.3 &&
+                size.x > 8 &&
+                size.z > 8
+            ) {
+
+                return;
+
+            }
+
+
+            /*
+            Ignore giant world bases.
+            */
+
+            if (
+                size.x > 150 &&
+                size.z > 150
+            ) {
+
+                return;
+
+            }
+
+
+            worldColliders.push({
+
+                box: box.clone(),
+
+                object: object
+
+            });
+
+        }
+    );
+
+
+    console.log(
+        "WALL COLLIDERS:",
+        worldColliders.length
+    );
+
+}
+
+
+buildWorldColliders();
+
+
+/*
+==================================================
+PLAYER COLLISION
 ==================================================
 */
 
@@ -809,17 +844,26 @@ function canMoveTo(
 
     const min =
         new THREE.Vector3(
+
             x - PLAYER_RADIUS,
+
             player.position.y,
+
             z - PLAYER_RADIUS
+
         );
 
 
     const max =
         new THREE.Vector3(
+
             x + PLAYER_RADIUS,
-            player.position.y + 2.7,
+
+            player.position.y +
+            PLAYER_HEIGHT,
+
             z + PLAYER_RADIUS
+
         );
 
 
@@ -854,7 +898,7 @@ function canMoveTo(
 
 /*
 ==================================================
-MOVEMENT WITH COLLISION
+PLAYER MOVEMENT
 ==================================================
 */
 
@@ -874,7 +918,9 @@ function movePlayer(
 
 
     /*
-    Check X separately.
+    X AXIS
+
+    Allows sliding along walls.
     */
 
     if (
@@ -891,7 +937,9 @@ function movePlayer(
 
 
     /*
-    Check Z separately.
+    Z AXIS
+
+    Allows sliding along walls.
     */
 
     if (
@@ -905,6 +953,44 @@ function movePlayer(
             nextZ;
 
     }
+
+}
+
+
+/*
+==================================================
+LARGE WORLD BOUNDARY
+==================================================
+*/
+
+const WORLD_LIMIT =
+    80;
+
+
+function applyWorldBoundary() {
+
+    player.position.x =
+        THREE.MathUtils.clamp(
+
+            player.position.x,
+
+            -WORLD_LIMIT,
+
+            WORLD_LIMIT
+
+        );
+
+
+    player.position.z =
+        THREE.MathUtils.clamp(
+
+            player.position.z,
+
+            -WORLD_LIMIT,
+
+            WORLD_LIMIT
+
+        );
 
 }
 
@@ -1027,6 +1113,7 @@ function updateJoystick(
             distance *
             maxDistance;
 
+
         dy =
             dy /
             distance *
@@ -1058,6 +1145,34 @@ function updateJoystick(
 }
 
 
+function stopJoystick() {
+
+    joystickActive =
+        false;
+
+
+    joystickId =
+        null;
+
+
+    joystickX =
+        0;
+
+
+    joystickY =
+        0;
+
+
+    if (knob) {
+
+        knob.style.transform =
+            "translate(-50%, -50%)";
+
+    }
+
+}
+
+
 if (joystick) {
 
     joystick.addEventListener(
@@ -1066,14 +1181,18 @@ if (joystick) {
 
             event.preventDefault();
 
+
             const touch =
                 event.changedTouches[0];
+
 
             joystickId =
                 touch.identifier;
 
+
             joystickActive =
                 true;
+
 
             updateJoystick(
                 touch.clientX,
@@ -1093,9 +1212,11 @@ if (joystick) {
 
             event.preventDefault();
 
+
             if (!joystickActive) {
                 return;
             }
+
 
             for (
                 const touch of
@@ -1121,31 +1242,6 @@ if (joystick) {
             passive: false
         }
     );
-
-
-    function stopJoystick() {
-
-        joystickActive =
-            false;
-
-        joystickId =
-            null;
-
-        joystickX =
-            0;
-
-        joystickY =
-            0;
-
-
-        if (knob) {
-
-            knob.style.transform =
-                "translate(-50%, -50%)";
-
-        }
-
-    }
 
 
     joystick.addEventListener(
@@ -1177,7 +1273,7 @@ let cameraPitch =
 
 
 const cameraDistance =
-    13;
+    15;
 
 
 let cameraTouch =
@@ -1201,6 +1297,11 @@ renderer.domElement.addEventListener(
             event.changedTouches
         ) {
 
+            /*
+            Left 40% =
+            joystick area.
+            */
+
             if (
                 touch.clientX <
                 window.innerWidth * 0.4
@@ -1214,8 +1315,10 @@ renderer.domElement.addEventListener(
             cameraTouch =
                 touch.identifier;
 
+
             lastTouchX =
                 touch.clientX;
+
 
             lastTouchY =
                 touch.clientY;
@@ -1277,14 +1380,19 @@ renderer.domElement.addEventListener(
 
             cameraPitch =
                 THREE.MathUtils.clamp(
+
                     cameraPitch,
+
                     -0.35,
+
                     0.85
+
                 );
 
 
             lastTouchX =
                 touch.clientX;
+
 
             lastTouchY =
                 touch.clientY;
@@ -1348,8 +1456,10 @@ window.addEventListener(
         mouseDown =
             true;
 
+
         mouseX =
             event.clientX;
+
 
         mouseY =
             event.clientY;
@@ -1398,14 +1508,19 @@ window.addEventListener(
 
         cameraPitch =
             THREE.MathUtils.clamp(
+
                 cameraPitch,
+
                 -0.35,
+
                 0.85
+
             );
 
 
         mouseX =
             event.clientX;
+
 
         mouseY =
             event.clientY;
@@ -1416,7 +1531,7 @@ window.addEventListener(
 
 /*
 ==================================================
-MOVEMENT INPUT
+MOVEMENT
 ==================================================
 */
 
@@ -1490,8 +1605,10 @@ function updateMovement(
 
     const magnitude =
         Math.sqrt(
+
             moveX * moveX +
             moveZ * moveZ
+
         );
 
 
@@ -1512,18 +1629,12 @@ function updateMovement(
         moveX /=
             magnitude;
 
+
         moveZ /=
             magnitude;
 
     }
 
-
-    /*
-    PLAYER SPEED
-
-    Slightly slower so the larger
-    environment feels easier to control.
-    */
 
     const speed =
         5.5;
@@ -1552,6 +1663,7 @@ function updateMovement(
 
 
     movePlayer(
+
         dx *
         speed *
         delta,
@@ -1559,7 +1671,11 @@ function updateMovement(
         dz *
         speed *
         delta
+
     );
+
+
+    applyWorldBoundary();
 
 
     player.rotation.y =
@@ -1611,7 +1727,7 @@ function updateCamera(
             horizontal,
 
             player.position.y +
-            4.8 +
+            5.2 +
             cameraDistance *
             Math.sin(cameraPitch),
 
@@ -1708,8 +1824,11 @@ function animate() {
 
     const delta =
         Math.min(
+
             clock.getDelta(),
+
             0.05
+
         );
 
 
@@ -1799,10 +1918,15 @@ function resize() {
 
 
     renderer.setPixelRatio(
+
         Math.min(
+
             window.devicePixelRatio,
+
             1.5
+
         )
+
     );
 
 }
@@ -1890,7 +2014,7 @@ console.log(
 );
 
 console.log(
-    "MAIN.JS 2.0 CONNECTED"
+    "MAIN.JS 3.0 CONNECTED"
 );
 
 console.log(
@@ -1906,6 +2030,11 @@ console.log(
 console.log(
     "COLLIDERS:",
     worldColliders.length
+);
+
+console.log(
+    "WORLD LIMIT:",
+    WORLD_LIMIT
 );
 
 console.log(
