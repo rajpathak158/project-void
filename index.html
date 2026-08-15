@@ -24,6 +24,7 @@
 
 html,
 body {
+
     margin: 0;
     padding: 0;
 
@@ -38,25 +39,28 @@ body {
         Arial,
         Helvetica,
         sans-serif;
+
 }
 
 #game-canvas {
+
     position: fixed;
 
-    left: 0;
-    top: 0;
+    inset: 0;
 
-    width: 100vw;
-    height: 100vh;
+    width: 100vw !important;
+    height: 100vh !important;
 
     display: block;
 
     z-index: 1;
 
     touch-action: none;
+
 }
 
 #hud {
+
     position: fixed;
 
     top: 24px;
@@ -67,17 +71,21 @@ body {
     color: white;
 
     pointer-events: none;
+
 }
 
 #game-title {
+
     font-size: 24px;
 
     font-weight: 900;
 
     letter-spacing: 5px;
+
 }
 
 #location {
+
     margin-top: 8px;
 
     font-size: 12px;
@@ -85,9 +93,11 @@ body {
     letter-spacing: 3px;
 
     color: #7e8bb5;
+
 }
 
 #joystick {
+
     position: fixed;
 
     left: 42px;
@@ -108,9 +118,11 @@ body {
     z-index: 50;
 
     touch-action: none;
+
 }
 
 #joystick-knob {
+
     position: absolute;
 
     left: 50%;
@@ -133,14 +145,16 @@ body {
     box-shadow:
         0 0 25px
         rgba(60,120,255,0.5);
+
 }
 
 #loading {
+
     position: fixed;
 
     inset: 0;
 
-    z-index: 100;
+    z-index: 1000;
 
     display: flex;
 
@@ -157,9 +171,11 @@ body {
 
     transition:
         opacity 0.4s ease;
+
 }
 
 #void-error {
+
     position: fixed;
 
     inset: 0;
@@ -169,17 +185,22 @@ body {
     display: none;
 
     align-items: center;
+
     justify-content: center;
 
     padding: 25px;
+
+    box-sizing: border-box;
 
     background:
         rgba(2,3,8,0.97);
 
     color: white;
+
 }
 
 #void-error-box {
+
     width:
         min(700px, 90vw);
 
@@ -196,17 +217,21 @@ body {
     border:
         1px solid
         rgba(255,70,90,0.5);
+
 }
 
 #void-error-title {
+
     font-size: 24px;
 
     font-weight: 900;
 
     margin-bottom: 15px;
+
 }
 
 #void-error-message {
+
     color: #ff8997;
 
     white-space: pre-wrap;
@@ -216,6 +241,7 @@ body {
     line-height: 1.6;
 
     font-size: 13px;
+
 }
 
 </style>
@@ -226,18 +252,18 @@ body {
 <body>
 
 
-<!-- ==================================================
+<!-- ==========================================
      LOADING
-================================================== -->
+========================================== -->
 
 <div id="loading">
     LOADING PROJECT: VOID
 </div>
 
 
-<!-- ==================================================
+<!-- ==========================================
      HUD
-================================================== -->
+========================================== -->
 
 <div id="hud">
 
@@ -252,9 +278,9 @@ body {
 </div>
 
 
-<!-- ==================================================
+<!-- ==========================================
      JOYSTICK
-================================================== -->
+========================================== -->
 
 <div id="joystick">
 
@@ -263,9 +289,9 @@ body {
 </div>
 
 
-<!-- ==================================================
+<!-- ==========================================
      ERROR
-================================================== -->
+========================================== -->
 
 <div id="void-error">
 
@@ -287,9 +313,11 @@ body {
 <script type="module">
 
 
-/* ==================================================
-   ERROR SYSTEM
-================================================== */
+/*
+==================================================
+ERROR SYSTEM
+==================================================
+*/
 
 function showError(error) {
 
@@ -309,7 +337,9 @@ function showError(error) {
         );
 
     if (!screen || !message) {
+
         return;
+
     }
 
     let text;
@@ -320,7 +350,8 @@ function showError(error) {
             error.stack ||
             error.message;
 
-    } else {
+    }
+    else {
 
         text =
             String(error);
@@ -361,9 +392,11 @@ window.addEventListener(
 );
 
 
-/* ==================================================
-   THREE.JS
-================================================== */
+/*
+==================================================
+IMPORT THREE.JS
+==================================================
+*/
 
 let THREE;
 
@@ -373,10 +406,11 @@ try {
         "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
     );
 
-} catch (error) {
+}
+catch (error) {
 
     showError(
-        "THREE.JS FAILED TO LOAD\n\n" +
+        "Three.js failed to load.\n\n" +
         error
     );
 
@@ -385,12 +419,46 @@ try {
 }
 
 
-/* ==================================================
-   SCENE
-================================================== */
+/*
+==================================================
+IMPORT YOUR WORLD
+==================================================
+*/
+
+let world;
+
+try {
+
+    const worldModule =
+        await import(
+            "./js/world.js?v=FINAL2"
+        );
+
+    world =
+        worldModule.default;
+
+}
+catch (error) {
+
+    showError(
+        "WORLD.JS FAILED TO LOAD.\n\n" +
+        error
+    );
+
+    throw error;
+
+}
+
+
+/*
+==================================================
+SCENE
+==================================================
+*/
 
 const scene =
     new THREE.Scene();
+
 
 scene.background =
     new THREE.Color(
@@ -401,14 +469,16 @@ scene.background =
 scene.fog =
     new THREE.Fog(
         0x05070d,
-        35,
+        25,
         100
     );
 
 
-/* ==================================================
-   CAMERA
-================================================== */
+/*
+==================================================
+CAMERA
+==================================================
+*/
 
 const camera =
     new THREE.PerspectiveCamera(
@@ -428,38 +498,25 @@ const camera =
 camera.position.set(
     0,
     6,
-    16
+    14
 );
 
 
-/* ==================================================
-   RENDERER
-================================================== */
+/*
+==================================================
+RENDERER
+==================================================
+*/
 
-let renderer;
+const renderer =
+    new THREE.WebGLRenderer({
 
-try {
+        antialias: true,
 
-    renderer =
-        new THREE.WebGLRenderer({
+        powerPreference:
+            "high-performance"
 
-            antialias: true,
-
-            powerPreference:
-                "high-performance"
-
-        });
-
-} catch (error) {
-
-    showError(
-        "WEBGL COULD NOT START.\n\n" +
-        error
-    );
-
-    throw error;
-
-}
+    });
 
 
 renderer.setSize(
@@ -470,7 +527,7 @@ renderer.setSize(
 
 renderer.setPixelRatio(
     Math.min(
-        window.devicePixelRatio || 1,
+        window.devicePixelRatio,
         1.5
     )
 );
@@ -478,6 +535,10 @@ renderer.setPixelRatio(
 
 renderer.shadowMap.enabled =
     true;
+
+
+renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
 
 
 renderer.domElement.id =
@@ -489,18 +550,18 @@ document.body.appendChild(
 );
 
 
-/* ==================================================
-   LIGHTING
-================================================== */
+/*
+==================================================
+LIGHTING
+==================================================
+*/
 
 const ambient =
     new THREE.HemisphereLight(
 
         0x8290ff,
-
         0x10121c,
-
-        2.0
+        1.8
 
     );
 
@@ -510,540 +571,152 @@ scene.add(
 );
 
 
-const mainLight =
+const sunlight =
     new THREE.DirectionalLight(
-
         0xffffff,
-
-        3
-
+        2.0
     );
 
 
-mainLight.position.set(
+sunlight.position.set(
     10,
     20,
     10
 );
 
 
-mainLight.castShadow =
+sunlight.castShadow =
     true;
 
 
 scene.add(
-    mainLight
+    sunlight
 );
 
-
-/* ==================================================
-   FLOOR
-================================================== */
-
-const floor =
-    new THREE.Mesh(
-
-        new THREE.PlaneGeometry(
-            70,
-            70
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-            color:
-                0x171b27,
-
-            roughness:
-                0.75,
-
-            metalness:
-                0.25
-
-        })
-
-    );
-
-
-floor.rotation.x =
-    -Math.PI / 2;
-
-
-floor.receiveShadow =
-    true;
-
-
-scene.add(
-    floor
-);
-
-
-/* ==================================================
-   GRID
-================================================== */
-
-const grid =
-    new THREE.GridHelper(
-
-        70,
-        35,
-
-        0x33446d,
-        0x1a2238
-
-    );
-
-
-grid.position.y =
-    0.02;
-
-
-scene.add(
-    grid
-);
-
-
-/* ==================================================
-   WALL MATERIAL
-================================================== */
-
-const wallMaterial =
-    new THREE.MeshStandardMaterial({
-
-        color:
-            0x252b3a,
-
-        roughness:
-            0.6,
-
-        metalness:
-            0.4
-
-    });
-
-
-/* ==================================================
-   WALL FUNCTION
-================================================== */
-
-function createWall(
-    x,
-    y,
-    z,
-    width,
-    height,
-    depth
-) {
-
-    const wall =
-        new THREE.Mesh(
-
-            new THREE.BoxGeometry(
-                width,
-                height,
-                depth
-            ),
-
-            wallMaterial
-
-        );
-
-
-    wall.position.set(
-        x,
-        y,
-        z
-    );
-
-
-    wall.castShadow =
-        true;
-
-    wall.receiveShadow =
-        true;
-
-
-    scene.add(
-        wall
-    );
-
-
-    return wall;
-
-}
-
-
-/* ==================================================
-   STATION
-================================================== */
-
-createWall(
-    0,
-    3,
-    -24,
-    50,
-    6,
-    1
-);
-
-
-createWall(
-    -25,
-    3,
-    0,
-    1,
-    6,
-    48
-);
-
-
-createWall(
-    25,
-    3,
-    0,
-    1,
-    6,
-    48
-);
-
-
-createWall(
-    -12,
-    3,
-    -10,
-    1,
-    6,
-    18
-);
-
-
-createWall(
-    12,
-    3,
-    -10,
-    1,
-    6,
-    18
-);
-
-
-/* ==================================================
-   DOORS
-================================================== */
-
-const doorMaterial =
-    new THREE.MeshStandardMaterial({
-
-        color:
-            0x172a46,
-
-        emissive:
-            0x123d70,
-
-        emissiveIntensity:
-            2,
-
-        metalness:
-            0.7,
-
-        roughness:
-            0.25
-
-    });
-
-
-function createDoor(
-    x,
-    z,
-    rotationY = 0
-) {
-
-    const door =
-        new THREE.Mesh(
-
-            new THREE.BoxGeometry(
-                5,
-                4,
-                0.25
-            ),
-
-            doorMaterial
-
-        );
-
-
-    door.position.set(
-        x,
-        2,
-        z
-    );
-
-
-    door.rotation.y =
-        rotationY;
-
-
-    door.castShadow =
-        true;
-
-
-    scene.add(
-        door
-    );
-
-
-    return door;
-
-}
-
-
-createDoor(
-    0,
-    -23.4
-);
-
-
-createDoor(
-    -24.4,
-    8,
-    Math.PI / 2
-);
-
-
-createDoor(
-    24.4,
-    8,
-    Math.PI / 2
-);
-
-
-/* ==================================================
-   CENTER PLATFORM
-================================================== */
-
-const platform =
-    new THREE.Mesh(
-
-        new THREE.CylinderGeometry(
-            5,
-            5,
-            0.6,
-            32
-        ),
-
-        new THREE.MeshStandardMaterial({
-
-            color:
-                0x30394d,
-
-            metalness:
-                0.75,
-
-            roughness:
-                0.3
-
-        })
-
-    );
-
-
-platform.position.y =
-    0.3;
-
-
-platform.castShadow =
-    true;
-
-
-platform.receiveShadow =
-    true;
-
-
-scene.add(
-    platform
-);
-
-
-/* ==================================================
-   ENERGY CORE
-================================================== */
-
-const coreMaterial =
-    new THREE.MeshStandardMaterial({
-
-        color:
-            0x42dfff,
-
-        emissive:
-            0x009dff,
-
-        emissiveIntensity:
-            4,
-
-        metalness:
-            0.5,
-
-        roughness:
-            0.15
-
-    });
-
-
-const core =
-    new THREE.Mesh(
-
-        new THREE.CylinderGeometry(
-            0.9,
-            0.9,
-            2.4,
-            24
-        ),
-
-        coreMaterial
-
-    );
-
-
-core.position.y =
-    1.7;
-
-
-core.castShadow =
-    true;
-
-
-scene.add(
-    core
-);
-
-
-/* ==================================================
-   CORE RINGS
-================================================== */
-
-const rings = [];
-
-
-for (
-    let i = 0;
-    i < 3;
-    i++
-) {
-
-    const ring =
-        new THREE.Mesh(
-
-            new THREE.TorusGeometry(
-                1.5 + i * 0.45,
-                0.035,
-                8,
-                48
-            ),
-
-            new THREE.MeshBasicMaterial({
-
-                color:
-                    0x36d9ff
-
-            })
-
-        );
-
-
-    ring.rotation.x =
-        Math.PI / 2;
-
-
-    ring.position.y =
-        1.7;
-
-
-    scene.add(
-        ring
-    );
-
-
-    rings.push(
-        ring
-    );
-
-}
-
-
-/* ==================================================
-   TEST CUBE
-================================================== */
 
 /*
-This cube is intentionally included.
-
-If you see it, Three.js,
-WebGL, camera and renderer
-are working correctly.
+==================================================
+WORLD
+==================================================
 */
 
-const testCube =
-    new THREE.Mesh(
+/*
+Your current world.js does not require
+collision registration, so we provide a
+safe empty collision object.
+*/
 
-        new THREE.BoxGeometry(
-            3,
-            3,
-            3
-        ),
+const collision = {
 
-        new THREE.MeshStandardMaterial({
+    colliders: [],
 
-            color:
-                0xff3366,
+    objects: [],
 
-            emissive:
-                0x330011,
+    clear() {
 
-            emissiveIntensity:
-                1,
+        this.colliders.length = 0;
+        this.objects.length = 0;
 
-            metalness:
-                0.2,
+    },
 
-            roughness:
-                0.5
+    reset() {
 
-        })
+        this.colliders.length = 0;
+        this.objects.length = 0;
 
+    }
+
+};
+
+
+let station;
+
+try {
+
+    station =
+        world.create(
+            scene,
+            collision
+        );
+
+}
+catch (error) {
+
+    showError(
+        "WORLD CREATION FAILED.\n\n" +
+        error
     );
 
+    throw error;
 
-testCube.position.set(
-    0,
-    1.5,
-    0
+}
+
+
+if (!station) {
+
+    throw new Error(
+        "world.create() returned nothing."
+    );
+
+}
+
+
+/*
+==================================================
+WORLD DEBUG
+==================================================
+*/
+
+console.log(
+    "================================"
+);
+
+console.log(
+    "PROJECT: VOID"
+);
+
+console.log(
+    "WORLD LOADED"
+);
+
+console.log(
+    "Rooms:",
+    station.rooms
+);
+
+console.log(
+    "Tasks:",
+    station.tasks
+);
+
+console.log(
+    "Task count:",
+    station.tasks.length
+);
+
+console.log(
+    "================================"
 );
 
 
-testCube.castShadow =
-    true;
-
-
-testCube.receiveShadow =
-    true;
-
-
-scene.add(
-    testCube
-);
-
-
-/* ==================================================
-   PLAYER
-================================================== */
+/*
+==================================================
+PLAYER
+==================================================
+*/
 
 const player =
     new THREE.Group();
 
 
 player.position.set(
-    0,
-    0,
-    8
+
+    station.spawn?.x ?? 0,
+
+    station.spawn?.y ?? 0,
+
+    station.spawn?.z ?? 4
+
 );
 
 
@@ -1052,9 +725,11 @@ scene.add(
 );
 
 
-/* ==================================================
-   PLAYER BODY
-================================================== */
+/*
+==================================================
+PLAYER MATERIAL
+==================================================
+*/
 
 const bodyMaterial =
     new THREE.MeshStandardMaterial({
@@ -1070,6 +745,33 @@ const bodyMaterial =
 
     });
 
+
+const visorMaterial =
+    new THREE.MeshStandardMaterial({
+
+        color:
+            0x9ceeff,
+
+        emissive:
+            0x168cb5,
+
+        emissiveIntensity:
+            3,
+
+        metalness:
+            0.8,
+
+        roughness:
+            0.1
+
+    });
+
+
+/*
+==================================================
+PLAYER BODY
+==================================================
+*/
 
 const body =
     new THREE.Mesh(
@@ -1099,9 +801,11 @@ player.add(
 );
 
 
-/* ==================================================
-   PLAYER HEAD
-================================================== */
+/*
+==================================================
+PLAYER HEAD
+==================================================
+*/
 
 const head =
     new THREE.Mesh(
@@ -1112,18 +816,7 @@ const head =
             16
         ),
 
-        new THREE.MeshStandardMaterial({
-
-            color:
-                0x202738,
-
-            metalness:
-                0.7,
-
-            roughness:
-                0.25
-
-        })
+        bodyMaterial
 
     );
 
@@ -1141,9 +834,11 @@ player.add(
 );
 
 
-/* ==================================================
-   PLAYER VISOR
-================================================== */
+/*
+==================================================
+VISOR
+==================================================
+*/
 
 const visor =
     new THREE.Mesh(
@@ -1154,24 +849,7 @@ const visor =
             12
         ),
 
-        new THREE.MeshStandardMaterial({
-
-            color:
-                0x9ceeff,
-
-            emissive:
-                0x168cb5,
-
-            emissiveIntensity:
-                3,
-
-            metalness:
-                0.8,
-
-            roughness:
-                0.1
-
-        })
+        visorMaterial
 
     );
 
@@ -1195,9 +873,11 @@ player.add(
 );
 
 
-/* ==================================================
-   PLAYER CORE
-================================================== */
+/*
+==================================================
+PLAYER CORE
+==================================================
+*/
 
 const playerCore =
     new THREE.Mesh(
@@ -1236,11 +916,13 @@ player.add(
 );
 
 
-/* ==================================================
-   PLAYER ARMS
-================================================== */
+/*
+==================================================
+ARMS
+==================================================
+*/
 
-function makeArm(x) {
+function createArm(x) {
 
     const arm =
         new THREE.Mesh(
@@ -1281,15 +963,17 @@ function makeArm(x) {
 }
 
 
-makeArm(-0.7);
-makeArm(0.7);
+createArm(-0.7);
+createArm(0.7);
 
 
-/* ==================================================
-   PLAYER LEGS
-================================================== */
+/*
+==================================================
+LEGS
+==================================================
+*/
 
-function makeLeg(x) {
+function createLeg(x) {
 
     const leg =
         new THREE.Mesh(
@@ -1324,13 +1008,15 @@ function makeLeg(x) {
 }
 
 
-makeLeg(-0.28);
-makeLeg(0.28);
+createLeg(-0.28);
+createLeg(0.28);
 
 
-/* ==================================================
-   KEYBOARD
-================================================== */
+/*
+==================================================
+KEYBOARD
+==================================================
+*/
 
 const keys = {};
 
@@ -1357,9 +1043,11 @@ window.addEventListener(
 );
 
 
-/* ==================================================
-   JOYSTICK
-================================================== */
+/*
+==================================================
+JOYSTICK
+==================================================
+*/
 
 const joystick =
     document.getElementById(
@@ -1409,13 +1097,11 @@ function updateJoystick(
 
 
     let dx =
-        x -
-        centerX;
+        x - centerX;
 
 
     let dy =
-        y -
-        centerY;
+        y - centerY;
 
 
     const max =
@@ -1434,14 +1120,10 @@ function updateJoystick(
     ) {
 
         dx =
-            dx /
-            distance *
-            max;
+            dx / distance * max;
 
         dy =
-            dy /
-            distance *
-            max;
+            dy / distance * max;
 
     }
 
@@ -1500,26 +1182,22 @@ joystick.addEventListener(
             return;
         }
 
-
         for (
             const touch of
             event.changedTouches
         ) {
 
             if (
-                touch.identifier !==
+                touch.identifier ===
                 joystickId
             ) {
 
-                continue;
+                updateJoystick(
+                    touch.clientX,
+                    touch.clientY
+                );
 
             }
-
-
-            updateJoystick(
-                touch.clientX,
-                touch.clientY
-            );
 
         }
 
@@ -1562,9 +1240,11 @@ joystick.addEventListener(
 );
 
 
-/* ==================================================
-   CAMERA
-================================================== */
+/*
+==================================================
+CAMERA
+==================================================
+*/
 
 let cameraYaw =
     0;
@@ -1707,9 +1387,11 @@ renderer.domElement.addEventListener(
 );
 
 
-/* ==================================================
-   MOUSE CAMERA
-================================================== */
+/*
+==================================================
+MOUSE CAMERA
+==================================================
+*/
 
 let mouseDown =
     false;
@@ -1796,12 +1478,18 @@ window.addEventListener(
 );
 
 
-/* ==================================================
-   GAME LOOP
-================================================== */
+/*
+==================================================
+GAME LOOP
+==================================================
+*/
 
 const clock =
     new THREE.Clock();
+
+
+const cameraTarget =
+    new THREE.Vector3();
 
 
 function animate() {
@@ -1818,9 +1506,11 @@ function animate() {
         );
 
 
-    /* ------------------------------------------
-       MOVEMENT INPUT
-    ------------------------------------------ */
+    /*
+    ==============================================
+    MOVEMENT INPUT
+    ==============================================
+    */
 
     let moveX =
         joystickActive
@@ -1878,9 +1568,11 @@ function animate() {
     }
 
 
-    /* ------------------------------------------
-       MOVEMENT
-    ------------------------------------------ */
+    /*
+    ==============================================
+    MOVEMENT
+    ==============================================
+    */
 
     const moving =
         Math.abs(moveX) > 0.01 ||
@@ -1896,18 +1588,15 @@ function animate() {
             );
 
 
-        moveX /=
-            Math.max(
-                length,
-                1
-            );
+        if (length > 1) {
 
+            moveX /=
+                length;
 
-        moveZ /=
-            Math.max(
-                length,
-                1
-            );
+            moveZ /=
+                length;
+
+        }
 
 
         const speed =
@@ -1948,19 +1637,23 @@ function animate() {
             delta;
 
 
+        /*
+        WORLD BOUNDARY
+        */
+
         player.position.x =
             THREE.MathUtils.clamp(
                 player.position.x,
-                -23,
-                23
+                -38,
+                38
             );
 
 
         player.position.z =
             THREE.MathUtils.clamp(
                 player.position.z,
-                -22,
-                22
+                -38,
+                38
             );
 
 
@@ -1973,20 +1666,21 @@ function animate() {
     }
 
 
-    /* ------------------------------------------
-       PLAYER BOB
-    ------------------------------------------ */
+    /*
+    ==============================================
+    PLAYER BOB
+    ==============================================
+    */
 
     if (moving) {
 
         player.position.y =
             Math.sin(
-                performance.now() *
-                0.012
-            ) *
-            0.025;
+                performance.now() * 0.012
+            ) * 0.025;
 
-    } else {
+    }
+    else {
 
         player.position.y =
             0;
@@ -1994,20 +1688,21 @@ function animate() {
     }
 
 
-    /* ------------------------------------------
-       CAMERA
-    ------------------------------------------ */
+    /*
+    ==============================================
+    CAMERA
+    ==============================================
+    */
 
-    const target =
-        new THREE.Vector3(
+    cameraTarget.set(
 
-            player.position.x,
+        player.position.x,
 
-            1.5,
+        player.position.y + 1.5,
 
-            player.position.z
+        player.position.z
 
-        );
+    );
 
 
     const horizontal =
@@ -2017,7 +1712,7 @@ function animate() {
         );
 
 
-    const desired =
+    const desiredCamera =
         new THREE.Vector3(
 
             player.position.x -
@@ -2037,51 +1732,24 @@ function animate() {
 
 
     camera.position.lerp(
-
-        desired,
-
+        desiredCamera,
         Math.min(
             1,
             delta * 7
         )
-
     );
 
 
     camera.lookAt(
-        target
+        cameraTarget
     );
 
 
-    /* ------------------------------------------
-       ANIMATION
-    ------------------------------------------ */
-
-    core.rotation.y +=
-        delta * 1.5;
-
-
-    for (
-        const ring of rings
-    ) {
-
-        ring.rotation.z +=
-            delta * 0.7;
-
-    }
-
-
-    testCube.rotation.x +=
-        delta * 0.5;
-
-
-    testCube.rotation.y +=
-        delta * 0.8;
-
-
-    /* ------------------------------------------
-       RENDER
-    ------------------------------------------ */
+    /*
+    ==============================================
+    RENDER
+    ==============================================
+    */
 
     renderer.render(
         scene,
@@ -2091,9 +1759,11 @@ function animate() {
 }
 
 
-/* ==================================================
-   RESIZE
-================================================== */
+/*
+==================================================
+RESIZE
+==================================================
+*/
 
 function resize() {
 
@@ -2126,7 +1796,7 @@ function resize() {
 
     renderer.setPixelRatio(
         Math.min(
-            window.devicePixelRatio || 1,
+            window.devicePixelRatio,
             1.5
         )
     );
@@ -2153,18 +1823,22 @@ window.addEventListener(
 );
 
 
-/* ==================================================
-   START
-================================================== */
+/*
+==================================================
+START
+==================================================
+*/
 
 resize();
 
 animate();
 
 
-/* ==================================================
-   REMOVE LOADING
-================================================== */
+/*
+==================================================
+REMOVE LOADING
+==================================================
+*/
 
 const loading =
     document.getElementById(
@@ -2175,31 +1849,34 @@ const loading =
 setTimeout(
     () => {
 
-        if (loading) {
-
-            loading.style.opacity =
-                "0";
-
-
-            setTimeout(
-                () => {
-
-                    loading.remove();
-
-                },
-                450
-            );
-
+        if (!loading) {
+            return;
         }
+
+
+        loading.style.opacity =
+            "0";
+
+
+        setTimeout(
+            () => {
+
+                loading.remove();
+
+            },
+            450
+        );
 
     },
     500
 );
 
 
-/* ==================================================
-   DEBUG
-================================================== */
+/*
+==================================================
+FINAL DEBUG
+==================================================
+*/
 
 console.log(
     "================================"
@@ -2210,19 +1887,21 @@ console.log(
 );
 
 console.log(
-    "STANDALONE ENGINE STARTED"
+    "WORLD.JS CONNECTED"
 );
 
 console.log(
-    "World: OK"
+    "ROOMS:",
+    station.rooms.length
 );
 
 console.log(
-    "Player: OK"
+    "TASKS:",
+    station.tasks.length
 );
 
 console.log(
-    "Renderer: OK"
+    "GAME ENGINE STARTED"
 );
 
 console.log(
