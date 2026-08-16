@@ -1,126 +1,106 @@
-import * as THREE from
-    "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-
-
 /*
 ==================================================
 PROJECT: VOID
-TASK SYSTEM v6
-==================================================
-
-FEATURES
-- Works with THREE.Group player
-- Uses #interact-button from index.html
-- Uses existing #task-panel / #task-list
-- Mobile friendly
-- Interaction distance
-- Sequence mini-game
-- Task completion
-- Retry system
-- No duplicate task UI
+TASK SYSTEM
+VERSION 6.0
 ==================================================
 */
 
-
 class TaskSystem {
 
-    constructor(
-        scene,
-        camera,
-        player
-    ) {
+    constructor(scene, camera, player) {
 
         this.scene = scene;
-
         this.camera = camera;
-
         this.player = player;
 
         this.tasks = [];
 
         this.activeTask = null;
-
         this.currentPromptTask = null;
 
-        this.interactionDistance = 3.2;
+        this.interactionDistance = 3.5;
+
+        this.container = null;
 
         this.sequence = [];
-
+        this.playerSequence = [];
         this.sequencePosition = 0;
 
         this.gameStarted = false;
 
-        this.taskPanel = null;
-
-        this.taskList = null;
-
-        this.interactButton = null;
-
         this.createUI();
-
-        this.setupInteraction();
+        this.setupInteractButton();
 
     }
 
 
     /*
     ==================================================
-    UI
+    REGISTER TASK
+    ==================================================
+    */
+
+    register(object, name = "TASK") {
+
+        if (!object) {
+            return;
+        }
+
+        if (
+            this.tasks.some(
+                task => task.object === object
+            )
+        ) {
+            return;
+        }
+
+        const task = {
+
+            object: object,
+
+            name: name,
+
+            completed: false
+
+        };
+
+        object.userData.task = true;
+        object.userData.taskName = name;
+
+        this.tasks.push(task);
+
+        this.updateProgress();
+
+    }
+
+
+    /*
+    ==================================================
+    CREATE TASK UI
     ==================================================
     */
 
     createUI() {
 
-        /*
-        Use existing HTML.
-        */
-
-        this.taskPanel =
+        const old =
             document.getElementById(
-                "task-panel"
+                "void-task-system"
             );
-
-
-        this.taskList =
-            document.getElementById(
-                "task-list"
-            );
-
-
-        this.interactButton =
-            document.getElementById(
-                "interact-button"
-            );
-
-
-        /*
-        Create task-game overlay only once.
-        */
-
-        let old =
-            document.getElementById(
-                "void-task-game"
-            );
-
 
         if (old) {
-
             old.remove();
-
         }
 
 
-        const game =
-            document.createElement(
-                "div"
-            );
+        this.container =
+            document.createElement("div");
+
+        this.container.id =
+            "void-task-system";
 
 
-        game.id =
-            "void-task-game";
-
-
-        game.innerHTML = `
+        this.container.innerHTML = `
 
             <div id="void-task-box">
 
@@ -129,62 +109,70 @@ class TaskSystem {
                 </div>
 
                 <div id="void-task-name">
-                    TASK
+                    SYSTEM READY
                 </div>
 
                 <div id="void-task-progress">
                     0 / 0 TASKS
                 </div>
 
-                <div id="void-task-instruction">
-                    PRESS START
+                <div id="void-task-game">
+
+                    <div id="void-task-instruction">
+                        PRESS START
+                    </div>
+
+                    <div id="void-sequence-buttons">
+
+                        <button
+                            class="void-sequence-button"
+                            data-number="1"
+                            type="button"
+                        >
+                            1
+                        </button>
+
+                        <button
+                            class="void-sequence-button"
+                            data-number="2"
+                            type="button"
+                        >
+                            2
+                        </button>
+
+                        <button
+                            class="void-sequence-button"
+                            data-number="3"
+                            type="button"
+                        >
+                            3
+                        </button>
+
+                        <button
+                            class="void-sequence-button"
+                            data-number="4"
+                            type="button"
+                        >
+                            4
+                        </button>
+
+                    </div>
+
+                    <button
+                        id="void-task-start"
+                        type="button"
+                    >
+                        START SYSTEM
+                    </button>
+
+                    <button
+                        id="void-task-close"
+                        type="button"
+                    >
+                        CANCEL
+                    </button>
+
                 </div>
-
-                <div id="void-sequence-buttons">
-
-                    <button
-                        type="button"
-                        data-number="1"
-                    >
-                        1
-                    </button>
-
-                    <button
-                        type="button"
-                        data-number="2"
-                    >
-                        2
-                    </button>
-
-                    <button
-                        type="button"
-                        data-number="3"
-                    >
-                        3
-                    </button>
-
-                    <button
-                        type="button"
-                        data-number="4"
-                    >
-                        4
-                    </button>
-
-                </div>
-
-                <button
-                    type="button"
-                    id="void-task-start"
-                >
-                    START SYSTEM
-                </button>
-
-                <button
-                    type="button"
-                    id="void-task-close"
-                >
-                    CANCEL
-                </button>
 
             </div>
 
@@ -192,56 +180,48 @@ class TaskSystem {
 
 
         document.body.appendChild(
-            game
+            this.container
         );
 
 
-        this.gameUI =
-            game;
+        this.container.style.display =
+            "none";
 
 
         this.taskNameElement =
-            game.querySelector(
+            this.container.querySelector(
                 "#void-task-name"
             );
 
 
-        this.taskProgressElement =
-            game.querySelector(
+        this.progressElement =
+            this.container.querySelector(
                 "#void-task-progress"
             );
 
 
         this.instructionElement =
-            game.querySelector(
+            this.container.querySelector(
                 "#void-task-instruction"
             );
 
 
         this.startButton =
-            game.querySelector(
+            this.container.querySelector(
                 "#void-task-start"
             );
 
 
         this.closeButton =
-            game.querySelector(
+            this.container.querySelector(
                 "#void-task-close"
             );
 
 
         this.sequenceButtons =
-            game.querySelectorAll(
-                "#void-sequence-buttons button"
+            this.container.querySelectorAll(
+                ".void-sequence-button"
             );
-
-
-        /*
-        Hidden initially.
-        */
-
-        game.style.display =
-            "none";
 
 
         /*
@@ -253,7 +233,6 @@ class TaskSystem {
             event => {
 
                 event.preventDefault();
-
                 event.stopPropagation();
 
                 this.startMiniGame();
@@ -271,7 +250,6 @@ class TaskSystem {
             event => {
 
                 event.preventDefault();
-
                 event.stopPropagation();
 
                 this.closeTask();
@@ -281,7 +259,7 @@ class TaskSystem {
 
 
         /*
-        SEQUENCE BUTTONS
+        SEQUENCE
         */
 
         this.sequenceButtons.forEach(
@@ -292,16 +270,12 @@ class TaskSystem {
                     event => {
 
                         event.preventDefault();
-
                         event.stopPropagation();
 
-                        const number =
+                        this.pressSequenceButton(
                             Number(
                                 button.dataset.number
-                            );
-
-                        this.pressSequenceButton(
-                            number
+                            )
                         );
 
                     }
@@ -312,11 +286,11 @@ class TaskSystem {
 
 
         /*
-        Prevent canvas interaction
-        while task UI is open.
+        DO NOT LET GAME CAMERA
+        RECEIVE UI CLICKS
         */
 
-        game.addEventListener(
+        this.container.addEventListener(
             "pointerdown",
             event => {
 
@@ -324,19 +298,6 @@ class TaskSystem {
 
             }
         );
-
-
-        game.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-            }
-        );
-
-
-        this.updateProgress();
 
     }
 
@@ -347,13 +308,21 @@ class TaskSystem {
     ==================================================
     */
 
-    setupInteraction() {
+    setupInteractButton() {
+
+        this.interactButton =
+            document.getElementById(
+                "interact-button"
+            );
+
 
         if (!this.interactButton) {
-
             return;
-
         }
+
+
+        this.interactButton.style.display =
+            "none";
 
 
         this.interactButton.addEventListener(
@@ -361,152 +330,18 @@ class TaskSystem {
             event => {
 
                 event.preventDefault();
-
                 event.stopPropagation();
 
-                this.interact();
+                if (
+                    this.currentPromptTask
+                ) {
 
-            }
-        );
-
-
-        this.interactButton.addEventListener(
-            "touchend",
-            event => {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-                this.interact();
-
-            },
-            {
-                passive: false
-            }
-        );
-
-
-        this.hideInteraction();
-
-    }
-
-
-    /*
-    ==================================================
-    REGISTER TASK
-    ==================================================
-    */
-
-    register(
-        object,
-        name = "TASK"
-    ) {
-
-        if (!object) {
-
-            return null;
-
-        }
-
-
-        /*
-        Prevent duplicate registration.
-        */
-
-        const existing =
-            this.tasks.find(
-                task =>
-                    task.object === object
-            );
-
-
-        if (existing) {
-
-            return existing;
-
-        }
-
-
-        const task = {
-
-            object: object,
-
-            name: name,
-
-            completed: false
-
-        };
-
-
-        this.tasks.push(
-            task
-        );
-
-
-        /*
-        Make task object visually identifiable.
-        */
-
-        object.userData =
-            object.userData || {};
-
-
-        object.userData.task =
-            true;
-
-
-        object.userData.taskName =
-            name;
-
-
-        this.updateTaskList();
-
-        this.updateProgress();
-
-        return task;
-
-    }
-
-
-    /*
-    ==================================================
-    REGISTER MANY
-    ==================================================
-    */
-
-    registerMany(
-        objects
-    ) {
-
-        if (!Array.isArray(objects)) {
-
-            return;
-
-        }
-
-
-        objects.forEach(
-            object => {
-
-                if (!object) {
-
-                    return;
+                    this.openTask(
+                        this.currentPromptTask
+                    );
 
                 }
 
-
-                const name =
-                    object.userData?.taskName ||
-                    object.name ||
-                    "TASK";
-
-
-                this.register(
-                    object,
-                    name
-                );
-
             }
         );
 
@@ -515,74 +350,11 @@ class TaskSystem {
 
     /*
     ==================================================
-    PLAYER POSITION
+    PLAYER DISTANCE
     ==================================================
     */
 
-    getPlayerPosition() {
-
-        const position =
-            new THREE.Vector3();
-
-
-        if (
-            this.player &&
-            this.player.isObject3D
-        ) {
-
-            this.player.getWorldPosition(
-                position
-            );
-
-        }
-
-
-        return position;
-
-    }
-
-
-    /*
-    ==================================================
-    TASK POSITION
-    ==================================================
-    */
-
-    getTaskPosition(
-        task
-    ) {
-
-        const position =
-            new THREE.Vector3();
-
-
-        if (
-            task &&
-            task.object &&
-            task.object.isObject3D
-        ) {
-
-            task.object.getWorldPosition(
-                position
-            );
-
-        }
-
-
-        return position;
-
-    }
-
-
-    /*
-    ==================================================
-    DISTANCE
-    ==================================================
-    */
-
-    getDistance(
-        task
-    ) {
+    getDistance(task) {
 
         if (
             !task ||
@@ -595,76 +367,13 @@ class TaskSystem {
         }
 
 
-        const playerPosition =
-            this.getPlayerPosition();
-
-
-        const taskPosition =
-            this.getTaskPosition(
-                task
-            );
-
-
-        return playerPosition.distanceTo(
-            taskPosition
+        return this.player.position.distanceTo(
+            task.object.getWorldPosition(
+                this._taskWorldPosition ||
+                (this._taskWorldPosition =
+                    this.player.position.clone())
+            )
         );
-
-    }
-
-
-    /*
-    ==================================================
-    FIND CLOSEST TASK
-    ==================================================
-    */
-
-    getClosestTask() {
-
-        let closest =
-            null;
-
-
-        let closestDistance =
-            this.interactionDistance;
-
-
-        for (
-            const task of
-            this.tasks
-        ) {
-
-            if (
-                task.completed
-            ) {
-
-                continue;
-
-            }
-
-
-            const distance =
-                this.getDistance(
-                    task
-                );
-
-
-            if (
-                distance <=
-                closestDistance
-            ) {
-
-                closestDistance =
-                    distance;
-
-                closest =
-                    task;
-
-            }
-
-        }
-
-
-        return closest;
 
     }
 
@@ -677,47 +386,58 @@ class TaskSystem {
 
     update() {
 
-        /*
-        Do not show prompts while
-        a task is open.
-        */
+        if (this.activeTask) {
+            return;
+        }
 
-        if (
-            this.activeTask
+
+        let closestTask = null;
+
+        let closestDistance =
+            this.interactionDistance;
+
+
+        for (
+            const task of this.tasks
         ) {
 
-            return;
+            if (task.completed) {
+                continue;
+            }
+
+
+            const distance =
+                this.getDistance(task);
+
+
+            if (
+                distance <
+                closestDistance
+            ) {
+
+                closestDistance =
+                    distance;
+
+                closestTask =
+                    task;
+
+            }
 
         }
 
 
-        const closest =
-            this.getClosestTask();
+        if (closestTask) {
 
-
-        if (closest) {
-
-            this.currentPromptTask =
-                closest;
-
-
-            this.showInteraction(
-                closest
+            this.showPrompt(
+                closestTask
             );
 
         }
         else {
 
-            this.currentPromptTask =
-                null;
-
-
-            this.hideInteraction();
+            this.hidePrompt();
 
         }
-
-
-        this.updateTaskList();
 
     }
 
@@ -728,16 +448,14 @@ class TaskSystem {
     ==================================================
     */
 
-    showInteraction(
-        task
-    ) {
+    showPrompt(task) {
 
-        if (
-            !this.interactButton
-        ) {
+        this.currentPromptTask =
+            task;
 
+
+        if (!this.interactButton) {
             return;
-
         }
 
 
@@ -757,54 +475,18 @@ class TaskSystem {
     ==================================================
     */
 
-    hideInteraction() {
+    hidePrompt() {
 
-        if (
-            !this.interactButton
-        ) {
-
-            return;
-
-        }
+        this.currentPromptTask =
+            null;
 
 
-        this.interactButton.style.display =
-            "none";
+        if (this.interactButton) {
 
-    }
-
-
-    /*
-    ==================================================
-    INTERACT
-    ==================================================
-    */
-
-    interact() {
-
-        if (
-            this.activeTask
-        ) {
-
-            return;
+            this.interactButton.style.display =
+                "none";
 
         }
-
-
-        const task =
-            this.getClosestTask();
-
-
-        if (!task) {
-
-            return;
-
-        }
-
-
-        this.openTask(
-            task
-        );
 
     }
 
@@ -815,23 +497,20 @@ class TaskSystem {
     ==================================================
     */
 
-    openTask(
-        task
-    ) {
+    openTask(task) {
 
         if (!task) {
-
             return;
-
         }
 
 
-        if (
-            task.completed
-        ) {
-
+        if (task.completed) {
             return;
+        }
 
+
+        if (this.activeTask) {
+            return;
         }
 
 
@@ -849,10 +528,10 @@ class TaskSystem {
             task;
 
 
-        this.hideInteraction();
+        this.hidePrompt();
 
 
-        this.gameUI.style.display =
+        this.container.style.display =
             "flex";
 
 
@@ -861,34 +540,6 @@ class TaskSystem {
 
 
         this.resetMiniGame();
-
-
-        this.updateProgress();
-
-    }
-
-
-    /*
-    ==================================================
-    CLOSE TASK
-    ==================================================
-    */
-
-    closeTask() {
-
-        this.activeTask =
-            null;
-
-
-        this.gameStarted =
-            false;
-
-
-        this.gameUI.style.display =
-            "none";
-
-
-        this.update();
 
     }
 
@@ -901,54 +552,23 @@ class TaskSystem {
 
     resetMiniGame() {
 
-        this.gameStarted =
-            false;
+        this.sequence =
+            [1, 2, 3, 4]
+            .sort(
+                () => Math.random() - 0.5
+            );
+
+
+        this.playerSequence =
+            [];
 
 
         this.sequencePosition =
             0;
 
 
-        /*
-        Generate random 4-number sequence.
-        */
-
-        this.sequence = [
-
-            1,
-            2,
-            3,
-            4
-
-        ];
-
-
-        for (
-            let i =
-                this.sequence.length - 1;
-
-            i > 0;
-
-            i--
-        ) {
-
-            const j =
-                Math.floor(
-                    Math.random() *
-                    (i + 1)
-                );
-
-
-            [
-                this.sequence[i],
-                this.sequence[j]
-            ] =
-            [
-                this.sequence[j],
-                this.sequence[i]
-            ];
-
-        }
+        this.gameStarted =
+            false;
 
 
         this.instructionElement.textContent =
@@ -969,7 +589,6 @@ class TaskSystem {
                 button.disabled =
                     true;
 
-
                 button.classList.remove(
                     "active",
                     "correct",
@@ -984,27 +603,14 @@ class TaskSystem {
 
     /*
     ==================================================
-    START MINI GAME
+    START
     ==================================================
     */
 
     startMiniGame() {
 
-        if (
-            !this.activeTask
-        ) {
-
+        if (!this.activeTask) {
             return;
-
-        }
-
-
-        if (
-            this.gameStarted
-        ) {
-
-            return;
-
         }
 
 
@@ -1012,16 +618,20 @@ class TaskSystem {
             true;
 
 
+        this.playerSequence =
+            [];
+
+
         this.sequencePosition =
             0;
 
 
-        this.instructionElement.textContent =
-            "MEMORIZE SEQUENCE";
-
-
         this.startButton.style.display =
             "none";
+
+
+        this.instructionElement.textContent =
+            "MEMORIZE SEQUENCE";
 
 
         this.sequenceButtons.forEach(
@@ -1052,39 +662,24 @@ class TaskSystem {
 
     async showSequence() {
 
-        if (
-            !this.gameStarted
-        ) {
-
-            return;
-
-        }
-
-
         for (
             const number of
             this.sequence
         ) {
 
-            if (
-                !this.gameStarted
-            ) {
-
+            if (!this.gameStarted) {
                 return;
-
             }
 
 
             const button =
-                this.gameUI.querySelector(
+                this.container.querySelector(
                     `[data-number="${number}"]`
                 );
 
 
             if (!button) {
-
                 continue;
-
             }
 
 
@@ -1104,18 +699,14 @@ class TaskSystem {
 
 
             await this.wait(
-                220
+                180
             );
 
         }
 
 
-        if (
-            !this.gameStarted
-        ) {
-
+        if (!this.gameStarted) {
             return;
-
         }
 
 
@@ -1137,21 +728,14 @@ class TaskSystem {
 
     /*
     ==================================================
-    PRESS SEQUENCE BUTTON
+    BUTTON PRESS
     ==================================================
     */
 
-    pressSequenceButton(
-        number
-    ) {
+    pressSequenceButton(number) {
 
-        if (
-            !this.gameStarted ||
-            !this.activeTask
-        ) {
-
+        if (!this.gameStarted) {
             return;
-
         }
 
 
@@ -1162,7 +746,7 @@ class TaskSystem {
 
 
         const button =
-            this.gameUI.querySelector(
+            this.container.querySelector(
                 `[data-number="${number}"]`
             );
 
@@ -1171,9 +755,7 @@ class TaskSystem {
         WRONG
         */
 
-        if (
-            number !== expected
-        ) {
+        if (number !== expected) {
 
             if (button) {
 
@@ -1190,7 +772,7 @@ class TaskSystem {
                         );
 
                     },
-                    350
+                    300
                 );
 
             }
@@ -1200,12 +782,8 @@ class TaskSystem {
                 false;
 
 
-            this.sequencePosition =
-                0;
-
-
             this.instructionElement.textContent =
-                "WRONG — TRY AGAIN";
+                "WRONG SEQUENCE";
 
 
             this.startButton.textContent =
@@ -1250,7 +828,7 @@ class TaskSystem {
                     );
 
                 },
-                250
+                200
             );
 
         }
@@ -1259,16 +837,12 @@ class TaskSystem {
         this.sequencePosition++;
 
 
-        /*
-        FINISHED
-        */
-
         if (
             this.sequencePosition >=
             this.sequence.length
         ) {
 
-            this.finishTask();
+            this.finishMiniGame();
 
         }
 
@@ -1277,32 +851,19 @@ class TaskSystem {
 
     /*
     ==================================================
-    FINISH TASK
+    FINISH
     ==================================================
     */
 
-    finishTask() {
+    finishMiniGame() {
 
-        if (
-            !this.activeTask
-        ) {
-
+        if (!this.activeTask) {
             return;
-
         }
 
 
         const task =
             this.activeTask;
-
-
-        if (
-            task.completed
-        ) {
-
-            return;
-
-        }
 
 
         task.completed =
@@ -1328,39 +889,33 @@ class TaskSystem {
 
 
         /*
-        Update world object.
+        Visual change on terminal
         */
 
-        if (
-            task.object
-        ) {
+        task.object.traverse(
+            object => {
 
-            task.object.userData.taskCompleted =
-                true;
+                if (
+                    object.material &&
+                    object.material.emissive
+                ) {
 
-        }
+                    object.material.emissiveIntensity =
+                        1;
+
+                }
+
+            }
+        );
 
 
         this.updateProgress();
 
-        this.updateTaskList();
-
-
-        /*
-        Close after success.
-        */
 
         setTimeout(
             () => {
 
-                if (
-                    this.activeTask ===
-                    task
-                ) {
-
-                    this.closeTask();
-
-                }
+                this.closeTask();
 
             },
             1000
@@ -1371,94 +926,47 @@ class TaskSystem {
 
     /*
     ==================================================
-    TASK LIST
+    CLOSE
     ==================================================
     */
 
-    updateTaskList() {
+    closeTask() {
 
-        if (!this.taskList) {
-
-            return;
-
-        }
+        this.activeTask =
+            null;
 
 
-        if (
-            this.tasks.length === 0
-        ) {
+        this.gameStarted =
+            false;
 
-            this.taskList.innerHTML =
-                `<div class="task-item">
-                    <span class="task-dot"></span>
-                    NO TASKS
-                </div>`;
 
-            return;
+        if (this.container) {
+
+            this.container.style.display =
+                "none";
 
         }
 
 
-        this.taskList.innerHTML =
-            "";
+        this.update();
+
+    }
 
 
-        this.tasks.forEach(
-            task => {
+    /*
+    ==================================================
+    WAIT
+    ==================================================
+    */
 
-                const item =
-                    document.createElement(
-                        "div"
-                    );
+    wait(ms) {
 
+        return new Promise(
+            resolve => {
 
-                item.className =
-                    "task-item";
-
-
-                if (
-                    task.completed
-                ) {
-
-                    item.classList.add(
-                        "task-complete"
-                    );
-
-                }
-
-
-                const dot =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                dot.className =
-                    "task-dot";
-
-
-                const text =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                text.textContent =
-                    task.name;
-
-
-                item.appendChild(
-                    dot
-                );
-
-
-                item.appendChild(
-                    text
-                );
-
-
-                this.taskList.appendChild(
-                    item
+                setTimeout(
+                    resolve,
+                    ms
                 );
 
             }
@@ -1475,36 +983,19 @@ class TaskSystem {
 
     updateProgress() {
 
-        if (
-            !this.taskProgressElement
-        ) {
-
+        if (!this.progressElement) {
             return;
-
         }
 
 
-        let completed =
-            0;
+        const completed =
+            this.tasks.filter(
+                task =>
+                    task.completed
+            ).length;
 
 
-        for (
-            const task of
-            this.tasks
-        ) {
-
-            if (
-                task.completed
-            ) {
-
-                completed++;
-
-            }
-
-        }
-
-
-        this.taskProgressElement.textContent =
+        this.progressElement.textContent =
             `${completed} / ${this.tasks.length} TASKS`;
 
     }
@@ -1518,42 +1009,12 @@ class TaskSystem {
 
     allCompleted() {
 
-        if (
-            this.tasks.length === 0
-        ) {
-
-            return false;
-
-        }
-
-
-        return this.tasks.every(
-            task =>
-                task.completed
-        );
-
-    }
-
-
-    /*
-    ==================================================
-    WAIT
-    ==================================================
-    */
-
-    wait(
-        milliseconds
-    ) {
-
-        return new Promise(
-            resolve => {
-
-                setTimeout(
-                    resolve,
-                    milliseconds
-                );
-
-            }
+        return (
+            this.tasks.length > 0 &&
+            this.tasks.every(
+                task =>
+                    task.completed
+            )
         );
 
     }
