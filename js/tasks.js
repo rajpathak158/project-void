@@ -1,64 +1,65 @@
+import * as THREE from
+    "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+
 /*
 ==================================================
 PROJECT: VOID
-TASK SYSTEM v5
+TASK SYSTEM v6
+==================================================
+
+FEATURES
+- Works with THREE.Group player
+- Uses #interact-button from index.html
+- Uses existing #task-panel / #task-list
+- Mobile friendly
+- Interaction distance
+- Sequence mini-game
+- Task completion
+- Retry system
+- No duplicate task UI
 ==================================================
 */
 
+
 class TaskSystem {
 
-    constructor(scene, camera, player) {
+    constructor(
+        scene,
+        camera,
+        player
+    ) {
 
         this.scene = scene;
+
         this.camera = camera;
+
         this.player = player;
 
         this.tasks = [];
 
         this.activeTask = null;
 
-        this.interactionDistance = 2.5;
+        this.currentPromptTask = null;
 
-        this.container = null;
+        this.interactionDistance = 3.2;
+
+        this.sequence = [];
+
+        this.sequencePosition = 0;
+
+        this.gameStarted = false;
+
+        this.taskPanel = null;
+
+        this.taskList = null;
+
+        this.interactButton = null;
 
         this.createUI();
-    }
 
+        this.setupInteraction();
 
-    /*
-    ==================================================
-    REGISTER
-    ==================================================
-    */
-
-    register(object, name) {
-
-        if (!object) {
-            return;
-        }
-
-        const exists =
-            this.tasks.some(
-                task => task.object === object
-            );
-
-        if (exists) {
-            return;
-        }
-
-        this.tasks.push({
-
-            object: object,
-
-            name:
-                name ||
-                "TASK",
-
-            completed: false
-
-        });
-
-        this.updateProgress();
     }
 
 
@@ -70,135 +71,181 @@ class TaskSystem {
 
     createUI() {
 
-        const old =
+        /*
+        Use existing HTML.
+        */
+
+        this.taskPanel =
             document.getElementById(
-                "task-ui"
-            );
-
-        if (old) {
-            old.remove();
-        }
-
-
-        this.container =
-            document.createElement(
-                "div"
-            );
-
-        this.container.id =
-            "task-ui";
-
-
-        this.container.innerHTML = `
-
-            <div id="task-panel">
-
-                <div id="task-header">
-                    TASK SYSTEM
-                </div>
-
-                <div id="task-name">
-                    SYSTEM READY
-                </div>
-
-                <div id="task-progress">
-                    0 / 0 TASKS
-                </div>
-
-                <div id="task-game">
-
-                    <div id="task-instruction">
-                        PRESS START
-                    </div>
-
-                    <div id="sequence-buttons">
-
-                        <button
-                            class="sequence-button"
-                            data-number="1"
-                        >
-                            1
-                        </button>
-
-                        <button
-                            class="sequence-button"
-                            data-number="2"
-                        >
-                            2
-                        </button>
-
-                        <button
-                            class="sequence-button"
-                            data-number="3"
-                        >
-                            3
-                        </button>
-
-                        <button
-                            class="sequence-button"
-                            data-number="4"
-                        >
-                            4
-                        </button>
-
-                    </div>
-
-                    <button
-                        id="task-start"
-                        type="button"
-                    >
-                        START SYSTEM
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-
-        document.body.appendChild(
-            this.container
-        );
-
-
-        this.container.style.display =
-            "none";
-
-
-        this.taskNameElement =
-            this.container.querySelector(
-                "#task-name"
+                "task-panel"
             );
 
 
-        this.progressElement =
-            this.container.querySelector(
-                "#task-progress"
+        this.taskList =
+            document.getElementById(
+                "task-list"
             );
 
 
-        this.instructionElement =
-            this.container.querySelector(
-                "#task-instruction"
-            );
-
-
-        this.startButton =
-            this.container.querySelector(
-                "#task-start"
-            );
-
-
-        this.sequenceButtons =
-            this.container.querySelectorAll(
-                ".sequence-button"
+        this.interactButton =
+            document.getElementById(
+                "interact-button"
             );
 
 
         /*
-        ==================================================
-        START BUTTON
-        ==================================================
+        Create task-game overlay only once.
+        */
+
+        let old =
+            document.getElementById(
+                "void-task-game"
+            );
+
+
+        if (old) {
+
+            old.remove();
+
+        }
+
+
+        const game =
+            document.createElement(
+                "div"
+            );
+
+
+        game.id =
+            "void-task-game";
+
+
+        game.innerHTML = `
+
+            <div id="void-task-box">
+
+                <div id="void-task-title">
+                    TASK SYSTEM
+                </div>
+
+                <div id="void-task-name">
+                    TASK
+                </div>
+
+                <div id="void-task-progress">
+                    0 / 0 TASKS
+                </div>
+
+                <div id="void-task-instruction">
+                    PRESS START
+                </div>
+
+                <div id="void-sequence-buttons">
+
+                    <button
+                        type="button"
+                        data-number="1"
+                    >
+                        1
+                    </button>
+
+                    <button
+                        type="button"
+                        data-number="2"
+                    >
+                        2
+                    </button>
+
+                    <button
+                        type="button"
+                        data-number="3"
+                    >
+                        3
+                    </button>
+
+                    <button
+                        type="button"
+                        data-number="4"
+                    >
+                        4
+                    </button>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="void-task-start"
+                >
+                    START SYSTEM
+                </button>
+
+                <button
+                    type="button"
+                    id="void-task-close"
+                >
+                    CANCEL
+                </button>
+
+            </div>
+
+        `;
+
+
+        document.body.appendChild(
+            game
+        );
+
+
+        this.gameUI =
+            game;
+
+
+        this.taskNameElement =
+            game.querySelector(
+                "#void-task-name"
+            );
+
+
+        this.taskProgressElement =
+            game.querySelector(
+                "#void-task-progress"
+            );
+
+
+        this.instructionElement =
+            game.querySelector(
+                "#void-task-instruction"
+            );
+
+
+        this.startButton =
+            game.querySelector(
+                "#void-task-start"
+            );
+
+
+        this.closeButton =
+            game.querySelector(
+                "#void-task-close"
+            );
+
+
+        this.sequenceButtons =
+            game.querySelectorAll(
+                "#void-sequence-buttons button"
+            );
+
+
+        /*
+        Hidden initially.
+        */
+
+        game.style.display =
+            "none";
+
+
+        /*
+        START
         */
 
         this.startButton.addEventListener(
@@ -216,9 +263,25 @@ class TaskSystem {
 
 
         /*
-        ==================================================
+        CANCEL
+        */
+
+        this.closeButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                this.closeTask();
+
+            }
+        );
+
+
+        /*
         SEQUENCE BUTTONS
-        ==================================================
         */
 
         this.sequenceButtons.forEach(
@@ -249,12 +312,21 @@ class TaskSystem {
 
 
         /*
-        ==================================================
-        PREVENT GAME CLICKS
-        ==================================================
+        Prevent canvas interaction
+        while task UI is open.
         */
 
-        this.container.addEventListener(
+        game.addEventListener(
+            "pointerdown",
+            event => {
+
+                event.stopPropagation();
+
+            }
+        );
+
+
+        game.addEventListener(
             "click",
             event => {
 
@@ -262,6 +334,242 @@ class TaskSystem {
 
             }
         );
+
+
+        this.updateProgress();
+
+    }
+
+
+    /*
+    ==================================================
+    INTERACT BUTTON
+    ==================================================
+    */
+
+    setupInteraction() {
+
+        if (!this.interactButton) {
+
+            return;
+
+        }
+
+
+        this.interactButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                this.interact();
+
+            }
+        );
+
+
+        this.interactButton.addEventListener(
+            "touchend",
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                this.interact();
+
+            },
+            {
+                passive: false
+            }
+        );
+
+
+        this.hideInteraction();
+
+    }
+
+
+    /*
+    ==================================================
+    REGISTER TASK
+    ==================================================
+    */
+
+    register(
+        object,
+        name = "TASK"
+    ) {
+
+        if (!object) {
+
+            return null;
+
+        }
+
+
+        /*
+        Prevent duplicate registration.
+        */
+
+        const existing =
+            this.tasks.find(
+                task =>
+                    task.object === object
+            );
+
+
+        if (existing) {
+
+            return existing;
+
+        }
+
+
+        const task = {
+
+            object: object,
+
+            name: name,
+
+            completed: false
+
+        };
+
+
+        this.tasks.push(
+            task
+        );
+
+
+        /*
+        Make task object visually identifiable.
+        */
+
+        object.userData =
+            object.userData || {};
+
+
+        object.userData.task =
+            true;
+
+
+        object.userData.taskName =
+            name;
+
+
+        this.updateTaskList();
+
+        this.updateProgress();
+
+        return task;
+
+    }
+
+
+    /*
+    ==================================================
+    REGISTER MANY
+    ==================================================
+    */
+
+    registerMany(
+        objects
+    ) {
+
+        if (!Array.isArray(objects)) {
+
+            return;
+
+        }
+
+
+        objects.forEach(
+            object => {
+
+                if (!object) {
+
+                    return;
+
+                }
+
+
+                const name =
+                    object.userData?.taskName ||
+                    object.name ||
+                    "TASK";
+
+
+                this.register(
+                    object,
+                    name
+                );
+
+            }
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    PLAYER POSITION
+    ==================================================
+    */
+
+    getPlayerPosition() {
+
+        const position =
+            new THREE.Vector3();
+
+
+        if (
+            this.player &&
+            this.player.isObject3D
+        ) {
+
+            this.player.getWorldPosition(
+                position
+            );
+
+        }
+
+
+        return position;
+
+    }
+
+
+    /*
+    ==================================================
+    TASK POSITION
+    ==================================================
+    */
+
+    getTaskPosition(
+        task
+    ) {
+
+        const position =
+            new THREE.Vector3();
+
+
+        if (
+            task &&
+            task.object &&
+            task.object.isObject3D
+        ) {
+
+            task.object.getWorldPosition(
+                position
+            );
+
+        }
+
+
+        return position;
 
     }
 
@@ -272,7 +580,9 @@ class TaskSystem {
     ==================================================
     */
 
-    getDistance(task) {
+    getDistance(
+        task
+    ) {
 
         if (
             !task ||
@@ -285,41 +595,42 @@ class TaskSystem {
         }
 
 
-        return this.player
-            .getPosition()
-            .distanceTo(
-                task.object.position
+        const playerPosition =
+            this.getPlayerPosition();
+
+
+        const taskPosition =
+            this.getTaskPosition(
+                task
             );
+
+
+        return playerPosition.distanceTo(
+            taskPosition
+        );
 
     }
 
 
     /*
     ==================================================
-    UPDATE
+    FIND CLOSEST TASK
     ==================================================
     */
 
-    update() {
-
-        if (
-            this.activeTask
-        ) {
-
-            return;
-
-        }
-
+    getClosestTask() {
 
         let closest =
             null;
+
 
         let closestDistance =
             this.interactionDistance;
 
 
         for (
-            const task of this.tasks
+            const task of
+            this.tasks
         ) {
 
             if (
@@ -338,7 +649,7 @@ class TaskSystem {
 
 
             if (
-                distance <
+                distance <=
                 closestDistance
             ) {
 
@@ -353,49 +664,26 @@ class TaskSystem {
         }
 
 
-        if (closest) {
-
-            this.showPrompt(
-                closest
-            );
-
-        } else {
-
-            this.hidePrompt();
-
-        }
+        return closest;
 
     }
 
 
     /*
     ==================================================
-    PROMPT
+    UPDATE
     ==================================================
     */
 
-    showPrompt(task) {
+    update() {
 
-        const interaction =
-            document.getElementById(
-                "interaction"
-            );
-
-
-        if (interaction) {
-
-            interaction.style.display =
-                "block";
-
-            interaction.textContent =
-                `TAP TO USE: ${task.name}`;
-
-        }
-
+        /*
+        Do not show prompts while
+        a task is open.
+        */
 
         if (
-            this.currentPromptTask ===
-            task
+            this.activeTask
         ) {
 
             return;
@@ -403,91 +691,120 @@ class TaskSystem {
         }
 
 
-        this.currentPromptTask =
-            task;
+        const closest =
+            this.getClosestTask();
 
 
-        if (
-            this.promptHandler
-        ) {
+        if (closest) {
 
-            document.removeEventListener(
-                "click",
-                this.promptHandler
+            this.currentPromptTask =
+                closest;
+
+
+            this.showInteraction(
+                closest
             );
+
+        }
+        else {
+
+            this.currentPromptTask =
+                null;
+
+
+            this.hideInteraction();
 
         }
 
 
-        this.promptHandler =
-            event => {
-
-                if (
-                    this.container &&
-                    this.container.contains(
-                        event.target
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                this.openTask(
-                    task
-                );
-
-            };
-
-
-        document.addEventListener(
-            "click",
-            this.promptHandler
-        );
+        this.updateTaskList();
 
     }
 
 
     /*
     ==================================================
-    HIDE PROMPT
+    SHOW INTERACTION
     ==================================================
     */
 
-    hidePrompt() {
-
-        const interaction =
-            document.getElementById(
-                "interaction"
-            );
-
-
-        if (interaction) {
-
-            interaction.style.display =
-                "none";
-
-        }
-
-
-        this.currentPromptTask =
-            null;
-
+    showInteraction(
+        task
+    ) {
 
         if (
-            this.promptHandler
+            !this.interactButton
         ) {
 
-            document.removeEventListener(
-                "click",
-                this.promptHandler
-            );
-
-            this.promptHandler =
-                null;
+            return;
 
         }
+
+
+        this.interactButton.style.display =
+            "block";
+
+
+        this.interactButton.textContent =
+            `USE: ${task.name}`;
+
+    }
+
+
+    /*
+    ==================================================
+    HIDE INTERACTION
+    ==================================================
+    */
+
+    hideInteraction() {
+
+        if (
+            !this.interactButton
+        ) {
+
+            return;
+
+        }
+
+
+        this.interactButton.style.display =
+            "none";
+
+    }
+
+
+    /*
+    ==================================================
+    INTERACT
+    ==================================================
+    */
+
+    interact() {
+
+        if (
+            this.activeTask
+        ) {
+
+            return;
+
+        }
+
+
+        const task =
+            this.getClosestTask();
+
+
+        if (!task) {
+
+            return;
+
+        }
+
+
+        this.openTask(
+            task
+        );
 
     }
 
@@ -498,20 +815,23 @@ class TaskSystem {
     ==================================================
     */
 
-    openTask(task) {
+    openTask(
+        task
+    ) {
 
         if (!task) {
+
             return;
+
         }
 
 
-        if (this.activeTask) {
-            return;
-        }
+        if (
+            task.completed
+        ) {
 
-
-        if (task.completed) {
             return;
+
         }
 
 
@@ -529,10 +849,10 @@ class TaskSystem {
             task;
 
 
-        this.hidePrompt();
+        this.hideInteraction();
 
 
-        this.container.style.display =
+        this.gameUI.style.display =
             "flex";
 
 
@@ -542,7 +862,33 @@ class TaskSystem {
 
         this.resetMiniGame();
 
+
         this.updateProgress();
+
+    }
+
+
+    /*
+    ==================================================
+    CLOSE TASK
+    ==================================================
+    */
+
+    closeTask() {
+
+        this.activeTask =
+            null;
+
+
+        this.gameStarted =
+            false;
+
+
+        this.gameUI.style.display =
+            "none";
+
+
+        this.update();
 
     }
 
@@ -555,26 +901,34 @@ class TaskSystem {
 
     resetMiniGame() {
 
-        this.sequence = [];
+        this.gameStarted =
+            false;
 
-        this.playerSequence = [];
 
-        this.sequencePosition = 0;
-
-        this.gameStarted = false;
+        this.sequencePosition =
+            0;
 
 
         /*
-        Generate random sequence.
+        Generate random 4-number sequence.
         */
 
-        const numbers =
-            [1, 2, 3, 4];
+        this.sequence = [
+
+            1,
+            2,
+            3,
+            4
+
+        ];
 
 
         for (
-            let i = numbers.length - 1;
+            let i =
+                this.sequence.length - 1;
+
             i > 0;
+
             i--
         ) {
 
@@ -586,23 +940,23 @@ class TaskSystem {
 
 
             [
-                numbers[i],
-                numbers[j]
+                this.sequence[i],
+                this.sequence[j]
             ] =
             [
-                numbers[j],
-                numbers[i]
+                this.sequence[j],
+                this.sequence[i]
             ];
 
         }
 
 
-        this.sequence =
-            numbers;
-
-
         this.instructionElement.textContent =
             "PRESS START";
+
+
+        this.startButton.textContent =
+            "START SYSTEM";
 
 
         this.startButton.style.display =
@@ -614,6 +968,13 @@ class TaskSystem {
 
                 button.disabled =
                     true;
+
+
+                button.classList.remove(
+                    "active",
+                    "correct",
+                    "wrong"
+                );
 
             }
         );
@@ -638,12 +999,17 @@ class TaskSystem {
         }
 
 
+        if (
+            this.gameStarted
+        ) {
+
+            return;
+
+        }
+
+
         this.gameStarted =
             true;
-
-
-        this.playerSequence =
-            [];
 
 
         this.sequencePosition =
@@ -651,7 +1017,7 @@ class TaskSystem {
 
 
         this.instructionElement.textContent =
-            "REPEAT THE SEQUENCE";
+            "MEMORIZE SEQUENCE";
 
 
         this.startButton.style.display =
@@ -662,7 +1028,7 @@ class TaskSystem {
             button => {
 
                 button.disabled =
-                    false;
+                    true;
 
                 button.classList.remove(
                     "correct",
@@ -672,10 +1038,6 @@ class TaskSystem {
             }
         );
 
-
-        /*
-        Show the sequence briefly.
-        */
 
         this.showSequence();
 
@@ -690,28 +1052,39 @@ class TaskSystem {
 
     async showSequence() {
 
-        this.sequenceButtons.forEach(
-            button => {
+        if (
+            !this.gameStarted
+        ) {
 
-                button.disabled =
-                    true;
+            return;
 
-            }
-        );
+        }
 
 
         for (
-            const number of this.sequence
+            const number of
+            this.sequence
         ) {
 
+            if (
+                !this.gameStarted
+            ) {
+
+                return;
+
+            }
+
+
             const button =
-                this.container.querySelector(
+                this.gameUI.querySelector(
                     `[data-number="${number}"]`
                 );
 
 
             if (!button) {
+
                 continue;
+
             }
 
 
@@ -721,7 +1094,7 @@ class TaskSystem {
 
 
             await this.wait(
-                500
+                550
             );
 
 
@@ -731,7 +1104,7 @@ class TaskSystem {
 
 
             await this.wait(
-                180
+                220
             );
 
         }
@@ -747,7 +1120,7 @@ class TaskSystem {
 
 
         this.instructionElement.textContent =
-            "NOW REPEAT IT";
+            "REPEAT THE SEQUENCE";
 
 
         this.sequenceButtons.forEach(
@@ -764,14 +1137,17 @@ class TaskSystem {
 
     /*
     ==================================================
-    PRESS BUTTON
+    PRESS SEQUENCE BUTTON
     ==================================================
     */
 
-    pressSequenceButton(number) {
+    pressSequenceButton(
+        number
+    ) {
 
         if (
-            !this.gameStarted
+            !this.gameStarted ||
+            !this.activeTask
         ) {
 
             return;
@@ -786,13 +1162,13 @@ class TaskSystem {
 
 
         const button =
-            this.container.querySelector(
+            this.gameUI.querySelector(
                 `[data-number="${number}"]`
             );
 
 
         /*
-        WRONG BUTTON
+        WRONG
         */
 
         if (
@@ -814,18 +1190,22 @@ class TaskSystem {
                         );
 
                     },
-                    300
+                    350
                 );
 
             }
 
 
-            this.instructionElement.textContent =
-                "⚠ WRONG SEQUENCE";
-
-
             this.gameStarted =
                 false;
+
+
+            this.sequencePosition =
+                0;
+
+
+            this.instructionElement.textContent =
+                "WRONG — TRY AGAIN";
 
 
             this.startButton.textContent =
@@ -852,7 +1232,7 @@ class TaskSystem {
 
 
         /*
-        CORRECT BUTTON
+        CORRECT
         */
 
         if (button) {
@@ -880,7 +1260,7 @@ class TaskSystem {
 
 
         /*
-        COMPLETED
+        FINISHED
         */
 
         if (
@@ -888,7 +1268,7 @@ class TaskSystem {
             this.sequence.length
         ) {
 
-            this.finishMiniGame();
+            this.finishTask();
 
         }
 
@@ -897,11 +1277,11 @@ class TaskSystem {
 
     /*
     ==================================================
-    FINISH MINI GAME
+    FINISH TASK
     ==================================================
     */
 
-    finishMiniGame() {
+    finishTask() {
 
         if (
             !this.activeTask
@@ -916,10 +1296,6 @@ class TaskSystem {
             this.activeTask;
 
 
-        /*
-        Safety.
-        */
-
         if (
             task.completed
         ) {
@@ -928,10 +1304,6 @@ class TaskSystem {
 
         }
 
-
-        /*
-        COMPLETE TASK.
-        */
 
         task.completed =
             true;
@@ -956,20 +1328,39 @@ class TaskSystem {
 
 
         /*
-        Update counter.
+        Update world object.
         */
+
+        if (
+            task.object
+        ) {
+
+            task.object.userData.taskCompleted =
+                true;
+
+        }
+
 
         this.updateProgress();
 
+        this.updateTaskList();
+
 
         /*
-        Wait before closing.
+        Close after success.
         */
 
         setTimeout(
             () => {
 
-                this.closeTask();
+                if (
+                    this.activeTask ===
+                    task
+                ) {
+
+                    this.closeTask();
+
+                }
 
             },
             1000
@@ -980,43 +1371,97 @@ class TaskSystem {
 
     /*
     ==================================================
-    CLOSE TASK
+    TASK LIST
     ==================================================
     */
 
-    closeTask() {
+    updateTaskList() {
 
-        this.activeTask =
-            null;
+        if (!this.taskList) {
 
+            return;
 
-        this.gameStarted =
-            false;
-
-
-        this.container.style.display =
-            "none";
+        }
 
 
-        this.update();
+        if (
+            this.tasks.length === 0
+        ) {
 
-    }
+            this.taskList.innerHTML =
+                `<div class="task-item">
+                    <span class="task-dot"></span>
+                    NO TASKS
+                </div>`;
+
+            return;
+
+        }
 
 
-    /*
-    ==================================================
-    WAIT
-    ==================================================
-    */
+        this.taskList.innerHTML =
+            "";
 
-    wait(ms) {
 
-        return new Promise(
-            resolve =>
-                setTimeout(
-                    resolve,
-                    ms
-                )
+        this.tasks.forEach(
+            task => {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                item.className =
+                    "task-item";
+
+
+                if (
+                    task.completed
+                ) {
+
+                    item.classList.add(
+                        "task-complete"
+                    );
+
+                }
+
+
+                const dot =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                dot.className =
+                    "task-dot";
+
+
+                const text =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                text.textContent =
+                    task.name;
+
+
+                item.appendChild(
+                    dot
+                );
+
+
+                item.appendChild(
+                    text
+                );
+
+
+                this.taskList.appendChild(
+                    item
+                );
+
+            }
         );
 
     }
@@ -1031,7 +1476,7 @@ class TaskSystem {
     updateProgress() {
 
         if (
-            !this.progressElement
+            !this.taskProgressElement
         ) {
 
             return;
@@ -1044,7 +1489,8 @@ class TaskSystem {
 
 
         for (
-            const task of this.tasks
+            const task of
+            this.tasks
         ) {
 
             if (
@@ -1058,7 +1504,7 @@ class TaskSystem {
         }
 
 
-        this.progressElement.textContent =
+        this.taskProgressElement.textContent =
             `${completed} / ${this.tasks.length} TASKS`;
 
     }
@@ -1084,6 +1530,30 @@ class TaskSystem {
         return this.tasks.every(
             task =>
                 task.completed
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    WAIT
+    ==================================================
+    */
+
+    wait(
+        milliseconds
+    ) {
+
+        return new Promise(
+            resolve => {
+
+                setTimeout(
+                    resolve,
+                    milliseconds
+                );
+
+            }
         );
 
     }
