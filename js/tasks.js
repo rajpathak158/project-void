@@ -1,14 +1,18 @@
 /*
 ==================================================
 PROJECT: VOID
-TASK SYSTEM
-VERSION 6.0
+TASK SYSTEM v6
 ==================================================
 */
 
 class TaskSystem {
 
-    constructor(scene, camera, player) {
+    constructor(
+        scene,
+        camera,
+        player,
+        tasks = []
+    ) {
 
         this.scene = scene;
         this.camera = camera;
@@ -17,9 +21,9 @@ class TaskSystem {
         this.tasks = [];
 
         this.activeTask = null;
-        this.currentPromptTask = null;
+        this.nearestTask = null;
 
-        this.interactionDistance = 3.5;
+        this.interactionDistance = 3.2;
 
         this.container = null;
 
@@ -30,54 +34,77 @@ class TaskSystem {
         this.gameStarted = false;
 
         this.createUI();
-        this.setupInteractButton();
+
+        this.setTasks(tasks);
 
     }
 
 
     /*
     ==================================================
-    REGISTER TASK
+    SET TASKS
     ==================================================
     */
 
-    register(object, name = "TASK") {
+    setTasks(tasks) {
 
-        if (!object) {
-            return;
-        }
+        this.tasks = Array.isArray(tasks)
+            ? tasks
+            : [];
 
-        if (
-            this.tasks.some(
-                task => task.object === object
-            )
-        ) {
-            return;
-        }
+        /*
+        Normalize task objects.
+        */
 
-        const task = {
+        this.tasks =
+            this.tasks
+                .filter(task =>
+                    task &&
+                    task.object
+                )
+                .map(task => {
 
-            object: object,
+                    if (
+                        typeof task.completed !==
+                        "boolean"
+                    ) {
 
-            name: name,
+                        task.completed = false;
 
-            completed: false
+                    }
 
-        };
+                    if (!task.name) {
 
-        object.userData.task = true;
-        object.userData.taskName = name;
+                        task.name =
+                            task.object
+                                ?.userData
+                                ?.taskName ||
+                            "TASK";
 
-        this.tasks.push(task);
+                    }
+
+                    return task;
+
+                });
+
 
         this.updateProgress();
+
+        this.updateTaskList();
+
+
+        console.log(
+            "TASK SYSTEM:",
+            this.tasks.length,
+            "TASKS REGISTERED"
+        );
 
     }
 
 
     /*
     ==================================================
-    CREATE TASK UI
+    UI
     ==================================================
     */
 
@@ -88,13 +115,19 @@ class TaskSystem {
                 "void-task-system"
             );
 
+
         if (old) {
+
             old.remove();
+
         }
 
 
         this.container =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         this.container.id =
             "void-task-system";
@@ -102,7 +135,7 @@ class TaskSystem {
 
         this.container.innerHTML = `
 
-            <div id="void-task-box">
+            <div id="void-task-window">
 
                 <div id="void-task-title">
                     TASK SYSTEM
@@ -116,63 +149,55 @@ class TaskSystem {
                     0 / 0 TASKS
                 </div>
 
-                <div id="void-task-game">
+                <div id="void-task-instruction">
+                    PRESS START
+                </div>
 
-                    <div id="void-task-instruction">
-                        PRESS START
-                    </div>
-
-                    <div id="void-sequence-buttons">
-
-                        <button
-                            class="void-sequence-button"
-                            data-number="1"
-                            type="button"
-                        >
-                            1
-                        </button>
-
-                        <button
-                            class="void-sequence-button"
-                            data-number="2"
-                            type="button"
-                        >
-                            2
-                        </button>
-
-                        <button
-                            class="void-sequence-button"
-                            data-number="3"
-                            type="button"
-                        >
-                            3
-                        </button>
-
-                        <button
-                            class="void-sequence-button"
-                            data-number="4"
-                            type="button"
-                        >
-                            4
-                        </button>
-
-                    </div>
+                <div id="void-sequence-buttons">
 
                     <button
-                        id="void-task-start"
-                        type="button"
+                        class="void-sequence-button"
+                        data-number="1"
                     >
-                        START SYSTEM
+                        1
                     </button>
 
                     <button
-                        id="void-task-close"
-                        type="button"
+                        class="void-sequence-button"
+                        data-number="2"
                     >
-                        CANCEL
+                        2
+                    </button>
+
+                    <button
+                        class="void-sequence-button"
+                        data-number="3"
+                    >
+                        3
+                    </button>
+
+                    <button
+                        class="void-sequence-button"
+                        data-number="4"
+                    >
+                        4
                     </button>
 
                 </div>
+
+                <button
+                    id="void-task-start"
+                    type="button"
+                >
+                    START SYSTEM
+                </button>
+
+                <button
+                    id="void-task-close"
+                    type="button"
+                >
+                    CANCEL
+                </button>
 
             </div>
 
@@ -233,6 +258,7 @@ class TaskSystem {
             event => {
 
                 event.preventDefault();
+
                 event.stopPropagation();
 
                 this.startMiniGame();
@@ -250,6 +276,7 @@ class TaskSystem {
             event => {
 
                 event.preventDefault();
+
                 event.stopPropagation();
 
                 this.closeTask();
@@ -270,12 +297,16 @@ class TaskSystem {
                     event => {
 
                         event.preventDefault();
+
                         event.stopPropagation();
 
-                        this.pressSequenceButton(
+                        const number =
                             Number(
                                 button.dataset.number
-                            )
+                            );
+
+                        this.pressSequenceButton(
+                            number
                         );
 
                     }
@@ -286,8 +317,7 @@ class TaskSystem {
 
 
         /*
-        DO NOT LET GAME CAMERA
-        RECEIVE UI CLICKS
+        Prevent game input.
         */
 
         this.container.addEventListener(
@@ -299,48 +329,11 @@ class TaskSystem {
             }
         );
 
-    }
-
-
-    /*
-    ==================================================
-    INTERACT BUTTON
-    ==================================================
-    */
-
-    setupInteractButton() {
-
-        this.interactButton =
-            document.getElementById(
-                "interact-button"
-            );
-
-
-        if (!this.interactButton) {
-            return;
-        }
-
-
-        this.interactButton.style.display =
-            "none";
-
-
-        this.interactButton.addEventListener(
+        this.container.addEventListener(
             "click",
             event => {
 
-                event.preventDefault();
                 event.stopPropagation();
-
-                if (
-                    this.currentPromptTask
-                ) {
-
-                    this.openTask(
-                        this.currentPromptTask
-                    );
-
-                }
 
             }
         );
@@ -350,7 +343,7 @@ class TaskSystem {
 
     /*
     ==================================================
-    PLAYER DISTANCE
+    DISTANCE
     ==================================================
     */
 
@@ -367,12 +360,19 @@ class TaskSystem {
         }
 
 
-        return this.player.position.distanceTo(
-            task.object.getWorldPosition(
-                this._taskWorldPosition ||
-                (this._taskWorldPosition =
-                    this.player.position.clone())
-            )
+        const dx =
+            this.player.position.x -
+            task.object.position.x;
+
+
+        const dz =
+            this.player.position.z -
+            task.object.position.z;
+
+
+        return Math.sqrt(
+            dx * dx +
+            dz * dz
         );
 
     }
@@ -387,27 +387,36 @@ class TaskSystem {
     update() {
 
         if (this.activeTask) {
+
             return;
+
         }
 
 
-        let closestTask = null;
+        let closest = null;
 
         let closestDistance =
             this.interactionDistance;
 
 
         for (
-            const task of this.tasks
+            const task of
+            this.tasks
         ) {
 
-            if (task.completed) {
+            if (
+                task.completed
+            ) {
+
                 continue;
+
             }
 
 
             const distance =
-                this.getDistance(task);
+                this.getDistance(
+                    task
+                );
 
 
             if (
@@ -418,7 +427,7 @@ class TaskSystem {
                 closestDistance =
                     distance;
 
-                closestTask =
+                closest =
                     task;
 
             }
@@ -426,14 +435,17 @@ class TaskSystem {
         }
 
 
-        if (closestTask) {
+        this.nearestTask =
+            closest;
+
+
+        if (closest) {
 
             this.showPrompt(
-                closestTask
+                closest
             );
 
-        }
-        else {
+        } else {
 
             this.hidePrompt();
 
@@ -444,49 +456,74 @@ class TaskSystem {
 
     /*
     ==================================================
-    SHOW INTERACTION
+    PROMPT
     ==================================================
     */
 
     showPrompt(task) {
 
-        this.currentPromptTask =
-            task;
+        const button =
+            document.getElementById(
+                "interact-button"
+            );
 
 
-        if (!this.interactButton) {
+        if (!button) {
+
             return;
+
         }
 
 
-        this.interactButton.style.display =
+        button.style.display =
             "block";
 
 
-        this.interactButton.textContent =
+        button.textContent =
             `USE: ${task.name}`;
+
+
+        button.onclick =
+            event => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                this.openTask(task);
+
+            };
 
     }
 
 
     /*
     ==================================================
-    HIDE INTERACTION
+    HIDE PROMPT
     ==================================================
     */
 
     hidePrompt() {
 
-        this.currentPromptTask =
-            null;
+        const button =
+            document.getElementById(
+                "interact-button"
+            );
 
 
-        if (this.interactButton) {
+        if (!button) {
 
-            this.interactButton.style.display =
-                "none";
+            return;
 
         }
+
+
+        button.style.display =
+            "none";
+
+
+        button.onclick =
+            null;
 
     }
 
@@ -500,17 +537,27 @@ class TaskSystem {
     openTask(task) {
 
         if (!task) {
+
             return;
+
         }
 
 
-        if (task.completed) {
+        if (
+            this.activeTask
+        ) {
+
             return;
+
         }
 
 
-        if (this.activeTask) {
+        if (
+            task.completed
+        ) {
+
             return;
+
         }
 
 
@@ -546,29 +593,58 @@ class TaskSystem {
 
     /*
     ==================================================
-    RESET MINI GAME
+    RESET
     ==================================================
     */
 
     resetMiniGame() {
 
+        this.sequence = [];
+
+        this.playerSequence = [];
+
+        this.sequencePosition = 0;
+
+        this.gameStarted = false;
+
+
+        const numbers =
+            [1, 2, 3, 4];
+
+
+        /*
+        Shuffle
+        */
+
+        for (
+            let i =
+                numbers.length - 1;
+
+            i > 0;
+
+            i--
+        ) {
+
+            const j =
+                Math.floor(
+                    Math.random() *
+                    (i + 1)
+                );
+
+
+            [
+                numbers[i],
+                numbers[j]
+            ] = [
+                numbers[j],
+                numbers[i]
+            ];
+
+        }
+
+
         this.sequence =
-            [1, 2, 3, 4]
-            .sort(
-                () => Math.random() - 0.5
-            );
-
-
-        this.playerSequence =
-            [];
-
-
-        this.sequencePosition =
-            0;
-
-
-        this.gameStarted =
-            false;
+            numbers;
 
 
         this.instructionElement.textContent =
@@ -580,6 +656,10 @@ class TaskSystem {
 
 
         this.startButton.style.display =
+            "block";
+
+
+        this.closeButton.style.display =
             "block";
 
 
@@ -609,8 +689,12 @@ class TaskSystem {
 
     startMiniGame() {
 
-        if (!this.activeTask) {
+        if (
+            !this.activeTask
+        ) {
+
             return;
+
         }
 
 
@@ -627,6 +711,10 @@ class TaskSystem {
 
 
         this.startButton.style.display =
+            "none";
+
+
+        this.closeButton.style.display =
             "none";
 
 
@@ -667,8 +755,12 @@ class TaskSystem {
             this.sequence
         ) {
 
-            if (!this.gameStarted) {
+            if (
+                !this.gameStarted
+            ) {
+
                 return;
+
             }
 
 
@@ -679,7 +771,9 @@ class TaskSystem {
 
 
             if (!button) {
+
                 continue;
+
             }
 
 
@@ -689,7 +783,7 @@ class TaskSystem {
 
 
             await this.wait(
-                550
+                450
             );
 
 
@@ -699,14 +793,18 @@ class TaskSystem {
 
 
             await this.wait(
-                180
+                150
             );
 
         }
 
 
-        if (!this.gameStarted) {
+        if (
+            !this.gameStarted
+        ) {
+
             return;
+
         }
 
 
@@ -728,14 +826,18 @@ class TaskSystem {
 
     /*
     ==================================================
-    BUTTON PRESS
+    PRESS
     ==================================================
     */
 
     pressSequenceButton(number) {
 
-        if (!this.gameStarted) {
+        if (
+            !this.gameStarted
+        ) {
+
             return;
+
         }
 
 
@@ -755,7 +857,9 @@ class TaskSystem {
         WRONG
         */
 
-        if (number !== expected) {
+        if (
+            number !== expected
+        ) {
 
             if (button) {
 
@@ -794,6 +898,10 @@ class TaskSystem {
                 "block";
 
 
+            this.closeButton.style.display =
+                "block";
+
+
             this.sequenceButtons.forEach(
                 button => {
 
@@ -828,7 +936,7 @@ class TaskSystem {
                     );
 
                 },
-                200
+                220
             );
 
         }
@@ -836,6 +944,10 @@ class TaskSystem {
 
         this.sequencePosition++;
 
+
+        /*
+        COMPLETE
+        */
 
         if (
             this.sequencePosition >=
@@ -857,13 +969,26 @@ class TaskSystem {
 
     finishMiniGame() {
 
-        if (!this.activeTask) {
+        if (
+            !this.activeTask
+        ) {
+
             return;
+
         }
 
 
         const task =
             this.activeTask;
+
+
+        if (
+            task.completed
+        ) {
+
+            return;
+
+        }
 
 
         task.completed =
@@ -888,28 +1013,23 @@ class TaskSystem {
         );
 
 
+        this.updateProgress();
+
+        this.updateTaskList();
+
+
         /*
-        Visual change on terminal
+        Mark terminal completed.
         */
 
-        task.object.traverse(
-            object => {
+        if (
+            task.object
+        ) {
 
-                if (
-                    object.material &&
-                    object.material.emissive
-                ) {
+            task.object.userData.completed =
+                true;
 
-                    object.material.emissiveIntensity =
-                        1;
-
-                }
-
-            }
-        );
-
-
-        this.updateProgress();
+        }
 
 
         setTimeout(
@@ -918,7 +1038,7 @@ class TaskSystem {
                 this.closeTask();
 
             },
-            1000
+            900
         );
 
     }
@@ -932,12 +1052,12 @@ class TaskSystem {
 
     closeTask() {
 
-        this.activeTask =
-            null;
-
-
         this.gameStarted =
             false;
+
+
+        this.activeTask =
+            null;
 
 
         if (this.container) {
@@ -955,22 +1075,76 @@ class TaskSystem {
 
     /*
     ==================================================
-    WAIT
+    TASK LIST
     ==================================================
     */
 
-    wait(ms) {
+    updateTaskList() {
 
-        return new Promise(
-            resolve => {
+        const list =
+            document.getElementById(
+                "task-list"
+            );
 
-                setTimeout(
-                    resolve,
-                    ms
-                );
 
-            }
-        );
+        if (!list) {
+
+            return;
+
+        }
+
+
+        if (
+            this.tasks.length === 0
+        ) {
+
+            list.innerHTML =
+                `
+                <div class="task-item">
+                    <span>NO TASKS</span>
+                </div>
+                `;
+
+            return;
+
+        }
+
+
+        list.innerHTML =
+            this.tasks
+                .map(task => {
+
+                    const completed =
+                        task.completed;
+
+
+                    return `
+
+                        <div
+                            class="
+                                task-item
+                                ${
+                                    completed
+                                        ? "task-complete"
+                                        : ""
+                                }
+                            "
+                        >
+
+                            <span
+                                class="task-dot"
+                            ></span>
+
+                            <span>
+                                ${task.name}
+                            </span>
+
+                        </div>
+
+                    `;
+
+                })
+                .join("");
 
     }
 
@@ -983,8 +1157,12 @@ class TaskSystem {
 
     updateProgress() {
 
-        if (!this.progressElement) {
+        if (
+            !this.progressElement
+        ) {
+
             return;
+
         }
 
 
@@ -1016,6 +1194,48 @@ class TaskSystem {
                     task.completed
             )
         );
+
+    }
+
+
+    /*
+    ==================================================
+    WAIT
+    ==================================================
+    */
+
+    wait(ms) {
+
+        return new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    ms
+                )
+        );
+
+    }
+
+
+    /*
+    ==================================================
+    DESTROY
+    ==================================================
+    */
+
+    destroy() {
+
+        if (
+            this.container
+        ) {
+
+            this.container.remove();
+
+        }
+
+        this.tasks = [];
+
+        this.activeTask = null;
 
     }
 
